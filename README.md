@@ -1,5 +1,7 @@
 # floework — Human-Aware SaaS Productivity & Team Collaboration Platform
 
+![floework Hero Page](./assets/hero_page.png)
+
 ---
 
 ## 1. Introduction
