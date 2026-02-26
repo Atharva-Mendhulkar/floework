@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email      String   @unique
+  name       String
+  password   String?
+  provider   String?  @default("local")
+  providerId String?  @unique
+  role       String   @default("MEMBER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams          TeamMember[]
+  assignedTasks  Task[]
+  focusSessions  FocusSession[]
+  productivity   ProductivityLog[]
+  subscription   Subscription?
+  messages       Message[]
+  alerts         Alert[]
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  members  TeamMember[]
+  projects Project[]
+}
+
+model TeamMember {
+  id       String @id @default(uuid())
+  userId   String
+  teamId   String
+  teamRole String @default("member")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  teamId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team  Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tasks Task[]
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  projectId String
+  createdAt DateTime @default(now())
+
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  status      String     @default("PENDING")
+  phase       String     @default("allocation")
+  projectId   String
+  assigneeId  String?
+  dueDate     DateTime?
+  priority    String     @default("medium")
+  isStarred   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee      User?          @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  focusSessions FocusSession[]
+}
+
+model FocusSession {
+  id           String    @id @default(uuid())
+  userId       String
+  taskId       String
+  startTime    DateTime  @default(now())
+  endTime      DateTime?
+  durationSecs Int       @default(0)
+  interrupts   Int       @default(0)
+  qualityScore Float?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model ProductivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime @default(now())
+  metric    String
+  value     Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  plan                 String    @default("FREE")
+  status               String    @default("ACTIVE")
+  currentPeriodEnd     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

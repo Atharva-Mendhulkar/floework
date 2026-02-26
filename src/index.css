@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 89.4%;
+    /* Canvas — off-white for a clean app feel */
+    --background: 210 20% 96%;
     --foreground: 216 33% 8%;
 
     --card: 0 0% 100%;
@@ -13,7 +14,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 216 33% 8%;
 
-    --primary: 216 38% 68%;
+    /* Brand accent: #007dff */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -22,27 +24,28 @@
     --muted: 220 9% 91%;
     --muted-foreground: 218 11% 46%;
 
-    --accent: 216 38% 68%;
+    --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 42% 61%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 216 38% 68%;
+    --ring: 211 100% 50%;
 
-    --radius: 1rem;
+    --radius: 0.875rem;
 
     --surface: 0 0% 100%;
     --surface-foreground: 216 33% 8%;
 
-    --canvas: 0 0% 89.4%;
+    --canvas: 210 20% 96%;
 
-    --focus: 216 38% 68%;
+    /* Focus = brand blue #007dff */
+    --focus: 211 100% 50%;
     --focus-foreground: 0 0% 100%;
 
-    --warning: 0 42% 61%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
     --text-primary: 216 33% 8%;
@@ -51,12 +54,12 @@
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 218 11% 46%;
-    --sidebar-primary: 216 38% 68%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 216 33% 8%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 216 38% 68%;
+    --sidebar-ring: 211 100% 50%;
   }
 }
 

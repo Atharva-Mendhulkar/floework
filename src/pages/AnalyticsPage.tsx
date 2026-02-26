@@ -2,86 +2,113 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-import { team } from "@/data/mockData";
+import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery } from "@/store/api";
+import { TrendingUp, Users, Zap, AlertTriangle } from "lucide-react";
 
-const barData = [
-  { day: "Mon", focusHrs: 5.2, tasksCompleted: 4 },
-  { day: "Tue", focusHrs: 6.1, tasksCompleted: 5 },
-  { day: "Wed", focusHrs: 3.8, tasksCompleted: 2 },
-  { day: "Thu", focusHrs: 7.0, tasksCompleted: 6 },
-  { day: "Fri", focusHrs: 4.5, tasksCompleted: 3 },
-];
+const BLUE = "#007dff";
+const BLUE_LIGHT = "#60a5fa";
+const RED = "#f87171";
 
-const burnoutData = [
-  { week: "W1", interrupts: 8, burnoutRisk: 22 },
-  { week: "W2", interrupts: 12, burnoutRisk: 35 },
-  { week: "W3", interrupts: 18, burnoutRisk: 52 },
-  { week: "W4", interrupts: 14, burnoutRisk: 45 },
-  { week: "W5", interrupts: 22, burnoutRisk: 68 },
-  { week: "W6", interrupts: 16, burnoutRisk: 55 },
-];
-
-const teamStatus = [
-  { member: team[0], status: "In Focus", task: "Design system tokens" },
-  { member: team[1], status: "Available", task: null },
-  { member: team[2], status: "In Focus", task: "Implement auth module" },
-  { member: team[3], status: "Available", task: null },
-  { member: team[4], status: "In Focus", task: "Resolve merge conflicts" },
-  { member: team[5], status: "Available", task: null },
-];
+const StatCard = ({ icon: Icon, label, value, sub, color }: {
+  icon: any; label: string; value: string; sub?: string; color: string;
+}) => (
+  <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0`} style={{ background: `${color}18` }}>
+      <Icon size={17} style={{ color }} />
+    </div>
+    <div>
+      <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">{label}</p>
+      <p className="text-xl font-bold text-slate-900 leading-tight">{value}</p>
+      {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
+    </div>
+  </div>
+);
 
 const AnalyticsPage = () => {
-  return (
-    <div className="flex-1 overflow-y-auto flex flex-col gap-3">
-      <h2 className="text-base font-semibold text-foreground px-1">Analytics & Burnout</h2>
+  const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
+  const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+  if (isLoadingDash || isLoadingTeam) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#007dff] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[13px] text-slate-400 font-medium">Loading analytics…</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { barData = [], burnoutData = [] } = dashboardRes?.data || {};
+  const teamStatus = teamStatusRes?.data || [];
+
+  const totalFocusHrs = (barData as any[]).reduce((s: number, d: any) => s + (d.focusHrs || 0), 0);
+  const totalTasks = (barData as any[]).reduce((s: number, d: any) => s + (d.tasksCompleted || 0), 0);
+  const inFocusNow = (teamStatus as any[]).filter((ts: any) => ts.status === "In Focus").length;
+  const latestBurnout = (burnoutData as any[]).at(-1)?.burnoutRisk ?? 0;
+
+  const tooltipStyle = {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 10,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    fontSize: 12,
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
+      {/* Page title */}
+      <div>
+        <h2 className="text-[15px] font-semibold text-slate-900">Analytics</h2>
+        <p className="text-[12px] text-slate-400">Focus patterns, effort signals, and team health.</p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard icon={Zap} label="Focus Hours" value={`${totalFocusHrs}h`} sub="This week" color={BLUE} />
+        <StatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} sub="This week" color="#10b981" />
+        <StatCard icon={Users} label="In Focus Now" value={String(inFocusNow)} sub="Team members" color="#8b5cf6" />
+        <StatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} sub="Current estimate" color="#f59e0b" />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Focus Hours vs Tasks */}
-        <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4">
-          <h3 className="text-sm font-semibold text-foreground">Focus Hours vs Tasks Completed</h3>
-          <div className="h-56">
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+          <div>
+            <h3 className="text-[13px] font-semibold text-slate-900">Focus Hours vs Tasks Completed</h3>
+            <p className="text-[11px] text-slate-400">Daily breakdown this week</p>
+          </div>
+          <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(218, 11%, 46%)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(218, 11%, 46%)" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(0, 0%, 100%)",
-                    border: "1px solid hsl(220, 13%, 91%)",
-                    borderRadius: 12,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-                    fontSize: 12,
-                  }}
-                />
-                <Bar dataKey="focusHrs" name="Focus Hrs" fill="hsl(216, 38%, 68%)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="tasksCompleted" name="Tasks Done" fill="hsl(152, 50%, 50%)" radius={[6, 6, 0, 0]} />
+              <BarChart data={barData} barGap={4} barCategoryGap="35%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="focusHrs" name="Focus Hrs" fill={BLUE} radius={[5, 5, 0, 0]} />
+                <Bar dataKey="tasksCompleted" name="Tasks Done" fill={BLUE_LIGHT} radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Burnout Risk */}
-        <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4">
-          <h3 className="text-sm font-semibold text-foreground">Burnout Risk Trend</h3>
-          <div className="h-56">
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+          <div>
+            <h3 className="text-[13px] font-semibold text-slate-900">Burnout Risk Trend</h3>
+            <p className="text-[11px] text-slate-400">Weekly rolling analysis</p>
+          </div>
+          <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={burnoutData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                <XAxis dataKey="week" tick={{ fontSize: 12, fill: "hsl(218, 11%, 46%)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(218, 11%, 46%)" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(0, 0%, 100%)",
-                    border: "1px solid hsl(220, 13%, 91%)",
-                    borderRadius: 12,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-                    fontSize: 12,
-                  }}
-                />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="interrupts" name="Interrupts" stroke="hsl(216, 38%, 68%)" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="burnoutRisk" name="Burnout Risk %" stroke="hsl(0, 42%, 61%)" strokeWidth={2.5} dot={{ r: 3 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="interrupts" name="Interrupts" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} />
+                <Line type="monotone" dataKey="burnoutRisk" name="Burnout Risk %" stroke={RED} strokeWidth={2.5} dot={{ r: 3, fill: RED }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -89,32 +116,32 @@ const AnalyticsPage = () => {
       </div>
 
       {/* Team Status */}
-      <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-foreground">Team Status</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {teamStatus.map((ts) => (
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+        <div>
+          <h3 className="text-[13px] font-semibold text-slate-900">Team Status</h3>
+          <p className="text-[11px] text-slate-400">Live execution state across the team</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {(teamStatus as any[]).map((ts: any) => (
             <div
               key={ts.member.id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:shadow-card transition-shadow"
+              className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all bg-slate-50/50"
             >
-              <div className={`w-9 h-9 rounded-lg ${ts.member.color} flex items-center justify-center text-xs font-semibold text-foreground`}>
+              <div className={`w-9 h-9 rounded-xl ${ts.member.color} flex items-center justify-center text-[11px] font-bold text-slate-700 shrink-0`}>
                 {ts.member.initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">{ts.member.name}</p>
-                {ts.task && (
-                  <p className="text-xs text-text-muted truncate">{ts.task}</p>
-                )}
+                <p className="text-[13px] font-semibold text-slate-800 truncate">{ts.member.name}</p>
+                {ts.task && <p className="text-[11px] text-slate-400 truncate">{ts.task}</p>}
               </div>
-              <span
-                className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${
-                  ts.status === "In Focus"
-                    ? "bg-focus/15 text-focus"
-                    : "bg-secondary text-text-secondary"
+              <span className={`shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-lg
+                ${ts.status === "In Focus"
+                  ? "bg-[#007dff]/10 text-[#007dff]"
+                  : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {ts.status === "In Focus" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-focus animate-pulse-soft" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#007dff] animate-pulse" />
                 )}
                 {ts.status}
               </span>

@@ -1,6 +1,23 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  initials?: string;
+  color?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  teamId: string;
+}
+
 export interface TeamMember {
   id: string;
   name: string;
+  role: string;
   initials: string;
   color: string;
 }
@@ -8,9 +25,16 @@ export interface TeamMember {
 export interface TaskNode {
   id: string;
   title: string;
+  description?: string;
   assignee?: TeamMember;
-  status: "pending" | "in-progress" | "done";
+  status: "pending" | "in-progress" | "done" | string;
+  phase: string;
   hasFocus?: boolean;
+  dependencies?: string[]; // IDs of tasks that must be completed first
+  dueDate?: string;
+  priority?: string;
+  isStarred?: boolean;
+  projectId: string;
 }
 
 export interface Phase {
@@ -29,49 +53,51 @@ export interface ActivityEntry {
 }
 
 export const team: TeamMember[] = [
-  { id: "1", name: "Sarah Chen", initials: "SC", color: "bg-focus" },
-  { id: "2", name: "James Park", initials: "JP", color: "bg-amber-400" },
-  { id: "3", name: "Mia Torres", initials: "MT", color: "bg-emerald-400" },
-  { id: "4", name: "Alex Reed", initials: "AR", color: "bg-rose-400" },
-  { id: "5", name: "Dev Patel", initials: "DP", color: "bg-violet-400" },
-  { id: "6", name: "Lina Sato", initials: "LS", color: "bg-cyan-400" },
+  { id: "1", name: "Sarah Chen", role: "admin", initials: "SC", color: "bg-orange-500" },
+  { id: "2", name: "Marcus Johnson", role: "member", initials: "MJ", color: "bg-blue-500" },
+  { id: "3", name: "Lina Sato", role: "member", initials: "LS", color: "bg-pink-500" },
+  { id: "4", name: "David Kim", role: "member", initials: "DK", color: "bg-indigo-500" },
+  { id: "5", name: "Mia Torres", role: "member", initials: "MT", color: "bg-emerald-500" },
+  { id: "6", name: "James Park", role: "member", initials: "JP", color: "bg-violet-500" },
 ];
+
+
 
 export const phases: Phase[] = [
   {
     id: "allocation",
     title: "Task Allocation",
     tasks: [
-      { id: "t1", title: "Allocate sprint tasks", assignee: team[0], status: "done" },
-      { id: "t2", title: "Assign code reviews", assignee: team[1], status: "done" },
+      { id: "t1", title: "API Schema Design", assignee: team[0], status: "done", phase: "allocation", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t2", title: "Auth Middleware", assignee: team[1], status: "in-progress", phase: "allocation", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
     ],
   },
   {
     id: "focus",
     title: "Focus Sessions",
     tasks: [
-      { id: "t3", title: "Implement auth module", assignee: team[2], status: "in-progress", hasFocus: true },
-      { id: "t4", title: "Design system tokens", assignee: team[0], status: "in-progress", hasFocus: true },
-      { id: "t5", title: "API rate limiting", assignee: team[3], status: "pending" },
+      { id: "t3", title: "Component Library Pipeline", assignee: team[4], status: "in-progress", hasFocus: true, phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t4", title: "Dashboard Layout", assignee: team[2], status: "in-progress", hasFocus: true, phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t5", title: "Redux Setup", assignee: team[3], status: "pending", phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
     ],
   },
   {
     id: "resolution",
     title: "Technical Resolution",
     tasks: [
-      { id: "t6", title: "Resolve merge conflicts", assignee: team[4], status: "in-progress" },
-      { id: "t7", title: "Fix CI pipeline", assignee: team[5], status: "done" },
-      { id: "t8", title: "Estimate delivery time", assignee: team[1], status: "pending" },
+      { id: "t6", title: "Fix iOS Safari visual bugs", assignee: team[5], status: "pending", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t7", title: "Optimize build times", assignee: team[1], status: "in-progress", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t8", title: "Update deps", assignee: team[0], status: "done", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
     ],
   },
   {
     id: "outcome",
-    title: "Team Outcome",
+    title: "Output & Outcome",
     tasks: [
-      { id: "t9", title: "QA sign-off", status: "pending" },
-      { id: "t10", title: "Stakeholder demo", status: "pending" },
-      { id: "t11", title: "Release notes", status: "pending" },
-      { id: "t12", title: "Retrospective", status: "pending" },
+      { id: "t9", title: "Q1 Marketing Page", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t10", title: "Blog Template", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t11", title: "Email Campaign Assets", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
+      { id: "t12", title: "SEO Audit", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac" },
     ],
   },
 ];
