@@ -1,20 +1,12 @@
 import { X, Clock, User, AlertTriangle, CheckCircle } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
+import TaskExecutionPanel from "@/components/TaskExecutionPanel";
+import { useGetFocusSessionsQuery } from "@/store/api";
 
 interface TaskDetailPanelProps {
   task: TaskNode | null;
   onClose: () => void;
 }
-
-const timelineEvents = [
-  { id: 1, type: "created", label: "Task created", user: "Sarah Chen", time: "Feb 18, 9:00 AM" },
-  { id: 2, type: "assigned", label: "Assigned to team", user: "James Park", time: "Feb 18, 9:30 AM" },
-  { id: 3, type: "focus", label: "Focus session started", user: "Mia Torres", time: "Feb 19, 10:00 AM", duration: "47 min" },
-  { id: 4, type: "interrupt", label: "Interrupt logged", user: "Mia Torres", time: "Feb 19, 10:47 AM", reason: "Standup meeting" },
-  { id: 5, type: "focus", label: "Focus session resumed", user: "Mia Torres", time: "Feb 19, 11:15 AM", duration: "1h 20min" },
-  { id: 6, type: "bottleneck", label: "Bottleneck detected", user: "System", time: "Feb 20, 2:00 PM", reason: "Blocked by CI pipeline" },
-  { id: 7, type: "resolved", label: "Blocker resolved", user: "Lina Sato", time: "Feb 20, 4:30 PM" },
-];
 
 const iconMap = {
   created: <CheckCircle size={14} className="text-text-muted" />,
@@ -25,91 +17,120 @@ const iconMap = {
   resolved: <CheckCircle size={14} className="text-emerald-500" />,
 };
 
+const statusStyle: Record<string, string> = {
+  done: "bg-emerald-500/10 text-emerald-600",
+  "in-progress": "bg-[#007dff]/10 text-[#007dff]",
+  DONE: "bg-emerald-500/10 text-emerald-600",
+  IN_PROGRESS: "bg-[#007dff]/10 text-[#007dff]",
+  pending: "bg-slate-100 text-slate-500",
+  PENDING: "bg-slate-100 text-slate-500",
+};
+
 const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
+  const { data: sessionsRes } = useGetFocusSessionsQuery(undefined, { skip: !task });
+  const taskSessions = sessionsRes?.data?.filter((s: any) => s.taskId === task?.id) ?? [];
+
   if (!task) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-foreground/10 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-hover z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200">
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border">
+        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-slate-100">
           <div>
-            <p className="text-xs text-text-muted">Task Detail</p>
-            <h3 className="text-base font-semibold text-foreground">{task.title}</h3>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide mb-0.5">Task Detail</p>
+            <h3 className="text-[14px] font-semibold text-slate-900 leading-snug">{task.title}</h3>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors text-text-secondary"
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 mt-0.5 shrink-0"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
-        {/* Meta */}
-        <div className="flex items-center gap-4 px-5 py-4 border-b border-border">
+        {/* Meta row */}
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 flex-wrap">
           {task.assignee && (
             <div className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-lg ${task.assignee.color} flex items-center justify-center text-[10px] font-semibold text-foreground`}>
+              <div className={`w-6 h-6 rounded-lg ${task.assignee.color} flex items-center justify-center text-[9px] font-bold text-foreground`}>
                 {task.assignee.initials}
               </div>
-              <span className="text-sm text-text-secondary">{task.assignee.name}</span>
+              <span className="text-[12px] text-slate-600">{task.assignee.name}</span>
             </div>
           )}
-          <span
-            className={`text-xs font-medium px-2 py-0.5 rounded-md ${
-              task.status === "done"
-                ? "bg-emerald-100 text-emerald-700"
-                : task.status === "in-progress"
-                ? "bg-focus/15 text-focus"
-                : "bg-secondary text-text-secondary"
-            }`}
-          >
-            {task.status}
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${statusStyle[task.status] || statusStyle.pending}`}>
+            {task.status.replace("_", " ")}
           </span>
+          {task.priority && (
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg uppercase">
+              {task.priority}
+            </span>
+          )}
         </div>
 
-        {/* Timeline */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <p className="text-xs font-medium text-text-secondary mb-4">Causal History</p>
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-[6px] top-2 bottom-2 w-px bg-border" />
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
 
-            <div className="flex flex-col gap-4">
-              {timelineEvents.map((event) => (
-                <div key={event.id} className="flex items-start gap-3 relative">
-                  <div className="w-3.5 h-3.5 rounded-full bg-surface border-2 border-border flex items-center justify-center z-10 mt-0.5">
-                    {/* dot */}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      {iconMap[event.type as keyof typeof iconMap]}
-                      <span className="text-sm font-medium text-foreground">{event.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-text-muted">{event.user}</span>
-                      <span className="text-xs text-text-muted">·</span>
-                      <span className="text-xs text-text-muted">{event.time}</span>
-                    </div>
-                    {event.duration && (
-                      <span className="inline-block text-[10px] font-medium bg-focus/10 text-focus px-1.5 py-0.5 rounded mt-1">
-                        {event.duration}
-                      </span>
-                    )}
-                    {event.reason && (
-                      <span className="inline-block text-[10px] font-medium bg-warning/10 text-warning px-1.5 py-0.5 rounded mt-1">
-                        {event.reason}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {/* Description */}
+          {task.description && (
+            <div>
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1.5">Description</p>
+              <p className="text-[13px] text-slate-600 leading-relaxed">{task.description}</p>
             </div>
-          </div>
+          )}
+
+          {/* Execution Signals — live from backend */}
+          <TaskExecutionPanel taskId={task.id} />
+
+          {/* Focus History from real sessions */}
+          {taskSessions.length > 0 && (
+            <div>
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">Focus Sessions</p>
+              <div className="relative">
+                <div className="absolute left-[6px] top-2 bottom-2 w-px bg-slate-100" />
+                <div className="flex flex-col gap-3">
+                  {taskSessions.slice(0, 6).map((s: any) => (
+                    <div key={s.id} className="flex items-start gap-3 relative">
+                      <div className="w-3.5 h-3.5 rounded-full bg-white border-2 border-[#007dff]/30 flex items-center justify-center z-10 mt-0.5 shrink-0">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#007dff]/60" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[12px] font-medium text-slate-700">
+                            {s.endTime ? `${Math.round(s.durationSecs / 60)} min session` : "Ongoing"}
+                          </span>
+                          {s.interrupts > 0 && (
+                            <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                              {s.interrupts} interrupt{s.interrupts > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(s.startTime).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
+                          {" · "}
+                          {new Date(s.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state when no sessions yet */}
+          {taskSessions.length === 0 && (
+            <div className="flex flex-col items-center gap-1.5 py-4">
+              <Clock size={18} className="text-slate-200" />
+              <p className="text-[11px] text-slate-400 text-center">No focus sessions yet. Start one from the Focus page.</p>
+            </div>
+          )}
         </div>
       </div>
     </>
