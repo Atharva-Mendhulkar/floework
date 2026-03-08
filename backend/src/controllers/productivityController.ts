@@ -78,25 +78,65 @@ export const getTeamStatus = async (req: Request, res: Response, next: NextFunct
 
 export const getAnalyticsDashboard = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // In a real app, this would aggregate real FocusSessions and ProductivityLogs over the week.
-        // For the sake of the milestone, we can return the structure expected by the frontend.
+        const userId = (req as any).user.id;
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        const barData = [
-            { day: "Mon", focusHrs: 5.2, tasksCompleted: 4 },
-            { day: "Tue", focusHrs: 6.1, tasksCompleted: 5 },
-            { day: "Wed", focusHrs: 3.8, tasksCompleted: 2 },
-            { day: "Thu", focusHrs: 7.0, tasksCompleted: 6 },
-            { day: "Fri", focusHrs: 4.5, tasksCompleted: 3 },
-        ];
+        const sessions = await prisma.focusSession.findMany({
+            where: {
+                userId,
+                endTime: { not: null },
+                startTime: { gte: sevenDaysAgo },
+            },
+            orderBy: { startTime: 'asc' },
+        });
 
-        const burnoutData = [
-            { week: "W1", interrupts: 8, burnoutRisk: 22 },
-            { week: "W2", interrupts: 12, burnoutRisk: 35 },
-            { week: "W3", interrupts: 18, burnoutRisk: 52 },
-            { week: "W4", interrupts: 14, burnoutRisk: 45 },
-            { week: "W5", interrupts: 22, burnoutRisk: 68 },
-            { week: "W6", interrupts: 16, burnoutRisk: 55 },
-        ];
+        // Bucket by abbreviated day name
+        const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayMap: Record<string, { focusSecs: number; sessions: number }> = {};
+        for (const s of sessions) {
+            const key = DAY_NAMES[s.startTime.getDay()];
+            if (!dayMap[key]) dayMap[key] = { focusSecs: 0, sessions: 0 };
+            dayMap[key].focusSecs += s.durationSecs;
+            dayMap[key].sessions += 1;
+        }
+
+        // Produce last-7-days ordered barData
+        const barData = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000);
+            const key = DAY_NAMES[d.getDay()];
+            const entry = dayMap[key] || { focusSecs: 0, sessions: 0 };
+            return {
+                day: key,
+                focusHrs: parseFloat((entry.focusSecs / 3600).toFixed(1)),
+                tasksCompleted: entry.sessions,
+            };
+        });
+
+        // Burnout trend: last 6 weeks of interrupt counts
+        const sixWeeksAgo = new Date(Date.now() - 42 * 24 * 60 * 60 * 1000);
+        const allSessions = await prisma.focusSession.findMany({
+            where: { userId, startTime: { gte: sixWeeksAgo }, endTime: { not: null } },
+        });
+
+        const weekMap: Record<string, { interrupts: number; count: number }> = {};
+        for (const s of allSessions) {
+            const weekNum = Math.floor((Date.now() - s.startTime.getTime()) / (7 * 24 * 60 * 60 * 1000));
+            const key = `W${6 - weekNum}`;
+            if (!weekMap[key]) weekMap[key] = { interrupts: 0, count: 0 };
+            weekMap[key].interrupts += s.interrupts;
+            weekMap[key].count += 1;
+        }
+
+        const burnoutData = Array.from({ length: 6 }, (_, i) => {
+            const key = `W${i + 1}`;
+            const entry = weekMap[key] || { interrupts: 0, count: 0 };
+            const avgInterrupts = entry.count > 0 ? entry.interrupts / entry.count : 0;
+            return {
+                week: key,
+                interrupts: Math.round(entry.interrupts),
+                burnoutRisk: Math.min(100, Math.round(avgInterrupts * 12)),
+            };
+        });
 
         res.json({ success: true, data: { barData, burnoutData } });
     } catch (error) {

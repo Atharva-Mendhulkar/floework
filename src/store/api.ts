@@ -192,6 +192,18 @@ export const api = createApi({
             }),
             invalidatesTags: ['Alert' as any],
         }),
+        getTaskSignals: builder.query<{ success: boolean; data: any | null }, string>({
+            query: (taskId) => `/analytics/task/${taskId}/signals`,
+            providesTags: ['Signal' as any],
+        }),
+        getStabilityGrid: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/stability',
+            providesTags: ['Signal' as any],
+        }),
+        getExecutionNarrative: builder.query<{ success: boolean; data: { summary: string; highlights: string[]; warnings: string[] } }, void>({
+            query: () => '/analytics/narrative',
+            providesTags: ['Signal' as any],
+        }),
     }),
 });
 
@@ -222,4 +234,7 @@ export const {
     useGetAlertsQuery,
     useMarkAlertReadMutation,
     useMarkAllAlertsReadMutation,
+    useGetTaskSignalsQuery,
+    useGetStabilityGridQuery,
+    useGetExecutionNarrativeQuery,
 } = api;

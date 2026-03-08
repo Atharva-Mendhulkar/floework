@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { computeTaskSignals } from '../services/executionSignals.service';
+import { computeFocusStability } from '../services/focusStability.service';
 
 // Start a new Focus Session
 export const startFocusSession = async (req: Request, res: Response, next: NextFunction) => {
@@ -55,6 +57,14 @@ export const stopFocusSession = async (req: Request, res: Response, next: NextFu
                 durationSecs,
             },
         });
+
+        // Fire-and-forget: compute execution signals and focus stability asynchronously
+        const tid = existingSession.taskId;
+        const uid = existingSession.userId;
+        Promise.all([
+            computeTaskSignals(tid, uid),
+            computeFocusStability(uid, existingSession.startTime),
+        ]).catch((err) => console.error('[signals]', err));
 
         res.json({ success: true, data: updatedSession });
     } catch (error) {

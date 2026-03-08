@@ -2,8 +2,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery } from "@/store/api";
-import { TrendingUp, Users, Zap, AlertTriangle } from "lucide-react";
+import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery } from "@/store/api";
+import { TrendingUp, Users, Zap, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import FocusStabilityMap from "@/components/FocusStabilityMap";
 
 const BLUE = "#007dff";
 const BLUE_LIGHT = "#60a5fa";
@@ -27,6 +28,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color }: {
 const AnalyticsPage = () => {
   const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
+  const { data: narrativeRes } = useGetExecutionNarrativeQuery();
 
   if (isLoadingDash || isLoadingTeam) {
     return (
@@ -149,6 +151,44 @@ const AnalyticsPage = () => {
           ))}
         </div>
       </div>
+      {/* Focus Stability Heatmap */}
+      <FocusStabilityMap />
+
+      {/* Execution Narrative Card */}
+      {narrativeRes?.data && (
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+          <div>
+            <h3 className="text-[13px] font-semibold text-slate-900">Execution Summary</h3>
+            <p className="text-[11px] text-slate-400">Auto-generated from your focus and task data</p>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <p className="text-[13px] font-medium text-slate-700 leading-relaxed">{narrativeRes.data.summary}</p>
+          </div>
+
+          {narrativeRes.data.highlights.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {narrativeRes.data.highlights.map((h, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-slate-600">{h}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {narrativeRes.data.warnings.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {narrativeRes.data.warnings.map((w, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <Info size={13} className="text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-slate-600">{w}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

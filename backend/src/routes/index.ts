@@ -9,6 +9,7 @@ import productivityRoutes from './productivityRoutes';
 import messageRoutes from './messageRoutes';
 import alertRoutes from './alertRoutes';
 import teamRoutes from './teamRoutes';
+import analyticsRoutes from './analyticsRoutes';
 import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -22,5 +23,6 @@ router.use('/tasks', protect, taskRoutes);
 router.use('/focus', focusRoutes);
 router.use('/productivity', productivityRoutes);
 router.use('/alerts', protect, alertRoutes);
+router.use('/analytics', protect, analyticsRoutes);
 
 export default router;
