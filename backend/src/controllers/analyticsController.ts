@@ -4,6 +4,7 @@ import { getTaskSignals } from '../services/executionSignals.service';
 import { getUserStabilityGrid } from '../services/focusStability.service';
 import { generateNarrative } from '../services/narrativeEngine.service';
 import { getOrSet, TTL_SECONDS } from '../utils/cache';
+import { getBottleneckReport, getBurnoutSignal } from '../services/advancedAnalytics.service';
 
 // GET /analytics/task/:taskId/signals
 export const getTaskExecutionSignals = async (req: Request, res: Response, next: NextFunction) => {
@@ -88,6 +89,28 @@ export const getNarrative = async (req: Request, res: Response, next: NextFuncti
         });
 
         res.json({ success: true, data: narrative });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /analytics/bottlenecks
+export const getBottlenecks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const report = await getBottleneckReport(userId);
+        res.json({ success: true, data: report });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /analytics/burnout
+export const getBurnout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const data = await getBurnoutSignal(userId);
+        res.json({ success: true, data });
     } catch (error) {
         next(error);
     }

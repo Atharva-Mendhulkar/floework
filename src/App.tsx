@@ -21,6 +21,7 @@ import MessagesPage from "./pages/MessagesPage";
 import ProfilePage from "./pages/ProfilePage";
 import AlertsPage from "./pages/AlertsPage";
 import DashboardLayout from "./components/DashboardLayout";
+import BillingPage from "./pages/BillingPage";
 import PhilosophyPage from "./pages/PhilosophyPage";
 import NotFound from "./pages/NotFound";
 
@@ -57,6 +58,7 @@ const App = () => (
                   <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />
                   <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
+                  <Route path="/billing" element={<DashboardLayout><BillingPage /></DashboardLayout>} />
                 </Route>
 
                 {/* Fallback */}

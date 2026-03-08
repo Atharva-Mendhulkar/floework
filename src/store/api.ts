@@ -204,6 +204,24 @@ export const api = createApi({
             query: () => '/analytics/narrative',
             providesTags: ['Signal' as any],
         }),
+        getBillingStatus: builder.query<{ success: boolean; data: any }, void>({
+            query: () => '/billing/status',
+            providesTags: ['Billing' as any],
+        }),
+        createCheckoutSession: builder.mutation<{ success: boolean; data: { url: string | null; devMode?: boolean; plan?: string } }, 'PRO' | 'TEAM'>({
+            query: (plan) => ({
+                url: '/billing/checkout',
+                method: 'POST',
+                body: { plan },
+            }),
+            invalidatesTags: ['Billing' as any],
+        }),
+        createPortalSession: builder.mutation<{ success: boolean; data: { url: string } }, void>({
+            query: () => ({
+                url: '/billing/portal',
+                method: 'POST',
+            }),
+        }),
     }),
 });
 
@@ -237,4 +255,7 @@ export const {
     useGetTaskSignalsQuery,
     useGetStabilityGridQuery,
     useGetExecutionNarrativeQuery,
+    useGetBillingStatusQuery,
+    useCreateCheckoutSessionMutation,
+    useCreatePortalSessionMutation,
 } = api;
