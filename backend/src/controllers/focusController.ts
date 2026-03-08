@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { computeTaskSignals } from '../services/executionSignals.service';
 import { computeFocusStability } from '../services/focusStability.service';
+import { signalQueue } from '../queues/signalQueue';
 
 // Start a new Focus Session
 export const startFocusSession = async (req: Request, res: Response, next: NextFunction) => {
@@ -58,13 +59,19 @@ export const stopFocusSession = async (req: Request, res: Response, next: NextFu
             },
         });
 
-        // Fire-and-forget: compute execution signals and focus stability asynchronously
-        const tid = existingSession.taskId;
-        const uid = existingSession.userId;
-        Promise.all([
-            computeTaskSignals(tid, uid),
-            computeFocusStability(uid, existingSession.startTime),
-        ]).catch((err) => console.error('[signals]', err));
+        // Enqueue signal computation via BullMQ; fall back to inline if queue unavailable
+        const jobData = {
+            taskId: existingSession.taskId,
+            userId: existingSession.userId,
+            sessionStartTime: existingSession.startTime.toISOString(),
+        };
+        signalQueue.add('compute', jobData).catch(() => {
+            // BullMQ unavailable (no Redis) — run inline as fallback
+            Promise.all([
+                computeTaskSignals(existingSession.taskId, existingSession.userId),
+                computeFocusStability(existingSession.userId, existingSession.startTime),
+            ]).catch((err) => console.error('[signals-fallback]', err));
+        });
 
         res.json({ success: true, data: updatedSession });
     } catch (error) {

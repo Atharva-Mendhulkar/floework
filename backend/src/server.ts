@@ -6,9 +6,11 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import http from 'http';
 import { initSocket } from './services/socketService';
-
 import { errorHandler } from './middleware/errorHandler';
 import apiRoutes from './routes';
+
+// Start BullMQ signal worker (gracefully handles missing Redis)
+import './workers/signalWorker';
 
 dotenv.config();
 

@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { getTaskSignals } from '../services/executionSignals.service';
 import { getUserStabilityGrid } from '../services/focusStability.service';
 import { generateNarrative } from '../services/narrativeEngine.service';
+import { getOrSet, TTL_SECONDS } from '../utils/cache';
 
 // GET /analytics/task/:taskId/signals
 export const getTaskExecutionSignals = async (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +11,11 @@ export const getTaskExecutionSignals = async (req: Request, res: Response, next:
         const { taskId } = req.params;
         const userId = (req as any).user.id;
 
-        const signal = await getTaskSignals(taskId, userId);
+        const signal = await getOrSet(
+            `signals:task:${taskId}:${userId}`,
+            TTL_SECONDS,
+            () => getTaskSignals(taskId, userId)
+        );
 
         if (!signal) {
             return res.json({
@@ -30,7 +35,13 @@ export const getTaskExecutionSignals = async (req: Request, res: Response, next:
 export const getStabilityGrid = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as any).user.id;
-        const grid = await getUserStabilityGrid(userId);
+
+        const grid = await getOrSet(
+            `stability:${userId}`,
+            TTL_SECONDS,
+            () => getUserStabilityGrid(userId)
+        );
+
         res.json({ success: true, data: grid });
     } catch (error) {
         next(error);
@@ -41,45 +52,39 @@ export const getStabilityGrid = async (req: Request, res: Response, next: NextFu
 export const getNarrative = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as any).user.id;
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        // Aggregate execution signals for this user
-        const signals = await prisma.executionSignal.findMany({ where: { userId } });
+        const narrative = await getOrSet(`narrative:${userId}`, TTL_SECONDS, async () => {
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        const avgEffortDensity = signals.length > 0
-            ? signals.reduce((a, s) => a + s.effortDensity, 0) / signals.length
-            : 0;
+            const signals = await prisma.executionSignal.findMany({ where: { userId } });
 
-        const avgResumeRate = signals.length > 0
-            ? signals.reduce((a, s) => a + s.resumeRate, 0) / signals.length
-            : 0;
+            const avgEffortDensity = signals.length > 0
+                ? signals.reduce((a, s) => a + s.effortDensity, 0) / signals.length
+                : 0;
 
-        const blockerCount = signals.filter((s) => s.blockerRisk).length;
+            const avgResumeRate = signals.length > 0
+                ? signals.reduce((a, s) => a + s.resumeRate, 0) / signals.length
+                : 0;
 
-        // Total focus hours this week
-        const recentSessions = await prisma.focusSession.findMany({
-            where: { userId, startTime: { gte: sevenDaysAgo }, endTime: { not: null } },
-        });
-        const totalFocusSecs = recentSessions.reduce((a, s) => a + s.durationSecs, 0);
-        const totalFocusHrs = parseFloat((totalFocusSecs / 3600).toFixed(1));
+            const blockerCount = signals.filter((s) => s.blockerRisk).length;
 
-        // Peak stability slot
-        const topSlot = await prisma.focusStabilitySlot.findFirst({
-            where: { userId },
-            orderBy: { focusScore: 'desc' },
-        });
+            const recentSessions = await prisma.focusSession.findMany({
+                where: { userId, startTime: { gte: sevenDaysAgo }, endTime: { not: null } },
+            });
+            const totalFocusSecs = recentSessions.reduce((a, s) => a + s.durationSecs, 0);
+            const totalFocusHrs = parseFloat((totalFocusSecs / 3600).toFixed(1));
 
-        const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const peak = topSlot
-            ? { day: DAY_NAMES[topSlot.dayOfWeek], hour: topSlot.hourOfDay }
-            : null;
+            const topSlot = await prisma.focusStabilitySlot.findFirst({
+                where: { userId },
+                orderBy: { focusScore: 'desc' },
+            });
 
-        const narrative = generateNarrative({
-            avgEffortDensity,
-            blockerCount,
-            peakSlot: peak,
-            totalFocusHrs,
-            avgResumeRate,
+            const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const peak = topSlot
+                ? { day: DAY_NAMES[topSlot.dayOfWeek], hour: topSlot.hourOfDay }
+                : null;
+
+            return generateNarrative({ avgEffortDensity, blockerCount, peakSlot: peak, totalFocusHrs, avgResumeRate });
         });
 
         res.json({ success: true, data: narrative });
