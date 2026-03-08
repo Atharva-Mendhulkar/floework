@@ -4,8 +4,10 @@ import { AppError } from '../middleware/errorHandler';
 
 export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { projectId } = req.query;
-        const filter = projectId ? { projectId: String(projectId) } : {};
+        const { projectId, starred } = req.query;
+        const filter: any = {};
+        if (projectId) filter.projectId = String(projectId);
+        if (starred === 'true') filter.isStarred = true;
 
         const tasks = await prisma.task.findMany({
             where: filter,
