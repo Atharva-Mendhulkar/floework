@@ -15,7 +15,7 @@ Teams commonly experience:
 - Burnout caused by misaligned expectations
 - Lack of causal linkage between work done and outcomes delivered
 
-This project proposes a single integrated SaaS platform that unifies task execution, collaboration, and personal productivity, with a core focus on human cognitive limits and sustainable execution.
+This project proposes a single integrated SaaS platform — **floework** — that unifies task execution, collaboration, and personal productivity, with a core focus on human cognitive limits and sustainable execution.
 
 ---
 
@@ -121,31 +121,35 @@ PostgreSQL / Redis / WebSockets / Cloud Services
 ## 5. Frontend Architecture
 
 ### 5.1 Responsibilities
-- User authentication
-- Task and project dashboards
-- Focus session interface
+- User authentication and onboarding
+- Home dashboard with activity overview
+- Task board (FlowBoard) with sprint management
+- Focus session interface with post-session logging
 - Real-time collaboration updates
-- Analytics visualization
+- Analytics and narrative productivity insights
 
 ---
 
 ### 5.2 Technology Stack
-- React (component-based UI)
+- React (Vite, component-based UI)
 - Redux Toolkit (state management)
 - Tailwind CSS
 - Socket.IO Client
-- Chart.js
-
-*(Note: Currently built with Vite, React Query, Recharts, shadcn-ui in the prototype)*
+- Recharts (data visualization)
+- shadcn-ui (component primitives)
+- React Router DOM (client-side routing)
+- lucide-react (icon system)
 
 ---
 
 ### 5.3 Component Structure
-- Authentication Module
-- Dashboard Module
-- Project & Task Module
-- Productivity Zone
-- Analytics Module
+- Authentication Module (`LoginPage`, `RegisterPage`)
+- Onboarding Module (`OnboardingPage`)
+- Landing Page (`LandingPage`, `PhilosophyPage`)
+- Dashboard Module (`Index` — Home, `BoardsPage` — Task Board)
+- Focus Zone (`FocusPage`)
+- Analytics Module (`AnalyticsPage`)
+- Supporting Pages (`StarredPage`, `MessagesPage`, `ProfilePage`, `AlertsPage`)
 
 ---
 
@@ -233,7 +237,7 @@ This separation ensures strong consistency for critical data and low-latency acc
 
 **Used For**
 - Active focus sessions
-- “In focus” presence indicators
+- "In focus" presence indicators
 - WebSocket connection mappings
 - Rate limiting counters
 - Short-lived analytics aggregates
@@ -248,7 +252,7 @@ Redis data is periodically persisted to PostgreSQL where required.
 - Role
 - Team
 - Project
-- Task
+- Task (with `effort` S/M/L and `focusCount` fields)
 - FocusSession
 - ProductivityLog
 - Subscription
@@ -266,104 +270,176 @@ Redis data is periodically persisted to PostgreSQL where required.
 ---
 
 ## 9. Core SaaS Features
-To ensure the platform acts as a fully functional SAAS product, the following core features are integrated:
-- **Flow Board Enhancements**: Fully functional task creation, assignment (adding people), and calendar views.
-- **Starred Items**: Ability to star or bookmark projects, tasks, or conversations for quick access.
-- **Messages**: In-app messaging and team communication channels to keep context tied to work.
-- **Profile Management**: User profiles for managing personal details, preferences, and roles.
-- **Alerts & Notifications**: Real-time alerts for task updates, mentions, and system events.
+
+### 9.1 FlowBoard (Task Board)
+The FlowBoard is the primary execution interface. Features include:
+- **Kanban Board View**: Drag-and-drop task columns (Backlog, In Progress, Review, Done)
+- **Calendar View**: Date-anchored task scheduling
+- **Task Creation Modal**: Create tasks with title, description, assignees, effort level (S/M/L), and due dates
+- **Editable Sprint Name**: Click on the sprint label (e.g., "Sprint 14") to rename it inline
+- **Real-time Socket Sync**: Task state changes propagate instantly via WebSocket
+- **Task Locking**: Prevents concurrent edits
+
+### 9.2 Task Cards
+Each task card displays:
+- Title and description
+- Assignee avatars
+- **Effort Badge** (S / M / L) indicating cognitive cost
+- **Focus Count** showing how many focus sessions have been run on the task
+- **Start Focus** hover action — directly links to the Focus Page anchored to that task
+- Status indicator
+
+### 9.3 Focus Session Engine
+- Task-linked focus sessions (each session is anchored to a task)
+- Live countdown timer with pause/resume
+- **Post-Session Confirmation Screen**: After stopping a session, a confirmation overlay appears showing:
+  - Total time elapsed
+  - Optional mental offload note ("What did you ship?")
+  - "Log Session & Return" CTA
+- Session metadata logged to the backend (duration, task ID, user ID, note)
+
+### 9.4 Home Page (Dashboard Overview)
+A dedicated Home view (`/dashboard`) separate from the Board:
+- Personalized welcome message with the user's first name
+- **Recent Activity Table**: Displays team activities with Subject, Status, Start/End dates, and Assigned User
+  - Supports **live search filtering** from the top navigation search bar
+- **Productivity Chart**: Visual representation of focus time distribution across the week
+
+### 9.5 Analytics & Narrative Insights
+The Analytics page (`/analytics`) includes:
+- Bar/line charts for focus hours, session counts, and task completion rate
+- **Narrative Insights Panel**: AI-generated, plain-English summaries of productivity trends (e.g., "Your most productive day this week was Tuesday at 4h 20min. Consider protecting that window.")
+
+### 9.6 Team Presence Avatars
+The FlowBoard header displays team member presence with:
+- **In Focus** (pulsing blue ring) — actively running a focus session
+- **Available** (green dot) — online but not in focus
+- **Offline** (grey dot) — not connected
+
+### 9.7 Top Navigation Bar
+The `TopHeader` component contains:
+- **Global Search**: Filters both FlowBoard tasks and ActivityTable entries in real-time (powered by Redux state)
+- **Notifications Bell**: Opens a dropdown with recent alerts and a "View all" link to `/alerts`
+- **Profile Chip**: Opens a dropdown with Profile, Settings, and Log Out actions
+- Sprint breadcrumb display
+
+### 9.8 Sidebar Navigation
+The collapsible icon sidebar links to:
+- **Home** (`/dashboard`) — Overview & activity
+- **Boards** (`/boards`) — FlowBoard task management
+- **Starred** (`/starred`) — Bookmarked items
+- **Focus** (`/focus`) — Focus session timer
+- **Analytics** (`/analytics`) — Productivity insights
+- **Messages** (`/messages`) — Team communication
+- **Alerts** (`/alerts`) — Notifications panel (with unread badge)
+- **Settings / Profile** (`/profile`)
+
+### 9.9 Starred, Messages, Profile & Alerts Pages
+Fully routed support pages:
+- **StarredPage**: Bookmarked items
+- **MessagesPage**: In-app messaging
+- **ProfilePage**: User profile and preferences
+- **AlertsPage**: Notification history
 
 ---
 
-## 9. Productivity Zone (Core Innovation)
+## 10. Landing Page & Marketing Site
 
-### 9.1 Focus Session Engine
-- Task-linked focus sessions
-- Timer-based execution
-- Pause, resume, and interruption detection
-- Session metadata logging
+### 10.1 Landing Page (`/`)
+A full marketing landing page with:
+- **Hero Section**: "Human-Aware Productivity." headline with animated floating team avatars
+- **ExecutionCausalityStrip**: An auto-progressing systems diagram illustrating the causal model: Focus State → Effort Signals → Task Progress → Team Outcomes
+- **Causal Model Section**: "The Causal Model of Work" — title and explanatory intro
+- **Features Bento Grid**: Cards highlighting Deep Work, Async Context, Task Linkage, and Non-Invasive Visibility with mock UI screenshots
+- **Competitor Comparison Section** ("Not just another tool. A completely new layer."): Interactive hover cards comparing floework against Jira, Slack, and Notion
+- **Pricing Section**: Free plan highlighted, with a "Start Now" CTA
+- **Navigation Bar**: Links to Philosophy, Features, Pricing (smooth scroll), Log In, and Start Now
 
----
-
-### 9.2 Productivity Logger
-- Tracks duration, interruptions, and task association
-- No content, keystroke, or screen logging
-- Privacy-first by design
-
----
-
-### 9.3 Analytics Engine
-Computes:
-- Focus-to-completion ratio
-- Interrupted session frequency
-- Hidden bottlenecks
-- Burnout risk indicators
+### 10.2 Philosophy Page (`/philosophy`)
+A blog-style page derived from the project's origin story and core design philosophy:
+- Background on the cognitive cost of context switching
+- floework's causal model of work explanation
+- System design principles (privacy-first, async-friendly, task-anchored)
 
 ---
 
-## 10. Real-Time Collaboration
+## 11. Onboarding Flow (`/onboarding`)
 
-### 10.1 WebSocket-Based Updates
-- Task state changes
-- Focus session presence
+A 3-step animated onboarding experience:
+1. **How will you execute?** — Select use case: Individual Contributor, Technical Team, or Student Project (with contextual sub-copy)
+2. **Got a crew?** — Option to join an existing workspace or start fresh
+3. **Name your space** — Create a workspace with a centered, large-format input
+
+Each step features staggered `animate-in` slide-up transitions, border-highlight selection states, and context-aware marketing copy that reinforces floework's value proposition.
+
+---
+
+## 12. Authentication
+
+### 12.1 Supported Auth Methods
+- Email/Password registration and login
+- JWT-based session management
+- Role-based access control
+
+### 12.2 Route Protection
+- `ProtectedRoute` guards all `/dashboard`, `/boards`, `/focus`, and other app routes
+- Unprotected routes: `/`, `/login`, `/register`, `/philosophy`
+
+---
+
+## 13. Real-Time Collaboration
+
+### 13.1 WebSocket-Based Updates
+- Task state changes broadcast via Socket.IO
+- Focus session presence sync
 - Project activity feeds
 
----
-
-### 10.2 Team Awareness Features
-- “In focus” indicators
+### 13.2 Team Awareness Features
+- "In focus" indicators on team avatars
 - Non-intrusive status visibility
 - Async-friendly collaboration model
 
 ---
 
-## 11. Security Design
+## 14. Security Design
 
-### 11.1 Authentication & Authorization
+### 14.1 Authentication & Authorization
 - JWT-based authentication with expiration
 - Secure refresh token handling
 - Role-based permission enforcement
 
----
-
-### 11.2 Data Protection
+### 14.2 Data Protection
 - HTTPS enforced across all services
 - Encryption of sensitive fields at rest
 - Secure cloud storage access policies
 
 ---
 
-## 13. Deployment & DevOps
+## 15. Deployment & DevOps
 
-### 13.1 Cloud Infrastructure
+### 15.1 Cloud Infrastructure
 The platform is deployed on AWS, initially leveraging free-tier resources for development and evaluation.
 
----
-
-### 12.2 Deployment Strategy
+### 15.2 Deployment Strategy
 - **Frontend**: Static build hosted on object storage and CDN
 - **Backend**: Containerized Node.js services
 - **Database**: Managed PostgreSQL instance
 - **Cache**: Redis hosted on compute instance
 
----
-
-### 12.3 CI/CD Pipeline
+### 15.3 CI/CD Pipeline
 - Source control–triggered builds
 - Automated testing and linting
 - Container image creation
 - Continuous deployment to cloud infrastructure
 
----
-
-### 12.4 Scalability Path
+### 15.4 Scalability Path
 - Redis → Managed in-memory cache service
 - Single-instance backend → Container orchestration
 - Database → Multi-AZ PostgreSQL with read replicas
 
 ---
 
-## 13. Testing Strategy
+## 16. Testing Strategy
 
 | Test Type | Scope |
 |---|---|
@@ -374,22 +450,24 @@ The platform is deployed on AWS, initially leveraging free-tier resources for de
 
 ---
 
-## 14. Limitations
+## 17. Limitations
 - Not designed for large enterprise organizations
 - Focused primarily on technical teams
 - Relies on user honesty for focus session usage
 
 ---
 
-## 15. Future Enhancements
-- AI-based task summarization
+## 18. Future Enhancements
+- AI-based task summarization and smart scheduling
 - Intelligent workload prediction
 - Team productivity benchmarking
 - Mobile application support
+- GitHub/Linear integration for commit-to-task linking
+- Calendar integrations (Google Calendar, Outlook)
 
 ---
 
-## 16. Conclusion
+## 19. Conclusion
 floework addresses a structural gap in modern productivity systems by integrating:
 - Task execution
 - Human focus awareness

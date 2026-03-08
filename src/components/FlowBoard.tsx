@@ -7,6 +7,7 @@ import { useGetTasksQuery, api } from "@/store/api";
 import { useMemo, useEffect, useState } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useDispatch } from "react-redux";
+import { useAppSelector } from "@/store/hooks";
 import type { AppDispatch } from "@/store";
 import { lockTask, unlockTask } from "@/store/slices/projectSlice";
 import { TaskCreateModal } from "./TaskCreateModal";
@@ -22,6 +23,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
+  const [sprintName, setSprintName] = useState("Sprint 14");
+  const [isEditingSprint, setIsEditingSprint] = useState(false);
+  const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
   const staticProjectId = "d5b480c4-ce88-4a96-aeae-7386b436a8ac";
 
@@ -94,7 +98,30 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
                 <span className="text-[11px] text-amber-500 font-medium">Connection error</span>
               )}
             </div>
-            <p className="text-[12px] text-slate-400 font-medium">Sprint 14 · {totalTasks} tasks</p>
+
+            <div className="flex items-center gap-1.5 mt-0.5 group">
+              {isEditingSprint ? (
+                <input
+                  type="text"
+                  value={sprintName}
+                  onChange={(e) => setSprintName(e.target.value)}
+                  onBlur={() => setIsEditingSprint(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') setIsEditingSprint(false)
+                  }}
+                  autoFocus
+                  className="text-[12px] text-slate-700 font-semibold bg-white border border-slate-300 rounded px-1.5 py-0.5 outline-none ring-1 ring-[#007dff]/30 w-auto min-w-[60px]"
+                />
+              ) : (
+                <button
+                  onClick={() => setIsEditingSprint(true)}
+                  className="text-[12px] text-slate-500 font-semibold hover:text-slate-800 transition-colors border border-transparent hover:border-slate-200 rounded px-1 -ml-1 cursor-text"
+                >
+                  {sprintName}
+                </button>
+              )}
+              <span className="text-[12px] text-slate-400 font-medium">· {totalTasks} tasks</span>
+            </div>
           </div>
         </div>
 
@@ -110,17 +137,28 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
             <span className="text-[12px] font-semibold text-slate-600">{progressPct}%</span>
           </div>
 
-          {/* Team avatars */}
-          <div className="flex -space-x-2">
-            {team.slice(0, 4).map((member) => (
-              <div
-                key={member.id}
-                className={`w-7 h-7 rounded-full ${member.color} flex items-center justify-center text-[10px] font-bold text-slate-700 border-2 border-white`}
-                title={member.name}
-              >
-                {member.initials}
-              </div>
-            ))}
+          {/* Team avatars with presence indicators */}
+          <div className="flex -space-x-1.5 px-2">
+            {team.slice(0, 4).map((member, idx) => {
+              // Mock presence: 1st is in focus, 2nd available, 3rd/4th away
+              const status = idx === 0 ? "focus" : idx === 1 ? "available" : "offline";
+              return (
+                <div key={member.id} className="relative group">
+                  <div
+                    className={`w-7 h-7 rounded-full ${member.color} flex items-center justify-center text-[10px] font-bold text-slate-700 border-2 border-white shadow-sm ring-offset-1 
+                      ${status === "focus" ? "ring-2 ring-[#007dff] animate-pulse-soft" : ""}
+                    `}
+                    title={`${member.name} (${status === "focus" ? "In Focus" : status === "available" ? "Available" : "Offline"})`}
+                  >
+                    {member.initials}
+                  </div>
+                  {/* Presence dot */}
+                  <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white
+                    ${status === "focus" ? "bg-[#007dff]" : status === "available" ? "bg-emerald-500" : "bg-slate-300"}
+                  `} />
+                </div>
+              );
+            })}
           </div>
 
           {/* Action buttons */}
@@ -134,8 +172,8 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
             <button
               onClick={() => setViewMode(viewMode === "kanban" ? "calendar" : "kanban")}
               className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${viewMode === "calendar"
-                  ? "bg-[#007dff]/10 text-[#007dff]"
-                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                ? "bg-[#007dff]/10 text-[#007dff]"
+                : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                 }`}
               title="Toggle View"
             >
@@ -151,8 +189,24 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
         </div>
       </div>
 
-      {/* ── Board / Calendar ─────────────────────────────────────── */}
-      {viewMode === "kanban" ? (
+      {/* ── Board / Calendar / Empty State ───────────────────────── */}
+      {totalTasks === 0 && !isLoading ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 px-6 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-6 shadow-sm">
+            <Zap size={28} className="text-slate-200" fill="currentColor" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">A calm space for work</h3>
+          <p className="text-[14px] text-slate-400 max-w-[280px] mx-auto mb-8 font-medium italic">
+            "Eliminate noise. Decide what matters. Watch how it unfolds."
+          </p>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-12 px-6 rounded-2xl bg-[#007dff] text-white font-semibold text-[14px] shadow-lg shadow-[#007dff]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            Create your first task
+          </button>
+        </div>
+      ) : viewMode === "kanban" ? (
         <div className="flex gap-3 overflow-x-auto pb-2">
           {phases.map((phase, i) => (
             <PhaseColumn

@@ -4,7 +4,7 @@ import { useGetAlertsQuery } from "@/store/api";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: Layers, label: "Boards", path: "/dashboard" },
+  { icon: Layers, label: "Boards", path: "/boards" },
   { icon: Star, label: "Starred", path: "/starred" },
   { icon: Target, label: "Focus", path: "/focus" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },

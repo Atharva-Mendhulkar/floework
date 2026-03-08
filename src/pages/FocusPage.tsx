@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Play, Pause, AlertTriangle, ChevronDown, Zap } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from "recharts";
 import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation } from "@/store/api";
@@ -11,11 +12,14 @@ const generateQualityData = () =>
   }));
 
 const FocusPage = () => {
+  const navigate = useNavigate();
   const [isRunning, setIsRunning] = useState(false);
+  const [showPostSession, setShowPostSession] = useState(false);
   const [seconds, setSeconds] = useState(25 * 60);
   const [interrupts, setInterrupts] = useState(0);
   const [qualityData, setQualityData] = useState(generateQualityData);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionNote, setSessionNote] = useState("");
 
   const [startSessionApi] = useStartFocusSessionMutation();
   const [stopSessionApi] = useStopFocusSessionMutation();
@@ -57,9 +61,11 @@ const FocusPage = () => {
     });
   }, []);
 
+  const totalPossibleSecs = 25 * 60;
+  const elapsedSecs = totalPossibleSecs - seconds;
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  const progress = 1 - seconds / (25 * 60);
+  const progress = 1 - seconds / totalPossibleSecs;
   const circumference = 2 * Math.PI * 110;
   const strokeDashoffset = circumference * (1 - progress);
   const currentQuality = Math.round(qualityData[qualityData.length - 1].quality);
@@ -73,22 +79,70 @@ const FocusPage = () => {
         toast.info("Focus session started.");
       } else {
         setIsRunning(false);
-        if (activeSessionId) {
-          await stopSessionApi(activeSessionId).unwrap();
-          setActiveSessionId(null);
-          toast.success("Session saved!");
-          const finalScore = Math.round(qualityData[qualityData.length - 1].quality);
-          await logProductivityApi({ metric: "focus_quality", value: finalScore }).unwrap();
-          toast.success(`Focus quality ${finalScore}% logged.`);
-        }
+        setShowPostSession(true); // Show confirmation screen
       }
     } catch {
       toast.error("Could not sync with server.");
     }
   };
 
+  const handleLogAndReturn = async () => {
+    try {
+      if (activeSessionId) {
+        await stopSessionApi(activeSessionId).unwrap();
+        const finalScore = Math.round(qualityData[qualityData.length - 1].quality);
+        await logProductivityApi({ metric: "focus_quality", value: finalScore }).unwrap();
+        toast.success(`Session saved with ${finalScore}% quality.`);
+      }
+      navigate("/dashboard");
+    } catch {
+      toast.error("Failed to finalize session.");
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8 px-4">
+    <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8 px-4 relative">
+
+      {/* Post-Session Overlay */}
+      {showPostSession && (
+        <div className="absolute inset-0 z-50 bg-white/95 flex items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
+          <div className="max-w-sm w-full">
+            <div className="w-16 h-16 rounded-3xl bg-[#007dff]/10 flex items-center justify-center mx-auto mb-6">
+              <Zap size={28} className="text-[#007dff]" fill="currentColor" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Focus Complete</h2>
+            <p className="text-slate-400 text-[14px] mb-8">Great work. Take a moment to offload your mental stack.</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Duration</p>
+                <p className="text-xl font-bold text-slate-900">{Math.floor(elapsedSecs / 60)}m {elapsedSecs % 60}s</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Quality</p>
+                <p className="text-xl font-bold text-[#007dff]">{currentQuality}%</p>
+              </div>
+            </div>
+
+            <div className="text-left mb-8">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Optional Note (Offload)</label>
+              <textarea
+                value={sessionNote}
+                onChange={(e) => setSessionNote(e.target.value)}
+                placeholder="What did you ship? What's the next step?"
+                className="w-full h-24 p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#007dff]/20 focus:border-[#007dff] outline-none text-[14px] transition-all resize-none"
+              />
+            </div>
+
+            <button
+              onClick={handleLogAndReturn}
+              className="w-full h-14 rounded-2xl bg-[#007dff] text-white font-semibold text-[16px] shadow-lg shadow-[#007dff]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Log Session & Return
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Active task chip */}
       <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm">

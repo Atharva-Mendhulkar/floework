@@ -1,8 +1,16 @@
-import { Search, Bell, ChevronDown, LogOut, Zap } from "lucide-react";
+import { Search, Bell, ChevronDown, LogOut, Zap, User as UserIcon, Settings } from "lucide-react";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setSearchQuery } from "@/store/slices/dashboardSlice";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const TopHeader = () => {
   const { user, logout } = useAuth();
@@ -54,33 +62,69 @@ const TopHeader = () => {
       {/* Right — actions */}
       <div className="flex items-center gap-2">
         {/* Bell */}
-        <button className="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-slate-100 transition-colors text-slate-500">
-          <Bell size={17} />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-400 rounded-full" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-slate-100 transition-colors text-slate-500 focus:outline-none">
+              <Bell size={17} />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-[300px] overflow-y-auto">
+              <div className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors">
+                <p className="text-sm font-medium text-slate-900">Sprint Planning Meeting</p>
+                <p className="text-xs text-slate-500 mt-1">Starting in 15 minutes. Join via link.</p>
+                <p className="text-[10px] text-slate-400 mt-2">Just now</p>
+              </div>
+              <div className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors">
+                <p className="text-sm font-medium text-slate-900">New Task Assigned</p>
+                <p className="text-xs text-slate-500 mt-1">Alex assigned you to "Update authentication flow".</p>
+                <p className="text-[10px] text-slate-400 mt-2">2 hours ago</p>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="w-full text-center text-xs text-[#007dff] cursor-pointer" onClick={() => navigate("/alerts")}>
+              <span className="w-full">View all alerts</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Divider */}
         <div className="w-px h-5 bg-slate-200 mx-1" />
 
         {/* User chip */}
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-100 transition-colors">
-          <div className="w-6 h-6 rounded-lg bg-[#007dff] flex items-center justify-center text-white text-[10px] font-bold">
-            {initials}
-          </div>
-          <span className="text-[13px] font-medium text-slate-700 max-w-[100px] truncate">
-            {user?.name ?? "User"}
-          </span>
-          <ChevronDown size={12} className="text-slate-400" />
-        </div>
-
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-red-50 hover:text-red-500 text-slate-400 transition-colors"
-          title="Log Out"
-        >
-          <LogOut size={16} />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#007dff]/20">
+              <div className="w-6 h-6 rounded-lg bg-[#007dff] flex items-center justify-center text-white text-[10px] font-bold">
+                {initials}
+              </div>
+              <span className="text-[13px] font-medium text-slate-700 max-w-[100px] truncate">
+                {user?.name ?? "User"}
+              </span>
+              <ChevronDown size={12} className="text-slate-400" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 mt-1 rounded-xl shadow-lg border-slate-200">
+            <DropdownMenuLabel className="font-semibold text-slate-900">My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 font-medium focus:text-red-700 focus:bg-red-50 cursor-pointer py-2">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

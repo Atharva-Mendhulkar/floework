@@ -1,5 +1,6 @@
 import { activities } from "@/data/mockData";
 import { Plus, Upload, Calendar, Star } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 const statusColors: Record<string, string> = {
   Executed: "bg-emerald-100 text-emerald-700",
@@ -9,6 +10,14 @@ const statusColors: Record<string, string> = {
 };
 
 const ActivityTable = () => {
+  const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
+  const filteredActivities = activities.filter((a) =>
+    !searchQuery ||
+    a.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.assignedUser.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.status.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4 flex-1 min-w-0">
       <div className="flex items-center justify-between">
@@ -39,7 +48,13 @@ const ActivityTable = () => {
             </tr>
           </thead>
           <tbody>
-            {activities.map((a) => (
+            {filteredActivities.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-sm font-medium text-slate-400">
+                  No activity found matching your search.
+                </td>
+              </tr>
+            ) : filteredActivities.map((a) => (
               <tr key={a.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/40 transition-colors">
                 <td className="py-2.5 pr-2">
                   <Star size={13} className="text-text-muted" />

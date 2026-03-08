@@ -1,50 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight } from "lucide-react";
+import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCausalityStrip";
 
-// ─── Scroll-reveal hook
-function useReveal(threshold = 0.15) {
-    const ref = useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const obs = new IntersectionObserver(
-            ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
-            { threshold }
-        );
-        obs.observe(el);
-        return () => obs.disconnect();
-    }, [threshold]);
-    return { ref, visible };
-}
-
-// ─── Individual reveal wrapper
-function Reveal({
-    children, delay = 0, from = "bottom",
-}: {
-    children: React.ReactNode; delay?: number; from?: "bottom" | "left" | "right";
-}) {
-    const { ref, visible } = useReveal();
-    const initial =
-        from === "left" ? "translateX(-30px)" :
-            from === "right" ? "translateX(30px)" : "translateY(40px)";
-    return (
-        <div
-            ref={ref}
-            style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? "none" : initial,
-                transition: `opacity 0.7s ease ${delay}ms, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms`,
-            }}
-            className="w-full"
-        >
-            {children}
-        </div>
-    );
-}
+import Reveal from "@/components/Reveal";
 
 // ─── Floating Cursor Avatar Component
 function FloatingAvatar({ img, delay, top, left, right, bottom, anim, rotate, color }: any) {
@@ -147,9 +107,9 @@ export default function LandingPage() {
                         </div>
 
                         <div className="hidden md:flex flex-1 justify-center items-center gap-8 text-[15px] font-medium text-text-secondary">
-                            <button onClick={() => document.getElementById("section-causal")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Philosophy</button>
+                            <button onClick={() => navigate("/philosophy")} className="hover:text-foreground transition-colors">Philosophy</button>
                             <button onClick={() => document.getElementById("section-features")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Features</button>
-                            <button onClick={() => document.getElementById("section-vs")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Pricing</button>
+                            <button onClick={() => document.getElementById("section-pricing")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Pricing</button>
                         </div>
 
                         <div className="flex flex-1 justify-end items-center gap-3">
@@ -172,9 +132,9 @@ export default function LandingPage() {
                     </div>
 
                     <h1 className="anim-up-2 text-[56px] leading-[1.05] md:text-[72px] font-semibold text-foreground tracking-tight mb-6">
-                        One tool to manage <br />
-                        tasks and <span className="relative inline-block text-[#007dff]">
-                            your team
+                        Human-Aware <br />
+                        <span className="relative inline-block text-[#007dff]">
+                            Productivity.
                             <svg className="absolute -bottom-2 md:-bottom-3 left-0 w-full" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
                                 <path d="M2 10C50 4 150 2 198 8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" opacity="0.3" />
                             </svg>
@@ -182,7 +142,7 @@ export default function LandingPage() {
                     </h1>
 
                     <p className="anim-up-3 text-lg md:text-xl text-text-secondary max-w-[680px] mx-auto leading-relaxed font-medium mb-10">
-                        floework respects human cognitive limits. Connect focused individual work with team-level execution and outcomes, without invasive monitoring.
+                        floework models work as a causal chain, not a list of static tickets. Replace context switching and process blindness with unified execution.
                     </p>
 
                     <div className="anim-up-4 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -524,6 +484,62 @@ export default function LandingPage() {
             </section>
 
 
+
+            <section id="section-pricing" className="py-32 px-6 bg-slate-50">
+                <div className="max-w-[1100px] mx-auto">
+                    <div className="text-center mb-16">
+                        <Reveal>
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-white mb-8">
+                                <Zap size={14} className="text-[#007dff]" />
+                                <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">PRICING</span>
+                            </div>
+                            <h2 className="text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5">
+                                Simple, transparent pricing.
+                            </h2>
+                            <p className="text-[17px] text-text-secondary max-w-2xl mx-auto leading-relaxed font-medium">
+                                Start solo or with your team. No hidden fees.
+                            </p>
+                        </Reveal>
+                    </div>
+
+                    <div className="max-w-md mx-auto">
+                        <Reveal>
+                            <div className="bg-white border-2 border-[#007dff] rounded-[32px] p-10 shadow-xl shadow-[#007dff]/5 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-[#007dff] text-white px-4 py-1 rounded-bl-xl text-[10px] font-bold uppercase tracking-widest">
+                                    Current Plan
+                                </div>
+                                <h3 className="text-2xl font-bold text-foreground mb-2">Free for individuals</h3>
+                                <p className="text-slate-500 font-medium mb-8">Upgrade for advanced team analytics.</p>
+
+                                <div className="flex items-baseline gap-1 mb-8">
+                                    <span className="text-5xl font-bold text-foreground">$0</span>
+                                    <span className="text-slate-400 font-medium">/month</span>
+                                </div>
+
+                                <ul className="space-y-4 mb-10">
+                                    {[
+                                        "Unlimited local focus sessions",
+                                        "Basic task management",
+                                        "Core causal analytics",
+                                        "Community support"
+                                    ].map((feature) => (
+                                        <li key={feature} className="flex items-center gap-3 text-slate-600 font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                                                <Check size={12} className="text-emerald-600" />
+                                            </div>
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <Button className="w-full h-14 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[17px] font-semibold" onClick={() => navigate("/register")}>
+                                    Get Started
+                                </Button>
+                            </div>
+                        </Reveal>
+                    </div>
+                </div>
+            </section>
 
             <footer className="bg-[#f7f8fa] border-t border-slate-200 py-14 px-8">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">

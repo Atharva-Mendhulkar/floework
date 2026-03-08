@@ -19,7 +19,7 @@ export default function OnboardingPage() {
             if (!useCase) return;
             if (useCase === "solo") {
                 // Skip team creation entirely
-                toast.success("Welcome to Floework");
+                toast.success("Welcome to floework");
                 navigate("/dashboard");
                 return;
             }
@@ -44,28 +44,41 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 sm:p-12 animate-in fade-in zoom-in duration-500">
-            <div className="w-full max-w-md flex flex-col items-center">
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 sm:p-12 transition-all duration-700">
+            <div className="w-full max-w-lg flex flex-col items-center">
                 {/* Step 1: Use Case */}
                 {step === 1 && (
-                    <div className="w-full space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
-                        <h1 className="text-3xl font-medium text-foreground text-center">How are you using floework?</h1>
+                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
+                        <div className="text-center space-y-4">
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">How will you execute?</h1>
+                            <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
+                                floework is built to respect human cognitive limits, whether alone or together.
+                            </p>
+                        </div>
 
                         <div className="flex flex-col gap-4 w-full">
-                            {['solo', 'team', 'student'].map((caseType) => (
+                            {['solo', 'team', 'student'].map((caseType, idx) => (
                                 <button
                                     key={caseType}
                                     onClick={() => setUseCase(caseType)}
-                                    className={`w-full p-4 rounded-2xl border text-left transition-all ${useCase === caseType
-                                        ? "border-focus bg-focus/5 shadow-sm"
-                                        : "border-border hover:border-focus/40 bg-surface"
+                                    style={{ animationDelay: `${idx * 100 + 200}ms` }}
+                                    className={`w-full p-5 rounded-3xl border-2 text-left transition-all animate-[in-slide-up_0.5s_ease-out_both] ${useCase === caseType
+                                        ? "border-[#007dff] bg-[#007dff]/5 shadow-md shadow-[#007dff]/10 scale-[1.02]"
+                                        : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-lg font-medium text-foreground capitalize">
-                                            {caseType === 'solo' ? 'Solo' : caseType === 'team' ? 'Small Team' : 'Student Project'}
-                                        </span>
-                                        {useCase === caseType && <CheckCircle2 className="text-focus" size={20} />}
+                                        <div>
+                                            <span className="text-lg font-semibold text-slate-900 capitalize block mb-1">
+                                                {caseType === 'solo' ? 'Individual Contributor' : caseType === 'team' ? 'Technical Team' : 'Student Project'}
+                                            </span>
+                                            <span className="text-[13px] text-slate-500 font-medium">
+                                                {caseType === 'solo' ? 'Deep work without the noise.' : caseType === 'team' ? 'Align effort with delivery.' : 'Stay on track together.'}
+                                            </span>
+                                        </div>
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${useCase === caseType ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
+                                            <CheckCircle2 size={16} strokeWidth={3} />
+                                        </div>
                                     </div>
                                 </button>
                             ))}
@@ -75,29 +88,38 @@ export default function OnboardingPage() {
 
                 {/* Step 2: Team Question */}
                 {step === 2 && (
-                    <div className="w-full space-y-8 animate-in slide-in-from-right-8 fade-in duration-500">
-                        <h1 className="text-3xl font-medium text-foreground text-center">Do you already have a team?</h1>
+                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
+                        <div className="text-center space-y-4">
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Got a crew?</h1>
+                            <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
+                                We can set up a new workspace for you to invite them later.
+                            </p>
+                        </div>
 
                         <div className="flex flex-col gap-4 w-full">
                             <button
                                 onClick={() => setHasTeam(true)}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${hasTeam === true ? "border-focus bg-focus/5 shadow-sm" : "border-border hover:border-focus/40 bg-surface"
+                                className={`w-full p-5 rounded-3xl border-2 text-left transition-all ${hasTeam === true ? "border-[#007dff] bg-[#007dff]/5 shadow-md scale-[1.02]" : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
                                     }`}
                             >
                                 <div className="flex items-center justify-between">
-                                    <span className="text-lg font-medium text-foreground">Yes, I need to join them</span>
-                                    {hasTeam === true && <CheckCircle2 className="text-focus" size={20} />}
+                                    <span className="text-lg font-semibold text-slate-900">Yes, I have an invite</span>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${hasTeam === true ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
+                                        <CheckCircle2 size={16} strokeWidth={3} />
+                                    </div>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => setHasTeam(false)}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${hasTeam === false ? "border-focus bg-focus/5 shadow-sm" : "border-border hover:border-focus/40 bg-surface"
+                                className={`w-full p-5 rounded-3xl border-2 text-left transition-all ${hasTeam === false ? "border-[#007dff] bg-[#007dff]/5 shadow-md scale-[1.02]" : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
                                     }`}
                             >
                                 <div className="flex items-center justify-between">
-                                    <span className="text-lg font-medium text-foreground">Not yet</span>
-                                    {hasTeam === false && <CheckCircle2 className="text-focus" size={20} />}
+                                    <span className="text-lg font-semibold text-slate-900">Not yet, I'll start fresh</span>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${hasTeam === false ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
+                                        <CheckCircle2 size={16} strokeWidth={3} />
+                                    </div>
                                 </div>
                             </button>
                         </div>
@@ -106,23 +128,29 @@ export default function OnboardingPage() {
 
                 {/* Step 3: Create Team Workspace */}
                 {step === 3 && (
-                    <div className="w-full space-y-8 animate-in slide-in-from-right-8 fade-in duration-500">
-                        <h1 className="text-3xl font-medium text-foreground text-center">Name your workspace</h1>
-                        <p className="text-text-secondary text-center">You can change this later or invite members anytime.</p>
+                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
+                        <div className="text-center space-y-4">
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Name your space</h1>
+                            <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
+                                Give your new workspace an identity.
+                            </p>
+                        </div>
 
-                        <input
-                            type="text"
-                            placeholder="e.g. Design Team or Alpha Project"
-                            value={teamName}
-                            onChange={(e) => setTeamName(e.target.value)}
-                            className="w-full flex-1 bg-surface border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-focus text-foreground"
-                            autoFocus
-                        />
+                        <div className="w-full relative">
+                            <input
+                                type="text"
+                                placeholder="e.g. Acme Corp or Next Big Thing"
+                                value={teamName}
+                                onChange={(e) => setTeamName(e.target.value)}
+                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                autoFocus
+                            />
+                        </div>
                     </div>
                 )}
 
                 {/* Action Bar */}
-                <div className="w-full flex justify-end mt-12">
+                <div className="w-full flex justify-center mt-12 animate-[fade-in_1s_ease-in-out_both] delay-500">
                     <Button
                         onClick={handleNext}
                         disabled={
@@ -131,12 +159,18 @@ export default function OnboardingPage() {
                             (step === 3 && (!teamName.trim() || isCreating))
                         }
                         size="lg"
-                        className="w-full sm:w-auto px-8"
+                        className="h-14 px-10 rounded-full bg-slate-900 text-white font-semibold shadow-lg shadow-black/10 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:shadow-none min-w-[200px]"
                     >
                         {step === 3 ? (isCreating ? "Preparing..." : "Enter floework") : "Continue"}
                     </Button>
                 </div>
 
+                <style>{`
+                @keyframes in-slide-up {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                `}</style>
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import { Check, MoreHorizontal, Lock, Star } from "lucide-react";
+import { Check, MoreHorizontal, Lock, Star, Play, Zap } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
@@ -82,7 +82,21 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
         {isLocked && <Lock size={12} className="text-warning flex-shrink-0" />}
       </span>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {/* Effort & Focus Count */}
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-slate-50 border border-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+          {task.effort && (
+            <span className="text-[10px] font-bold text-slate-400 w-4 h-4 flex items-center justify-center border border-slate-200 rounded-md bg-white">
+              {task.effort}
+            </span>
+          )}
+          {task.focusCount ? (
+            <span className="text-[10px] font-bold text-[#007dff] flex items-center gap-0.5">
+              {task.focusCount}<Zap size={8} fill="currentColor" />
+            </span>
+          ) : null}
+        </div>
+
         <button
           onClick={handleStarClick}
           className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-secondary ${task.isStarred ? 'opacity-100 text-yellow-500' : 'text-text-muted hover:text-yellow-500'}`}
@@ -90,6 +104,19 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
         >
           <Star size={14} fill={task.isStarred ? "currentColor" : "none"} />
         </button>
+
+        {/* Quick Focus Toggle */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            window.location.href = "/focus"; // Redirect to focus page
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-[#007dff] text-white flex items-center justify-center shadow-lg shadow-[#007dff]/20 active:scale-95"
+          title="Start Focus Session"
+        >
+          <Play size={12} fill="white" />
+        </button>
+
         {task.status === "done" && (
           <div className="w-5 h-5 rounded-md bg-emerald-500 flex items-center justify-center">
             <Check size={12} className="text-surface" />

@@ -11,6 +11,7 @@ import { LoginPage } from "./modules/auth/views/LoginPage";
 import { RegisterPage } from "./modules/auth/views/RegisterPage";
 import { SocketProvider } from "./modules/socket/SocketContext";
 import Index from "./pages/Index";
+import BoardsPage from "./pages/BoardsPage";
 import FocusPage from "./pages/FocusPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -20,6 +21,7 @@ import MessagesPage from "./pages/MessagesPage";
 import ProfilePage from "./pages/ProfilePage";
 import AlertsPage from "./pages/AlertsPage";
 import DashboardLayout from "./components/DashboardLayout";
+import PhilosophyPage from "./pages/PhilosophyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,7 @@ const App = () => (
               <Routes>
                 {/* Public landing page */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/philosophy" element={<PhilosophyPage />} />
 
                 {/* Auth */}
                 <Route path="/login" element={<LoginPage />} />
@@ -47,6 +50,7 @@ const App = () => (
                   <Route path="/onboarding" element={<OnboardingPage />} />
 
                   <Route path="/dashboard" element={<Index />} />
+                  <Route path="/boards" element={<BoardsPage />} />
                   <Route path="/focus" element={<DashboardLayout><FocusPage /></DashboardLayout>} />
                   <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
                   <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
