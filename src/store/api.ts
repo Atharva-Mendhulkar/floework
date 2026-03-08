@@ -222,6 +222,14 @@ export const api = createApi({
                 method: 'POST',
             }),
         }),
+        getBottlenecks: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/bottlenecks',
+            providesTags: ['Signal' as any],
+        }),
+        getBurnoutTrend: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/burnout',
+            providesTags: ['Signal' as any],
+        }),
     }),
 });
 
@@ -258,4 +266,6 @@ export const {
     useGetBillingStatusQuery,
     useCreateCheckoutSessionMutation,
     useCreatePortalSessionMutation,
+    useGetBottlenecksQuery,
+    useGetBurnoutTrendQuery,
 } = api;

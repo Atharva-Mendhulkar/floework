@@ -2,9 +2,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery } from "@/store/api";
+import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery } from "@/store/api";
 import { TrendingUp, Users, Zap, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import FocusStabilityMap from "@/components/FocusStabilityMap";
+import BottleneckPanel from "@/components/BottleneckPanel";
 
 const BLUE = "#007dff";
 const BLUE_LIGHT = "#60a5fa";
@@ -29,6 +30,7 @@ const AnalyticsPage = () => {
   const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
   const { data: narrativeRes } = useGetExecutionNarrativeQuery();
+  const { data: burnoutRes } = useGetBurnoutTrendQuery();
 
   if (isLoadingDash || isLoadingTeam) {
     return (
@@ -41,7 +43,9 @@ const AnalyticsPage = () => {
     );
   }
 
-  const { barData = [], burnoutData = [] } = dashboardRes?.data || {};
+  const { barData = [], burnoutData: rawBurnout = [] } = dashboardRes?.data || {};
+  // Prefer real 4-week burnout signal; fall back to dashboard data
+  const burnoutData = (burnoutRes?.data?.length ?? 0) > 0 ? burnoutRes!.data : rawBurnout;
   const teamStatus = teamStatusRes?.data || [];
 
   const totalFocusHrs = (barData as any[]).reduce((s: number, d: any) => s + (d.focusHrs || 0), 0);
@@ -153,6 +157,9 @@ const AnalyticsPage = () => {
       </div>
       {/* Focus Stability Heatmap */}
       <FocusStabilityMap />
+
+      {/* Bottleneck Report */}
+      <BottleneckPanel />
 
       {/* Execution Narrative Card */}
       {narrativeRes?.data && (
