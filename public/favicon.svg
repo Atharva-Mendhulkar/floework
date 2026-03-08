@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="#6366F1" />
-  <text x="50" y="55" font-size="50" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif">F</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="white"/>
+
+  <text x="12" y="48"
+        font-family="Helvetica, Arial, sans-serif"
+        font-weight="bold"
+        font-size="52"
+        fill="black">
+    f
+  </text>
+
+  <circle cx="42" cy="48" r="6" fill="rgb(0,125,255)"/>
 </svg>
