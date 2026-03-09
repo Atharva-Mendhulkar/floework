@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createTeam, getMyTeams, inviteMember, updateMemberRole, removeMember } from '../controllers/teamController';
+import { createTeam, getMyTeams, inviteMember, updateMemberRole, removeMember, joinTeam } from '../controllers/teamController';
 import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 router.use(protect); // Ensure all team routes are protected
 
 router.post('/', createTeam);
+router.post('/join', joinTeam);
 router.get('/', getMyTeams);
 router.post('/:teamId/invite', inviteMember);
 router.patch('/:teamId/members/:userId', updateMemberRole);

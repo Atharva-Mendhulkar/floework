@@ -111,6 +111,34 @@ export const api = createApi({
             }),
             invalidatesTags: ['User'],
         }),
+        joinTeam: builder.mutation<{ success: boolean; data: any }, { token: string }>({
+            query: (joinData) => ({
+                url: '/teams/join',
+                method: 'POST',
+                body: joinData,
+            }),
+            invalidatesTags: ['User', 'Project'],
+        }),
+        getProjectSprints: builder.query<{ success: boolean; data: any[] }, string>({
+            query: (projectId) => `/projects/${projectId}/sprints`,
+            providesTags: ['Task'],
+        }),
+        createSprint: builder.mutation<{ success: boolean; data: any }, { projectId: string; name: string; startDate: string; endDate: string }>({
+            query: ({ projectId, ...sprintData }) => ({
+                url: `/projects/${projectId}/sprints`,
+                method: 'POST',
+                body: sprintData,
+            }),
+            invalidatesTags: ['Task'], // Tasks list updates with new sprint
+        }),
+        updateSprint: builder.mutation<{ success: boolean; data: any }, { projectId: string; sprintId: string; status: string }>({
+            query: ({ projectId, sprintId, status }) => ({
+                url: `/projects/${projectId}/sprints/${sprintId}`,
+                method: 'PATCH',
+                body: { status },
+            }),
+            invalidatesTags: ['Task'], // Status changes bubble tasks to backlog
+        }),
         getFocusSessions: builder.query<{ success: boolean; data: any[] }, void>({
             query: () => '/focus',
             providesTags: ['FocusSession' as any],
@@ -254,6 +282,10 @@ export const {
     useGetMyTeamsQuery,
     useCreateTeamMutation,
     useInviteToTeamMutation,
+    useJoinTeamMutation,
+    useGetProjectSprintsQuery,
+    useCreateSprintMutation,
+    useUpdateSprintMutation,
     useGetFocusSessionsQuery,
     useStartFocusSessionMutation,
     useStopFocusSessionMutation,

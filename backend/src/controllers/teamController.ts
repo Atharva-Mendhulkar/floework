@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
@@ -75,34 +76,79 @@ export const inviteMember = async (req: Request, res: Response, next: NextFuncti
             return next(new AppError('You do not have permission to invite members to this team', 403));
         }
 
-        // Find the user by email
+        // Check if the user already exists and is in the team
         const userToInvite = await prisma.user.findUnique({ where: { email } });
-        if (!userToInvite) {
-            return next(new AppError('No user found with that email address. They must register first.', 404));
+        if (userToInvite) {
+            const existingMember = await prisma.teamMember.findUnique({
+                where: { userId_teamId: { userId: userToInvite.id, teamId } }
+            });
+
+            if (existingMember) {
+                return next(new AppError('User is already a member of this team', 400));
+            }
         }
 
-        // Check if already in the team
-        const existingMember = await prisma.teamMember.findUnique({
-            where: { userId_teamId: { userId: userToInvite.id, teamId } }
-        });
+        // Generate invitation token
+        const token = crypto.randomUUID();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7 day expiry
 
-        if (existingMember) {
-            return next(new AppError('User is already a member of this team', 400));
-        }
-
-        // Create membership
-        const newMember = await prisma.teamMember.create({
+        const invitation = await prisma.invitation.create({
             data: {
-                userId: userToInvite.id,
+                email,
                 teamId,
-                teamRole: role.toUpperCase()
-            },
-            include: {
-                user: { select: { id: true, name: true, email: true } }
+                role: role.toUpperCase(),
+                token,
+                expiresAt,
             }
         });
 
-        res.json({ success: true, data: newMember });
+        res.json({ success: true, message: 'Invitation created', data: { token: invitation.token, email: invitation.email } });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const joinTeam = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.body;
+        const userId = (req as any).user.id;
+
+        if (!token) return next(new AppError('Invitation token is required', 400));
+
+        const invitation = await prisma.invitation.findUnique({ where: { token } });
+
+        if (!invitation) return next(new AppError('Invalid invitation token', 404));
+        if (invitation.status !== 'PENDING') return next(new AppError('Invitation has already been consumed or cancelled', 400));
+        if (new Date() > invitation.expiresAt) return next(new AppError('Invitation token has expired', 400));
+
+        // Check if user is already in team
+        const existingMember = await prisma.teamMember.findUnique({
+            where: { userId_teamId: { userId, teamId: invitation.teamId } }
+        });
+
+        if (existingMember) return next(new AppError('You are already a member of this team', 400));
+
+        // Join team transaction
+        const member = await prisma.$transaction(async (tx) => {
+            const newMember = await tx.teamMember.create({
+                data: {
+                    userId,
+                    teamId: invitation.teamId,
+                    teamRole: invitation.role,
+                },
+                include: { team: true }
+            });
+
+            await tx.invitation.update({
+                where: { id: invitation.id },
+                data: { status: 'ACCEPTED' }
+            });
+
+            return newMember;
+        });
+
+        res.json({ success: true, data: member.team });
     } catch (error) {
         next(error);
     }

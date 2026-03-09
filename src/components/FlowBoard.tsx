@@ -23,20 +23,28 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
-  const [sprintName, setSprintName] = useState("Sprint 14");
-  const [isEditingSprint, setIsEditingSprint] = useState(false);
+
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
+  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+
+  const { data: sprintsRes } = api.endpoints.getProjectSprints.useQueryState(activeProjectId!, { skip: !activeProjectId });
+  const activeSprint = sprintsRes?.data?.find((s: any) => s.id === activeSprintId);
+
+  // Refetch tasks if sprint changes (backend mapping via sprintId would ideally be passed to getTasks query param)
+  // For now, if activeSprintId is null, it's Backlog. We should probably pass activeSprintId to useGetTasksQuery!
 
   const { data: projectsRes } = useGetProjectsQuery();
-  const activeProjectId = projectsRes?.data?.[0]?.id || "fallback-id";
+  const fallbackProjectId = projectsRes?.data?.[0]?.id || "fallback-id";
+  const effectiveProjectId = activeProjectId || fallbackProjectId;
 
-  const { data: predictionRes } = useGetProjectPredictionQuery(activeProjectId, { skip: !activeProjectId });
+  const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId, { skip: !activeProjectId });
   const prediction = predictionRes?.data;
 
   /* WebSocket subscription */
   useEffect(() => {
-    if (!socket || !isConnected || !activeProjectId || activeProjectId === "fallback-id") return;
-    socket.emit("join_project", activeProjectId);
+    if (!socket || !isConnected || !effectiveProjectId || effectiveProjectId === "fallback-id") return;
+    socket.emit("join_project", effectiveProjectId);
 
     socket.on("task_updated", (data: { taskId: string; phase: string; projectId: string }) => {
       dispatch(
@@ -62,7 +70,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     });
 
     return () => {
-      socket.emit("leave_project", activeProjectId);
+      socket.emit("leave_project", effectiveProjectId);
       socket.off("task_updated");
       socket.off("task_locked");
       socket.off("task_unlocked");
@@ -104,26 +112,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
             </div>
 
             <div className="flex items-center gap-1.5 mt-0.5 group">
-              {isEditingSprint ? (
-                <input
-                  type="text"
-                  value={sprintName}
-                  onChange={(e) => setSprintName(e.target.value)}
-                  onBlur={() => setIsEditingSprint(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') setIsEditingSprint(false)
-                  }}
-                  autoFocus
-                  className="text-[12px] text-slate-700 font-semibold bg-white border border-slate-300 rounded px-1.5 py-0.5 outline-none ring-1 ring-[#007dff]/30 w-auto min-w-[60px]"
-                />
-              ) : (
-                <button
-                  onClick={() => setIsEditingSprint(true)}
-                  className="text-[12px] text-slate-500 font-semibold hover:text-slate-800 transition-colors border border-transparent hover:border-slate-200 rounded px-1 -ml-1 cursor-text"
-                >
-                  {sprintName}
-                </button>
-              )}
+              <span className="text-[12px] text-slate-500 font-semibold">
+                {activeSprint ? activeSprint.name : (activeSprintId === null ? "Backlog" : "Sprint view")}
+              </span>
               <span className="text-[12px] text-slate-400 font-medium">· {totalTasks} tasks</span>
             </div>
           </div>
@@ -265,7 +256,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
       <TaskCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        projectId={activeProjectId}
+        projectId={effectiveProjectId}
       />
     </div>
   );

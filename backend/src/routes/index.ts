@@ -11,6 +11,7 @@ import alertRoutes from './alertRoutes';
 import teamRoutes from './teamRoutes';
 import analyticsRoutes from './analyticsRoutes';
 import billingRoutes from './billingRoutes';
+import sprintRoutes from './sprintRoutes';
 import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -20,6 +21,7 @@ router.use('/users', protect, userRoutes);
 router.use('/teams', protect, teamRoutes);
 router.use('/projects', protect, projectRoutes);
 router.use('/projects/:projectId/messages', protect, messageRoutes);
+router.use('/projects/:projectId/sprints', protect, sprintRoutes);
 router.use('/tasks', protect, taskRoutes);
 router.use('/focus', focusRoutes);
 router.use('/productivity', productivityRoutes);

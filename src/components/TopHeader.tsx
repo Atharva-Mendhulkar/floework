@@ -1,8 +1,13 @@
-import { Search, Bell, ChevronDown, LogOut, Zap, User as UserIcon, Settings } from "lucide-react";
+import { Search, Bell, ChevronDown, LogOut, Zap, User as UserIcon, Settings, Users, UserPlus } from "lucide-react";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setSearchQuery } from "@/store/slices/dashboardSlice";
+import { ProjectSelector } from "./ProjectSelector";
+import { SprintSelector } from "./SprintSelector";
+import { ManageWorkspaceModal } from "./ManageWorkspaceModal";
+import { JoinWorkspaceModal } from "./JoinWorkspaceModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +22,8 @@ const TopHeader = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -40,11 +47,10 @@ const TopHeader = () => {
         </div>
 
         <span className="text-slate-300 mx-1 select-none">/</span>
+        <ProjectSelector />
 
-        <div className="flex items-center gap-1.5 cursor-pointer group">
-          <span className="text-[13px] text-slate-500 group-hover:text-slate-800 transition-colors font-medium">Sprint 14</span>
-          <ChevronDown size={13} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
-        </div>
+        <span className="text-slate-300 mx-1 select-none">/</span>
+        <SprintSelector />
       </div>
 
       {/* Center — search */}
@@ -119,6 +125,15 @@ const TopHeader = () => {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setIsManageModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
+              <Users className="mr-2 h-4 w-4" />
+              <span>Manage Workspace</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsJoinModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>Join Workspace</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 font-medium focus:text-red-700 focus:bg-red-50 cursor-pointer py-2">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
@@ -126,6 +141,9 @@ const TopHeader = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ManageWorkspaceModal isOpen={isManageModalOpen} onClose={() => setIsManageModalOpen(false)} />
+      <JoinWorkspaceModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} />
     </header>
   );
 };

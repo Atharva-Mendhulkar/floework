@@ -5,12 +5,16 @@ interface DashboardState {
     searchQuery: string;
     isSidebarOpen: boolean;
     activeTaskId: string | null;
+    activeProjectId: string | null;
+    activeSprintId: string | null;
 }
 
 const initialState: DashboardState = {
     searchQuery: '',
     isSidebarOpen: true,
     activeTaskId: null,
+    activeProjectId: null,
+    activeSprintId: null,
 };
 
 export const dashboardSlice = createSlice({
@@ -26,8 +30,14 @@ export const dashboardSlice = createSlice({
         setActiveTask: (state, action: PayloadAction<string | null>) => {
             state.activeTaskId = action.payload;
         },
+        setActiveProject: (state, action: PayloadAction<string | null>) => {
+            state.activeProjectId = action.payload;
+        },
+        setActiveSprint: (state, action: PayloadAction<string | null>) => {
+            state.activeSprintId = action.payload;
+        },
     },
 });
 
-export const { setSearchQuery, toggleSidebar, setActiveTask } = dashboardSlice.actions;
+export const { setSearchQuery, toggleSidebar, setActiveTask, setActiveProject, setActiveSprint } = dashboardSlice.actions;
 export default dashboardSlice.reducer;
