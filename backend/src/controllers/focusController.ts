@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { computeTaskSignals } from '../services/executionSignals.service';
 import { computeFocusStability } from '../services/focusStability.service';
+import { logExecutionEvent } from '../services/executionGraph.service';
 import { signalQueue } from '../queues/signalQueue';
 
 // Start a new Focus Session
@@ -23,6 +24,8 @@ export const startFocusSession = async (req: Request, res: Response, next: NextF
                 taskId,
             },
         });
+
+        logExecutionEvent(taskId, userId, 'FOCUS_START');
 
         res.status(201).json({ success: true, data: session });
     } catch (error) {
@@ -58,6 +61,8 @@ export const stopFocusSession = async (req: Request, res: Response, next: NextFu
                 durationSecs,
             },
         });
+
+        logExecutionEvent(existingSession.taskId, userId, 'FOCUS_STOP', { durationSecs, interrupts: existingSession.interrupts });
 
         // Enqueue signal computation via BullMQ; fall back to inline if queue unavailable
         const jobData = {

@@ -27,6 +27,7 @@ model User {
   alerts         Alert[]
   executionSignals ExecutionSignal[]
   focusStability   FocusStabilitySlot[]
+  executionEvents  ExecutionEvent[]
 }
 
 model Team {
@@ -104,6 +105,9 @@ model Task {
   assignee      User?          @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
   focusSessions FocusSession[]
   executionSignals ExecutionSignal[]
+  executionEvents ExecutionEvent[]
+  dependencies    TaskDependency[] @relation("TaskDependencies")
+  blocks          TaskDependency[] @relation("TaskBlocks")
 }
 
 model FocusSession {
@@ -172,3 +176,29 @@ model FocusStabilitySlot {
 
   @@unique([userId, dayOfWeek, hourOfDay])
 }
+
+model ExecutionEvent {
+  id          String   @id @default(uuid())
+  taskId      String
+  userId      String
+  eventType   String   // e.g. 'FOCUS_START', 'FOCUS_PAUSE', 'FOCUS_STOP', 'STATUS_CHANGE', 'BLOCKER_DETECTED'
+  metadata    String?  // JSON stringified metadata
+  timestamp   DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TaskDependency {
+  id          String   @id @default(uuid())
+  taskId      String   // The task that is blocked
+  blocksId    String   // The task that is blocking
+  type        String   // 'BLOCKS', 'RELATES_TO'
+  createdAt   DateTime @default(now())
+
+  task   Task @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
+  blocks Task @relation("TaskBlocks", fields: [blocksId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, blocksId])
+}
+

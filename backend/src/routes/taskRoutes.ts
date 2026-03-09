@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getTasks, updateTaskState, createTask, toggleTaskStar } from '../controllers/taskController';
+import { getTasks, updateTaskState, createTask, toggleTaskStar, getTaskReplay } from '../controllers/taskController';
 
 const router = Router();
 
@@ -12,5 +12,8 @@ router.route('/:id')
 
 router.route('/:id/star')
     .patch(toggleTaskStar);
+
+router.route('/:id/replay')
+    .get(getTaskReplay);
 
 export default router;

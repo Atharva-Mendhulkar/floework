@@ -1,7 +1,7 @@
 import { X, Clock, User, AlertTriangle, CheckCircle } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
 import TaskExecutionPanel from "@/components/TaskExecutionPanel";
-import { useGetFocusSessionsQuery } from "@/store/api";
+import TaskReplayTimeline from "@/components/TaskReplayTimeline";
 
 interface TaskDetailPanelProps {
   task: TaskNode | null;
@@ -27,8 +27,6 @@ const statusStyle: Record<string, string> = {
 };
 
 const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
-  const { data: sessionsRes } = useGetFocusSessionsQuery(undefined, { skip: !task });
-  const taskSessions = sessionsRes?.data?.filter((s: any) => s.taskId === task?.id) ?? [];
 
   if (!task) return null;
 
@@ -85,52 +83,9 @@ const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
             </div>
           )}
 
-          {/* Execution Signals — live from backend */}
+          {/* Execution Signals & History — live from backend */}
           <TaskExecutionPanel taskId={task.id} />
-
-          {/* Focus History from real sessions */}
-          {taskSessions.length > 0 && (
-            <div>
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">Focus Sessions</p>
-              <div className="relative">
-                <div className="absolute left-[6px] top-2 bottom-2 w-px bg-slate-100" />
-                <div className="flex flex-col gap-3">
-                  {taskSessions.slice(0, 6).map((s: any) => (
-                    <div key={s.id} className="flex items-start gap-3 relative">
-                      <div className="w-3.5 h-3.5 rounded-full bg-white border-2 border-[#007dff]/30 flex items-center justify-center z-10 mt-0.5 shrink-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#007dff]/60" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[12px] font-medium text-slate-700">
-                            {s.endTime ? `${Math.round(s.durationSecs / 60)} min session` : "Ongoing"}
-                          </span>
-                          {s.interrupts > 0 && (
-                            <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">
-                              {s.interrupts} interrupt{s.interrupts > 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(s.startTime).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
-                          {" · "}
-                          {new Date(s.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Empty state when no sessions yet */}
-          {taskSessions.length === 0 && (
-            <div className="flex flex-col items-center gap-1.5 py-4">
-              <Clock size={18} className="text-slate-200" />
-              <p className="text-[11px] text-slate-400 text-center">No focus sessions yet. Start one from the Focus page.</p>
-            </div>
-          )}
+          <TaskReplayTimeline taskId={task.id} />
         </div>
       </div>
     </>

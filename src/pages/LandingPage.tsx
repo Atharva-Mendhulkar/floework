@@ -558,7 +558,7 @@ export default function LandingPage() {
                     <div className="flex gap-16 md:gap-24">
                         <div>
                             <ul className="space-y-4 text-[14px]">
-                                {["About Us", "Contact", "What's New", "Careers"].map((item) => (
+                                {["About Us", "Contact", "What's New"].map((item) => (
                                     <li key={item}>
                                         <a href="#" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
                                             <ArrowRight size={13} className="text-slate-400 group-hover:text-[#007dff] transition-colors shrink-0" />

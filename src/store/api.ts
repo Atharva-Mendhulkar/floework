@@ -230,6 +230,10 @@ export const api = createApi({
             query: () => '/analytics/burnout',
             providesTags: ['Signal' as any],
         }),
+        getTaskReplay: builder.query<{ success: boolean; data: any[] }, string>({
+            query: (taskId) => `/tasks/${taskId}/replay`,
+            providesTags: ['Task'],
+        }),
     }),
 });
 
@@ -268,4 +272,5 @@ export const {
     useCreatePortalSessionMutation,
     useGetBottlenecksQuery,
     useGetBurnoutTrendQuery,
+    useGetTaskReplayQuery,
 } = api;

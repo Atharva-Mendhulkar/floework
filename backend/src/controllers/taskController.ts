@@ -1,6 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { logExecutionEvent, getTaskExecutionTimeline } from '../services/executionGraph.service';
+
+export const getTaskReplay = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const events = await getTaskExecutionTimeline(req.params.id);
+        res.json({ success: true, count: events.length, data: events });
+    } catch (error) {
+        next(error);
+    }
+};
 
 export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -28,6 +38,11 @@ export const updateTaskState = async (req: Request, res: Response, next: NextFun
             where: { id: req.params.id },
             data: { status, phase },
         });
+
+        const userId = (req as any).user?.id;
+        if (userId) {
+            logExecutionEvent(task.id, userId, 'STATUS_CHANGE', { status, phase });
+        }
 
         res.json({ success: true, data: task });
     } catch (error) {
@@ -69,6 +84,11 @@ export const createTask = async (req: Request, res: Response, next: NextFunction
                 priority
             },
         });
+
+        const userId = (req as any).user?.id;
+        if (userId) {
+            logExecutionEvent(task.id, userId, 'TASK_CREATED', { title, priority });
+        }
 
         res.status(201).json({ success: true, data: task });
     } catch (error) {
