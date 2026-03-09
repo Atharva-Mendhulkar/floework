@@ -346,9 +346,33 @@ Fully routed support pages:
 
 ---
 
-## 10. Landing Page & Marketing Site
+---
 
-### 10.1 Landing Page (`/`)
+## 10. Disruptive Execution Intelligence Features (The Execution Graph)
+
+Unlike standard productivity tools that only track *what* is done, floework tracks *how* work happens by building a causal "Execution Graph."
+
+### 10.1 Execution Graph Foundation
+Every meaningful action on a task (creation, status changes, focus session start/stop, blocker detection) is asynchronously logged as an `ExecutionEvent` in PostgreSQL. This forms an append-only timeline of reality. The `TaskDependency` model further links tasks to identify structural bottlenecks.
+
+### 10.2 Task Execution Replay UI
+Inside the FlowBoard, clicking any Task Card opens the Detail Panel, which now features a **Replay Timeline**. This vertical, color-coded timeline plays back the exact chronological history of a task—showing when focus sessions happened, how long they took, how many interrupts occurred, and when blockers appeared.
+
+### 10.3 Cognitive Load Monitoring System
+The advanced analytics engine goes beyond simple time-tracking to measure physiological burden. The Burnout Risk score now explicitly penalizes:
+- **Fragmentation**: Penalizes micro-sessions (working in chunks of less than 10 minutes).
+- **After-Hours Impact**: Penalizes sessions run outside typical work hours or on weekends.
+- **Volume Spikes**: Detects if current weekly focus hours severely exceed a 3-week rolling baseline.
+Hovering over the Burnout chart reveals these exact risk factors.
+
+### 10.4 Predictive Delivery Engine
+The FlowBoard header features an AI Delivery Predictor badge. The backend engine calculates the team's historical execution velocity (average focus hours over trailing 4 weeks) and maps it against the estimated required hours for the remaining priority backlog tasks. If the required effort exceeds the historical capacity within the sprint boundary, the badge warns of Slippage Risk in real-time.
+
+---
+
+## 11. Landing Page & Marketing Site
+
+### 11.1 Landing Page (`/`)
 A full marketing landing page with:
 - **Hero Section**: "Human-Aware Productivity." headline with animated floating team avatars
 - **ExecutionCausalityStrip**: An auto-progressing systems diagram illustrating the causal model: Focus State → Effort Signals → Task Progress → Team Outcomes
@@ -358,7 +382,7 @@ A full marketing landing page with:
 - **Pricing Section**: Free plan highlighted, with a "Start Now" CTA
 - **Navigation Bar**: Links to Philosophy, Features, Pricing (smooth scroll), Log In, and Start Now
 
-### 10.2 Philosophy Page (`/philosophy`)
+### 11.2 Philosophy Page (`/philosophy`)
 A blog-style page derived from the project's origin story and core design philosophy:
 - Background on the cognitive cost of context switching
 - floework's causal model of work explanation
@@ -366,7 +390,7 @@ A blog-style page derived from the project's origin story and core design philos
 
 ---
 
-## 11. Onboarding Flow (`/onboarding`)
+## 12. Onboarding Flow (`/onboarding`)
 
 A 3-step animated onboarding experience:
 1. **How will you execute?** — Select use case: Individual Contributor, Technical Team, or Student Project (with contextual sub-copy)
@@ -377,72 +401,72 @@ Each step features staggered `animate-in` slide-up transitions, border-highlight
 
 ---
 
-## 12. Authentication
+## 13. Authentication
 
-### 12.1 Supported Auth Methods
+### 13.1 Supported Auth Methods
 - Email/Password registration and login
 - JWT-based session management
 - Role-based access control
 
-### 12.2 Route Protection
+### 13.2 Route Protection
 - `ProtectedRoute` guards all `/dashboard`, `/boards`, `/focus`, and other app routes
 - Unprotected routes: `/`, `/login`, `/register`, `/philosophy`
 
 ---
 
-## 13. Real-Time Collaboration
+## 14. Real-Time Collaboration
 
-### 13.1 WebSocket-Based Updates
+### 14.1 WebSocket-Based Updates
 - Task state changes broadcast via Socket.IO
 - Focus session presence sync
 - Project activity feeds
 
-### 13.2 Team Awareness Features
+### 14.2 Team Awareness Features
 - "In focus" indicators on team avatars
 - Non-intrusive status visibility
 - Async-friendly collaboration model
 
 ---
 
-## 14. Security Design
+## 15. Security Design
 
-### 14.1 Authentication & Authorization
+### 15.1 Authentication & Authorization
 - JWT-based authentication with expiration
 - Secure refresh token handling
 - Role-based permission enforcement
 
-### 14.2 Data Protection
+### 15.2 Data Protection
 - HTTPS enforced across all services
 - Encryption of sensitive fields at rest
 - Secure cloud storage access policies
 
 ---
 
-## 15. Deployment & DevOps
+## 16. Deployment & DevOps
 
-### 15.1 Cloud Infrastructure
+### 16.1 Cloud Infrastructure
 The platform is deployed on AWS, initially leveraging free-tier resources for development and evaluation.
 
-### 15.2 Deployment Strategy
+### 16.2 Deployment Strategy
 - **Frontend**: Static build hosted on object storage and CDN
 - **Backend**: Containerized Node.js services
 - **Database**: Managed PostgreSQL instance
 - **Cache**: Redis hosted on compute instance
 
-### 15.3 CI/CD Pipeline
+### 16.3 CI/CD Pipeline
 - Source control–triggered builds
 - Automated testing and linting
 - Container image creation
 - Continuous deployment to cloud infrastructure
 
-### 15.4 Scalability Path
+### 16.4 Scalability Path
 - Redis → Managed in-memory cache service
 - Single-instance backend → Container orchestration
 - Database → Multi-AZ PostgreSQL with read replicas
 
 ---
 
-## 16. Testing Strategy
+## 17. Testing Strategy
 
 | Test Type | Scope |
 |---|---|
@@ -453,14 +477,14 @@ The platform is deployed on AWS, initially leveraging free-tier resources for de
 
 ---
 
-## 17. Limitations
+## 18. Limitations
 - Not designed for large enterprise organizations
 - Focused primarily on technical teams
 - Relies on user honesty for focus session usage
 
 ---
 
-## 18. Future Enhancements
+## 19. Future Enhancements
 - AI-based task summarization and smart scheduling
 - Intelligent workload prediction
 - Team productivity benchmarking
@@ -470,7 +494,7 @@ The platform is deployed on AWS, initially leveraging free-tier resources for de
 
 ---
 
-## 19. Conclusion
+## 20. Conclusion
 floework addresses a structural gap in modern productivity systems by integrating:
 - Task execution
 - Human focus awareness
