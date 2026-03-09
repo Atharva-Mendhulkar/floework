@@ -3,7 +3,7 @@ import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
 import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
-import { useGetTasksQuery, useGetProjectPredictionQuery, api } from "@/store/api";
+import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, api } from "@/store/api";
 import { useMemo, useEffect, useState } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useDispatch } from "react-redux";
@@ -27,14 +27,16 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const [isEditingSprint, setIsEditingSprint] = useState(false);
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
-  const staticProjectId = "d5b480c4-ce88-4a96-aeae-7386b436a8ac";
-  const { data: predictionRes } = useGetProjectPredictionQuery(staticProjectId);
+  const { data: projectsRes } = useGetProjectsQuery();
+  const activeProjectId = projectsRes?.data?.[0]?.id || "fallback-id";
+
+  const { data: predictionRes } = useGetProjectPredictionQuery(activeProjectId, { skip: !activeProjectId });
   const prediction = predictionRes?.data;
 
   /* WebSocket subscription */
   useEffect(() => {
-    if (!socket || !isConnected) return;
-    socket.emit("join_project", staticProjectId);
+    if (!socket || !isConnected || !activeProjectId || activeProjectId === "fallback-id") return;
+    socket.emit("join_project", activeProjectId);
 
     socket.on("task_updated", (data: { taskId: string; phase: string; projectId: string }) => {
       dispatch(
@@ -60,7 +62,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     });
 
     return () => {
-      socket.emit("leave_project", staticProjectId);
+      socket.emit("leave_project", activeProjectId);
       socket.off("task_updated");
       socket.off("task_locked");
       socket.off("task_unlocked");
@@ -263,7 +265,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
       <TaskCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        projectId={staticProjectId}
+        projectId={activeProjectId}
       />
     </div>
   );

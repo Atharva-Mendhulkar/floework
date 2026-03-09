@@ -109,7 +109,7 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            window.location.href = "/focus"; // Redirect to focus page
+            window.location.href = `/focus?taskId=${task.id}`; // Redirect to focus page
           }}
           className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-[#007dff] text-white flex items-center justify-center shadow-lg shadow-[#007dff]/20 active:scale-95"
           title="Start Focus Session"

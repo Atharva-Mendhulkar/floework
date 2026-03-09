@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Play, Pause, AlertTriangle, ChevronDown, Zap } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from "recharts";
-import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation } from "@/store/api";
+import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation, useGetTasksQuery } from "@/store/api";
 import { toast } from "sonner";
 
 const generateQualityData = () =>
@@ -25,8 +25,18 @@ const FocusPage = () => {
   const [stopSessionApi] = useStopFocusSessionMutation();
   const [logProductivityApi] = useLogProductivityMutation();
 
-  const staticTaskId = "3aefbbe9-a1cc-41b5-a4e7-22e3e1d2f809";
+  const [searchParams] = useSearchParams();
+  const urlTaskId = searchParams.get("taskId");
 
+  const { data: tasksRes } = useGetTasksQuery();
+  const tasks = tasksRes?.data || [];
+
+  const activeTask = tasks.find(t => t.id === urlTaskId)
+    || tasks.find(t => t.status === "in-progress" || t.phase === "execution")
+    || tasks[0];
+
+  const activeTaskId = activeTask?.id || "";
+  const activeTaskTitle = activeTask?.title || "No Active Tasks";
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => {
@@ -73,7 +83,11 @@ const FocusPage = () => {
   const handleTimerToggle = async () => {
     try {
       if (!isRunning) {
-        const res = await startSessionApi(staticTaskId).unwrap();
+        if (!activeTaskId) {
+          toast.error("No valid task to focus on.");
+          return;
+        }
+        const res = await startSessionApi(activeTaskId).unwrap();
         setActiveSessionId(res.data.id);
         setIsRunning(true);
         toast.info("Focus session started.");
@@ -151,7 +165,7 @@ const FocusPage = () => {
         </div>
         <div>
           <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Anchored task</p>
-          <p className="text-[13px] font-semibold text-slate-900">Component Library Pipeline</p>
+          <p className="text-[13px] font-semibold text-slate-900">{activeTaskTitle}</p>
         </div>
         <button className="ml-2 flex items-center gap-1 text-[12px] text-slate-400 hover:text-slate-600 transition-colors">
           Change <ChevronDown size={11} />

@@ -34,6 +34,30 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
             },
         });
 
+        // Seed a default team and project for the new user
+        const team = await prisma.team.create({
+            data: {
+                name: 'Personal Workspace',
+            }
+        });
+
+        // Add user as a member of their own team
+        await prisma.teamMember.create({
+            data: {
+                teamId: team.id,
+                userId: user.id,
+                teamRole: 'ADMIN' // They are the owner
+            }
+        });
+
+        const project = await prisma.project.create({
+            data: {
+                name: 'My First Project',
+                description: 'Default project to get started',
+                teamId: team.id
+            }
+        });
+
         res.status(201).json({
             success: true,
             data: {
