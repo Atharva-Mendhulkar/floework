@@ -186,12 +186,14 @@ PostgreSQL / Redis / WebSockets / Cloud Services
 ---
 
 ### 7.2 Core Backend Services
-- Authentication Service
+- Authentication & RBAC Service
 - Project & Task Service
 - Focus Session Engine
-- Real-Time Event Service
-- Analytics Service
-- Billing & Subscription Service
+- Real-Time Event Service (Socket.IO)
+- **Execution Intelligence Service** (Signal computing)
+- **Advanced Analytics Service** (Bottlenecks & Burnout)
+- **Billing & Subscription Service** (Stripe via webhooks)
+- **Background Worker Queue** (BullMQ for async processing)
 
 ---
 
@@ -229,34 +231,28 @@ This separation ensures strong consistency for critical data and low-latency acc
 
 ---
 
-### 8.3 In-Memory Store — Redis
+### 8.3 In-Memory Store & Message Queue — Redis & BullMQ
 **Role**
 - Real-time system state
-- Low-latency data access
-- Temporary and derived data
+- Low-latency cache aside (15-min TTLs)
+- Asynchronous job execution queue
 
 **Used For**
-- Active focus sessions
-- "In focus" presence indicators
+- Active focus sessions and presence indicators
 - WebSocket connection mappings
-- Rate limiting counters
-- Short-lived analytics aggregates
-- Session and token storage
-
-Redis data is periodically persisted to PostgreSQL where required.
+- Background computation of complex analytics (Execution Signals)
+- Caching heavy aggregations (`/analytics/narrative`, `/analytics/stability`)
 
 ---
 
 ### 8.4 Core Entities
-- User
-- Role
-- Team
-- Project
-- Task (with `effort` S/M/L and `focusCount` fields)
-- FocusSession
-- ProductivityLog
-- Subscription
-- Payment
+- User & Role (Admin / Member)
+- Team & Project
+- Task (effort tags, focus counts, status)
+- FocusSession (duration, interrupts, timestamps)
+- ExecutionSignal (effort density, resume rate, blocker risk)
+- FocusStabilitySlot (time-bucketed focus scores)
+- Subscription (Stripe data, renewal dates)
 
 ---
 
@@ -280,14 +276,12 @@ The FlowBoard is the primary execution interface. Features include:
 - **Real-time Socket Sync**: Task state changes propagate instantly via WebSocket
 - **Task Locking**: Prevents concurrent edits
 
-### 9.2 Task Cards
+### 9.2 Task Cards & Detail Panel
 Each task card displays:
-- Title and description
-- Assignee avatars
-- **Effort Badge** (S / M / L) indicating cognitive cost
-- **Focus Count** showing how many focus sessions have been run on the task
-- **Start Focus** hover action — directly links to the Focus Page anchored to that task
-- Status indicator
+- Title, status, and assignee avatars
+- **Effort Badge** and **Focus Count** (number of sessions run)
+- **Start Focus** quick-action
+- **TaskExecutionPanel (Slide-over)**: Detailed view showing live *Execution Signals* (Effort Density bar, Resume Rate badge, Blocker Risk) and a real history of individual focus sessions mapped to that task.
 
 ### 9.3 Focus Session Engine
 - Task-linked focus sessions (each session is anchored to a task)
@@ -305,10 +299,19 @@ A dedicated Home view (`/dashboard`) separate from the Board:
   - Supports **live search filtering** from the top navigation search bar
 - **Productivity Chart**: Visual representation of focus time distribution across the week
 
-### 9.5 Analytics & Narrative Insights
-The Analytics page (`/analytics`) includes:
-- Bar/line charts for focus hours, session counts, and task completion rate
-- **Narrative Insights Panel**: AI-generated, plain-English summaries of productivity trends (e.g., "Your most productive day this week was Tuesday at 4h 20min. Consider protecting that window.")
+### 9.5 Execution Intelligence Analytics (`/analytics`)
+The platform replaces standard "time tracking" with behavioral signal analysis:
+- **Focus Stability Heatmap**: A 7×24 grid showing user's peak focus windows across the week based on historical effort density mapping.
+- **Bottleneck Report**: Ranks tasks by composite bottleneck scores (high effort + low progress) and generates plain-English recommendations to unblock them.
+- **Burnout Risk Trend**: A 4-week rolling line chart tracking real burnout signals, calculated via average interrupts and daily focus hours.
+- **Narrative Insights Panel**: Rule-based (non-LLM) plain-English summaries generating targeted Highlights and Warnings about recent productivity behavior.
+
+### 9.6 Billing & Subscriptions (`/billing`)
+Fully integrated Stripe SaaS architecture:
+- 3-Tier Plan selection (Free, Pro, Team)
+- Create Stripe Checkout Sessions for upgrades.
+- Stripe Customer Portal integration for standard subscription management.
+- Webhook handling (`checkout.session.completed`, `customer.subscription.deleted`, `invoice.payment_failed`) keeping local database state precisely in sync with Stripe.
 
 ### 9.6 Team Presence Avatars
 The FlowBoard header displays team member presence with:
