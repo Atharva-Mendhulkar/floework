@@ -48,7 +48,12 @@ app.get('/api/health', (req, res) => {
 // Global Error Handler
 app.use(errorHandler);
 
+// Export for testing
+export { app, server };
+
 // Start the server using the HTTP instance instead of express app
-server.listen(PORT, () => {
-    console.log(`[floework backend] Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => {
+        console.log(`[floework backend] Server is running on port ${PORT}`);
+    });
+}
