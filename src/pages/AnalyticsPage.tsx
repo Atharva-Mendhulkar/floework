@@ -26,6 +26,42 @@ const StatCard = ({ icon: Icon, label, value, sub, color }: {
   </div>
 );
 
+const BurnoutTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white border border-slate-200 shadow-xl rounded-xl p-3 w-[220px]">
+        <p className="text-[12px] font-bold text-slate-700 mb-2">{label}</p>
+        <div className="flex flex-col gap-1.5">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+                <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+                {entry.name}
+              </span>
+              <span className="text-[11px] font-bold" style={{ color: entry.color }}>
+                {entry.value}{entry.name.includes("Risk") ? "%" : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+        {data.factors && data.factors.length > 0 && (
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex flex-col gap-1.5">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Risk Factors</p>
+            {data.factors.map((f: string, i: number) => (
+              <p key={i} className="text-[11px] font-medium text-red-500/90 leading-snug flex items-start">
+                <span className="mr-1.5">•</span>
+                <span>{f}</span>
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 const AnalyticsPage = () => {
   const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
@@ -111,7 +147,7 @@ const AnalyticsPage = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip content={<BurnoutTooltip />} cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
                 <Line type="monotone" dataKey="interrupts" name="Interrupts" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} />
                 <Line type="monotone" dataKey="burnoutRisk" name="Burnout Risk %" stroke={RED} strokeWidth={2.5} dot={{ r: 3, fill: RED }} />
