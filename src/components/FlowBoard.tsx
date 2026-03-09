@@ -2,8 +2,8 @@ import { team } from "@/data/mockData";
 import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
-import { Plus, Calendar, ListTodo, Filter, Zap } from "lucide-react";
-import { useGetTasksQuery, api } from "@/store/api";
+import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
+import { useGetTasksQuery, useGetProjectPredictionQuery, api } from "@/store/api";
 import { useMemo, useEffect, useState } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useDispatch } from "react-redux";
@@ -28,6 +28,8 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
   const staticProjectId = "d5b480c4-ce88-4a96-aeae-7386b436a8ac";
+  const { data: predictionRes } = useGetProjectPredictionQuery(staticProjectId);
+  const prediction = predictionRes?.data;
 
   /* WebSocket subscription */
   useEffect(() => {
@@ -126,6 +128,43 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Predictive Delivery Badge */}
+          {prediction && (
+            <div
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border shadow-sm group relative cursor-help
+                ${prediction.deliveryProbability >= 80
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : prediction.deliveryProbability >= 50
+                    ? "bg-amber-50 border-amber-200 text-amber-700"
+                    : "bg-red-50 border-red-200 text-red-700"
+                }`}
+            >
+              {prediction.deliveryProbability >= 80 ? (
+                <TrendingUp size={14} className="text-emerald-500" />
+              ) : prediction.deliveryProbability >= 50 ? (
+                <AlertCircle size={14} className="text-amber-500" />
+              ) : (
+                <TrendingDown size={14} className="text-red-500" />
+              )}
+              <span className="text-[12px] font-bold tracking-tight">
+                {prediction.deliveryProbability}% Predictability
+              </span>
+
+              {/* Tooltip for factors */}
+              <div className="absolute top-full mt-2 right-0 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <p className="text-[11px] font-medium text-slate-300 mb-2">AI Delivery Prediction</p>
+                <div className="flex flex-col gap-1.5">
+                  {prediction.factors.map((f: string, i: number) => (
+                    <p key={i} className="text-[11px] text-slate-100 leading-snug flex items-start">
+                      <span className="mr-1.5 opacity-50">•</span>
+                      <span>{f}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Sprint progress badge */}
           <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
             <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">

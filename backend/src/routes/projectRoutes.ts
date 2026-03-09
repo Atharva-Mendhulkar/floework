@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProjects, createProject, getProjectById } from '../controllers/projectController';
+import { getProjects, createProject, getProjectById, getProjectPredictiveDelivery } from '../controllers/projectController';
 import { authorize } from '../middleware/rbacMiddleware';
 import { protect } from '../middleware/authMiddleware';
 
@@ -11,5 +11,8 @@ router.route('/')
 
 router.route('/:id')
     .get(getProjectById);
+
+router.route('/:id/prediction')
+    .get(getProjectPredictiveDelivery);
 
 export default router;

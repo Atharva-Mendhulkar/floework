@@ -1,6 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { getProjectPrediction } from '../services/predictiveDelivery.service';
+
+export const getProjectPredictiveDelivery = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await getProjectPrediction(req.params.id);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        next(error);
+    }
+};
 
 export const getProjects = async (req: Request, res: Response, next: NextFunction) => {
     try {

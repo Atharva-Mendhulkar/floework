@@ -234,6 +234,10 @@ export const api = createApi({
             query: (taskId) => `/tasks/${taskId}/replay`,
             providesTags: ['Task'],
         }),
+        getProjectPrediction: builder.query<{ success: boolean; data: any }, string>({
+            query: (projectId) => `/projects/${projectId}/prediction`,
+            providesTags: ['Project', 'Task'],
+        }),
     }),
 });
 
@@ -273,4 +277,5 @@ export const {
     useGetBottlenecksQuery,
     useGetBurnoutTrendQuery,
     useGetTaskReplayQuery,
+    useGetProjectPredictionQuery,
 } = api;
