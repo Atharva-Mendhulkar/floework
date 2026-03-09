@@ -494,7 +494,492 @@ The platform is deployed on AWS, initially leveraging free-tier resources for de
 
 ---
 
-## 20. Conclusion
+## 20. Master AI Build Prompt
+
+Below is a single master prompt that can be pasted into Bolt.new, Cursor, Lovable, or any AI code generator to scaffold and generate the complete floework application with frontend and backend. 
+
+It is written as a system architect specification so the generator builds the entire stack correctly.
+
+<details>
+<summary>Click here to expand the Master Build Prompt</summary>
+
+```text
+MASTER BUILD PROMPT — floework Fullstack System
+
+ROLE
+You are a senior full-stack engineer building a production-ready SaaS platform called floework.
+
+The system is a Human-Aware Execution Intelligence Platform that links:
+
+Focus State → Effort Signals → Task Progress → Team Outcomes.
+
+The system must be fully functional with frontend, backend, database, and real-time systems.
+
+Do not generate mock code.
+Generate working production-ready code.
+
+⸻
+
+CORE PRODUCT IDEA
+
+floework helps teams understand how work actually happens, not just what tasks exist.
+
+Unlike typical productivity tools, floework tracks execution signals such as:
+	•	focus sessions
+	•	interruptions
+	•	effort density
+	•	task progress velocity
+	•	execution bottlenecks
+
+The system provides execution intelligence analytics explaining how work moves.
+
+⸻
+
+TECH STACK (STRICT)
+
+Frontend
+	•	React
+	•	Vite
+	•	TypeScript
+	•	Tailwind CSS
+	•	shadcn-ui
+	•	React Router
+	•	Redux Toolkit
+	•	Recharts
+	•	Framer Motion
+
+Backend
+	•	Node.js
+	•	Express.js
+	•	TypeScript
+	•	Socket.IO
+	•	BullMQ job queues
+	•	Redis
+
+Database
+	•	PostgreSQL
+
+Auth
+	•	JWT
+	•	bcrypt
+
+Billing
+	•	Stripe
+
+Infrastructure
+	•	Docker support
+	•	environment variables
+	•	production configuration ready
+
+⸻
+
+PROJECT STRUCTURE
+
+Generate a monorepo structure.
+
+floework/
+ ├── frontend/
+ ├── backend/
+ ├── database/
+ ├── docker/
+ └── README.md
+
+
+⸻
+
+DATABASE SCHEMA
+
+Use PostgreSQL.
+
+Tables:
+
+Users
+
+id
+email
+password_hash
+name
+avatar
+role
+created_at
+
+Teams
+
+id
+name
+owner_id
+created_at
+
+Projects
+
+id
+team_id
+name
+created_at
+
+Tasks
+
+id
+project_id
+title
+description
+status
+effort
+assignee_id
+due_date
+created_at
+
+FocusSessions
+
+id
+task_id
+user_id
+start_time
+end_time
+duration
+interrupt_count
+note
+
+ExecutionEvents
+
+id
+task_id
+user_id
+event_type
+timestamp
+metadata
+
+ExecutionSignals
+
+id
+task_id
+effort_density
+resume_rate
+blocker_risk
+computed_at
+
+FocusStabilitySlots
+
+id
+user_id
+day_of_week
+hour_of_day
+focus_score
+
+Subscriptions
+
+id
+user_id
+stripe_customer_id
+plan
+status
+renewal_date
+
+
+⸻
+
+BACKEND SERVICES
+
+Implement these services.
+
+AuthenticationService
+	•	login
+	•	register
+	•	JWT generation
+	•	password hashing
+
+TaskService
+	•	create task
+	•	update task
+	•	move task
+	•	assign task
+
+FocusSessionService
+	•	start session
+	•	pause session
+	•	resume session
+	•	stop session
+	•	save session
+
+ExecutionSignalService
+Compute:
+
+effortDensity = focused_time / session_span
+resumeRate = resume_events / session_count
+
+Blocker rule:
+
+if effort_high && progress_low → blockerRisk
+
+ExecutionEventService
+Append-only event log.
+
+Example events:
+
+task_created
+focus_started
+focus_stopped
+task_blocked
+task_completed
+
+AnalyticsService
+Provides:
+	•	focus stability heatmap
+	•	burnout trend
+	•	bottleneck report
+	•	narrative insights
+
+PresenceService
+Uses Socket.IO + Redis.
+
+States:
+
+in_focus
+available
+offline
+
+BillingService
+Stripe integration:
+	•	create checkout session
+	•	handle webhook events
+	•	update subscription status
+
+WorkerQueue
+Use BullMQ for async tasks:
+
+compute_execution_signals
+generate_narratives
+analytics_aggregation
+
+
+⸻
+
+FRONTEND APPLICATION
+
+Build a full React dashboard.
+
+Pages:
+
+LandingPage
+LoginPage
+RegisterPage
+OnboardingPage
+DashboardHome
+BoardsPage
+FocusPage
+AnalyticsPage
+MessagesPage
+AlertsPage
+ProfilePage
+BillingPage
+
+⸻
+
+MAIN UI COMPONENTS
+
+Sidebar
+
+Home
+Boards
+Starred
+Focus
+Analytics
+Messages
+Alerts
+Profile
+
+TopHeader
+
+global search
+notifications
+profile menu
+
+FlowBoard
+Kanban columns:
+
+Backlog
+In Progress
+Review
+Done
+
+Features:
+	•	drag and drop
+	•	realtime updates
+	•	task creation modal
+
+TaskCard
+Displays:
+
+title
+assignee avatars
+effort badge
+focus count
+
+TaskDetailPanel
+Shows:
+
+task details
+execution signals
+focus session history
+execution timeline
+
+FocusTimer
+Timer with:
+
+start
+pause
+resume
+stop
+
+PostSessionModal
+Shows:
+
+time worked
+progress note
+log session button
+
+AnalyticsDashboard
+
+Charts:
+
+FocusStabilityHeatmap
+BurnoutTrendChart
+TaskBottleneckReport
+NarrativeInsightsPanel
+
+⸻
+
+EXECUTION REPLAY UI
+
+Task detail panel must show timeline replay.
+
+Example:
+
+09:32 Focus Started
+10:10 Interrupted
+10:15 Focus Resumed
+11:02 Focus Ended
+
+Use ExecutionEvents table.
+
+⸻
+
+REALTIME FEATURES
+
+Use Socket.IO.
+
+Events:
+
+task_updated
+task_created
+focus_started
+focus_stopped
+presence_updated
+
+Redis stores active presence.
+
+⸻
+
+ANALYTICS
+
+Focus Stability Heatmap:
+
+7 rows (days)
+24 columns (hours)
+
+Query FocusSessions grouped by hour.
+
+Burnout Score uses:
+
+session fragmentation
+after hours sessions
+weekly spikes
+
+Bottleneck Detection:
+
+high effort
+low progress
+long task age
+
+Narrative insights generated via rule engine.
+
+⸻
+
+LANDING PAGE
+
+Hero:
+
+Headline:
+
+Human-Aware Execution Intelligence
+
+Subtext:
+
+floework connects focus, effort, and task progress to explain how work actually happens.
+
+Include:
+	•	execution causality strip
+	•	feature grid
+	•	pricing section
+	•	signup CTA
+
+⸻
+
+SECURITY
+
+Implement:
+	•	password hashing (bcrypt)
+	•	JWT auth
+	•	protected routes
+	•	role-based access control
+	•	rate limiting
+
+⸻
+
+DEVOPS
+
+Include:
+
+Dockerfiles
+
+frontend container
+backend container
+postgres container
+redis container
+
+Add docker-compose.
+
+⸻
+
+TESTING
+
+Generate:
+	•	backend unit tests
+	•	API tests
+	•	basic frontend tests
+
+⸻
+
+FINAL OUTPUT
+
+Generate:
+	1.	complete frontend code
+	2.	complete backend code
+	3.	PostgreSQL schema
+	4.	Redis integration
+	5.	Stripe billing integration
+	6.	Socket.IO realtime system
+	7.	analytics engine
+	8.	Docker setup
+	9.	run instructions
+
+The result must be a fully runnable SaaS application.
+```
+</details>
+
+---
+
+## 21. Conclusion
 floework addresses a structural gap in modern productivity systems by integrating:
 - Task execution
 - Human focus awareness
