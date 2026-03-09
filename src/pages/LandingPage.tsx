@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check } from "lucide-react";
+import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCausalityStrip";
 
@@ -319,57 +319,69 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ─── Horizontal VS Competitors Section ─────────────────────────────────────────── */}
+            {/* ─── Disruptive Features Section ─────────────────────────────────────────── */}
             <section className="py-32 px-6 bg-slate-50 relative overflow-hidden border-t border-slate-200">
 
                 {/* Soft background glow to match hero */}
-                <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-orange-500/5 to-transparent pointer-events-none"></div>
+                <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-[#007dff]/5 to-transparent pointer-events-none"></div>
 
                 <div className="max-w-[1280px] mx-auto relative z-10">
                     <Reveal>
                         <div className="text-center mb-24 max-w-3xl mx-auto">
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border mb-6">
-                                <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">THE DIFFERENCE</span>
+                                <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">EXECUTION INTELLIGENCE</span>
                             </div>
                             <h2 className="text-4xl md:text-[52px] font-medium text-foreground tracking-tight leading-[1.1] mb-6">
-                                Not just another tool.<br />A completely new layer.
+                                Not just another tracker.<br />An execution observatory.
                             </h2>
                             <p className="text-[19px] text-text-secondary leading-relaxed font-medium">
-                                Why existing tools break under pressure, and how Floework fixes the root cause natively.
+                                We moved past static spreadsheets and chat rooms. floework is built on a real-time Execution Graph.
                             </p>
                         </div>
                     </Reveal>
 
                     <div className="space-y-8 max-w-[1100px] mx-auto">
 
-                        {/* ROW 1: VS JIRA */}
+                        {/* ROW 1: EXECUTION GRAPH / TASK REPLAY */}
                         <Reveal from="bottom" delay={0}>
                             <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[2rem] p-4 pr-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
                                 {/* Visual side */}
                                 <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
 
-                                    {/* Default State (Jira) */}
+                                    {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
-                                        <img src="/competitors/jira-logo.png" alt="Jira" className="w-28 h-28 md:w-36 md:h-36 object-contain mb-5 drop-shadow-sm" />
-                                        <p className="text-slate-800 font-semibold mb-2 text-lg">Process Tracking</p>
+                                        <div className="w-20 h-20 mb-6 bg-indigo-50 border border-indigo-100 rounded-3xl flex items-center justify-center shadow-inner">
+                                            <Target size={32} className="text-indigo-500" />
+                                        </div>
+                                        <p className="text-slate-800 font-semibold mb-2 text-xl drop-shadow-sm">The Execution Graph</p>
                                         <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                            "Cards move right, but no one knows what's actually happening right now. It's outcome-only visibility."
+                                            "A continuous, causal ledger of exactly how work unfolds over time."
                                         </p>
                                     </div>
 
-                                    {/* Hover State (Floework Mockup) */}
+                                    {/* Hover State (Task Replay Timeline Mockup) */}
                                     <div className="absolute inset-0 bg-background flex flex-col items-center justify-center p-6 opacity-0 translate-y-8 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0">
                                         <div className="w-full max-w-sm bg-surface border border-border rounded-xl shadow-lg p-5">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <img src="https://i.pravatar.cc/150?img=11" className="w-10 h-10 rounded-full" alt="User" />
-                                                <div>
-                                                    <p className="text-sm font-semibold text-foreground">Alex is focusing</p>
-                                                    <p className="text-xs text-[#007dff] font-medium flex items-center gap-1"><Zap size={10} fill="currentColor" /> Active for 45m</p>
-                                                </div>
+                                            <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
+                                                <span className="font-semibold text-sm text-foreground">Task Replay</span>
+                                                <span className="text-[10px] uppercase font-bold text-[#007dff] bg-[#007dff]/10 px-2 py-1 rounded">Live</span>
                                             </div>
-                                            <div className="bg-background border border-border rounded-lg p-3">
-                                                <p className="text-xs text-text-muted font-medium mb-1 uppercase tracking-wider">Anchored Task</p>
-                                                <p className="text-sm font-medium text-foreground">Implement Auth Middleware</p>
+
+                                            <div className="relative pl-6 space-y-4 before:absolute before:inset-y-0 before:left-2.5 before:w-px before:bg-border">
+                                                <div className="relative">
+                                                    <div className="absolute -left-6 w-5 h-5 bg-background border-2 border-[#007dff] rounded-full flex items-center justify-center">
+                                                        <div className="w-2 h-2 bg-[#007dff] rounded-full"></div>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-foreground">Focus Session Logged</p>
+                                                    <p className="text-[11px] text-text-muted mt-1">45m duration • 2 interrupts</p>
+                                                </div>
+                                                <div className="relative">
+                                                    <div className="absolute -left-6 w-5 h-5 bg-background border-2 border-amber-500 rounded-full flex items-center justify-center">
+                                                        <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-foreground">Status Change</p>
+                                                    <p className="text-[11px] text-text-muted mt-1">Moved to In Progress</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -377,46 +389,47 @@ export default function LandingPage() {
                                 </div>
                                 {/* Text side */}
                                 <div className="w-full md:w-[55%] flex flex-col justify-center pl-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Live Execution &gt; Static Tickets</h3>
+                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Task Execution Replay</h3>
                                     <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
-                                        Unlike Jira, floework anchors effort directly to tasks in real-time. Instead of asking "what's the status?", you automatically see exactly where focus is being deployed right now without interrupting anyone.
+                                        Tasks aren't just cards that move left to right. Every focus session, status change, and blocker is logged to our Execution Graph. Click any task to instantly replay its entire history chronologically, exactly as it happened.
                                     </p>
                                 </div>
                             </div>
                         </Reveal>
 
-                        {/* ROW 2: VS SLACK */}
+                        {/* ROW 2: COGNITIVE LOAD */}
                         <Reveal from="bottom" delay={100}>
                             <div className="group flex flex-col md:flex-row-reverse bg-surface border border-border rounded-[2rem] p-4 pl-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
                                 {/* Visual side */}
                                 <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
 
-                                    {/* Default State (Slack) */}
+                                    {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
-                                        <img src="/competitors/Slack-Logo.png" alt="Slack" className="w-24 h-24 md:w-32 md:h-32 object-contain mb-6 drop-shadow-md" />
-                                        <p className="text-[#4A154B] font-semibold mb-2 text-xl drop-shadow-sm">High-Noise Communication</p>
-                                        <p className="text-sm text-indigo-900/60 leading-relaxed font-medium">
-                                            "Constant pings, scattered context, and immediate pressure to respond. Focus is shattered daily."
+                                        <div className="w-20 h-20 mb-6 bg-rose-50 border border-rose-100 rounded-3xl flex items-center justify-center shadow-inner">
+                                            <Zap size={32} className="text-rose-500" fill="currentColor" />
+                                        </div>
+                                        <p className="text-rose-900 font-semibold mb-2 text-xl drop-shadow-sm">Cognitive Load Monitoring</p>
+                                        <p className="text-sm text-rose-900/60 leading-relaxed font-medium">
+                                            "We measure physiological burden, not just hours in a seat."
                                         </p>
                                     </div>
 
-                                    {/* Hover State (Floework Mockup) */}
+                                    {/* Hover State (Burnout Mockup) */}
                                     <div className="absolute inset-0 bg-background flex flex-col items-center justify-center p-6 opacity-0 translate-y-8 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0">
-                                        <div className="w-full max-w-sm bg-surface border border-border rounded-xl shadow-lg">
-                                            <div className="p-4 border-b border-border flex justify-between items-center bg-background rounded-t-xl">
-                                                <span className="text-sm font-semibold text-foreground">Post-Session Note</span>
+                                        <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-4 relative overflow-hidden">
+                                            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 to-rose-500"></div>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Burnout Risk Factors</span>
+                                                <span className="text-sm font-bold text-rose-400">High (72%)</span>
                                             </div>
-                                            <div className="p-5 space-y-4 bg-surface rounded-b-xl">
-                                                <div className="flex gap-3">
-                                                    <div className="w-8 h-8 rounded bg-[#007dff]/10 text-[#007dff] flex items-center justify-center shrink-0">
-                                                        <CheckCircle size={14} />
-                                                    </div>
-                                                    <p className="text-[13px] text-text-secondary font-medium leading-relaxed">
-                                                        "Finished the database migration. Added the script to the repo. Ready for review."
-                                                    </p>
+                                            <div className="space-y-2">
+                                                <div className="bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50 flex items-start gap-2">
+                                                    <span className="text-amber-500 mt-0.5">•</span>
+                                                    <span className="text-[11px] text-slate-300 leading-snug font-medium">Excessive context switching (Avg session &lt; 12m)</span>
                                                 </div>
-                                                <div className="pt-2 flex justify-end">
-                                                    <span className="text-[10px] uppercase font-bold text-text-muted bg-background border border-border px-2 py-1 rounded">Attached to Task</span>
+                                                <div className="bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50 flex items-start gap-2">
+                                                    <span className="text-rose-500 mt-0.5">•</span>
+                                                    <span className="text-[11px] text-slate-300 leading-snug font-medium">After-hours penalty: High weekend execution</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -425,45 +438,45 @@ export default function LandingPage() {
                                 </div>
                                 {/* Text side */}
                                 <div className="w-full md:w-[55%] flex flex-col justify-center pr-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Async Context &gt; Interruptions</h3>
+                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Protecting the Human Element</h3>
                                     <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
-                                        Unlike Slack, floework doesn't rely on immediate chat for alignment. Post-session notes automatically attach to the task, providing rich, contextual updates that the team can read entirely async.
+                                        Our analytics go beyond basic time tracking to model actual cognitive burden. The system automatically detects and flags burnout risks heavily penalizing focus fragmentation (micro-sessions) and late-night execution volume spikes.
                                     </p>
                                 </div>
                             </div>
                         </Reveal>
 
-                        {/* ROW 3: VS NOTION */}
+                        {/* ROW 3: PREDICTIVE DELIVERY */}
                         <Reveal from="bottom" delay={200}>
                             <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[2rem] p-4 pr-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
                                 {/* Visual side */}
                                 <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
 
-                                    {/* Default State (Notion) */}
+                                    {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
-                                        <img src="/competitors/notion-logo.png" alt="Notion" className="w-20 h-20 md:w-24 md:h-24 object-contain mb-5 drop-shadow-sm" />
-                                        <p className="text-stone-800 font-semibold mb-2 text-xl drop-shadow-sm">Execution Blindness</p>
-                                        <p className="text-sm text-stone-500 leading-relaxed font-medium">
-                                            "Beautiful docs, but completely disconnected from the actual work. It's a static repository, not an engine."
+                                        <div className="w-20 h-20 mb-6 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center justify-center shadow-inner">
+                                            <Calendar size={32} className="text-emerald-500" />
+                                        </div>
+                                        <p className="text-emerald-900 font-semibold mb-2 text-xl drop-shadow-sm">Predictive Delivery Engine</p>
+                                        <p className="text-sm text-emerald-900/60 leading-relaxed font-medium">
+                                            "Solving the fundamental disconnect between estimated effort and actual capacity."
                                         </p>
                                     </div>
 
-                                    {/* Hover State (Floework Mockup) */}
+                                    {/* Hover State (Prediction Badge Mockup) */}
                                     <div className="absolute inset-0 bg-background flex flex-col items-center justify-center p-6 opacity-0 translate-y-8 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0">
-                                        <div className="w-full max-w-sm bg-surface border border-border rounded-xl shadow-lg p-5">
-                                            <div className="flex items-center gap-2 mb-6">
-                                                <div className="w-2 h-2 rounded-full bg-[#007dff] animate-pulse"></div>
-                                                <span className="text-sm font-semibold text-foreground">Effort Insight</span>
+                                        <div className="w-full max-w-sm flex flex-col items-center">
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl shadow-md p-4 w-full mb-3 text-center">
+                                                <div className="flex items-center justify-center gap-2 mb-2">
+                                                    <span className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"></span>
+                                                    <span className="text-amber-700 font-bold text-[15px]">54% Predictability</span>
+                                                </div>
+                                                <p className="text-xs text-amber-700/80 font-medium">Sprint Slippage Risk Detected</p>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <div className="h-6 w-full rounded bg-muted/60 relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 h-full w-[80%] bg-[#007dff]/30 border-r-2 border-[#007dff]"></div>
-                                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground z-10">4h 30m Focus Spent</span>
-                                                </div>
-                                                <p className="text-[12px] text-text-secondary leading-snug font-medium text-center">
-                                                    This task took 3x longer than team average. The scope likely expanded during execution.
-                                                </p>
+                                            <div className="w-full bg-surface border border-border pl-4 pr-4 py-3 rounded-xl shadow-sm space-y-2">
+                                                <p className="text-[11px] text-text-secondary font-medium">✓ Trailing 4-week capacity averages 42 focus hours/week.</p>
+                                                <p className="text-[11px] text-amber-600 font-semibold border-t border-border pt-2">⚠ Required priority effort exceeds historical team capacity.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -471,9 +484,9 @@ export default function LandingPage() {
                                 </div>
                                 {/* Text side */}
                                 <div className="w-full md:w-[55%] flex flex-col justify-center pl-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Causal Analytics &gt; Static Docs</h3>
+                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Slippage Predicted via History</h3>
                                     <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
-                                        Unlike Notion, floework generates insights directly from execution data. Because we link focus to tasks, we can automatically summarize *why* things took longer or *where* friction occurred.
+                                        Stop guessing when a sprint will finish. The AI Predictive Delivery Engine maps your specific team's historical execution velocity against the exact effort estimations required for remaining backlog tasks, proactively warning you of structural blockers and capacity overruns.
                                     </p>
                                 </div>
                             </div>
