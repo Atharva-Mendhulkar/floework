@@ -91,6 +91,15 @@ export const api = createApi({
             }),
             invalidatesTags: ['User'],
         }),
+        setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { projectName?: string; sprintName?: string; useSandbox?: boolean }>({
+            query: (setupData) => ({
+                url: '/auth/setup-workspace',
+                method: 'POST',
+                body: setupData,
+            }),
+            invalidatesTags: ['Project', 'Task', 'User'],
+        }),
+
         getMyTeams: builder.query<{ success: boolean; data: any[] }, void>({
             query: () => '/teams',
             providesTags: ['User'],
@@ -151,10 +160,11 @@ export const api = createApi({
             }),
             invalidatesTags: ['FocusSession' as any],
         }),
-        stopFocusSession: builder.mutation<{ success: boolean; data: any }, string>({
-            query: (sessionId) => ({
+        stopFocusSession: builder.mutation<{ success: boolean; data: any }, { sessionId: string; aiAssisted?: boolean }>({
+            query: ({ sessionId, aiAssisted }) => ({
                 url: `/focus/${sessionId}/stop`,
                 method: 'PATCH',
+                body: { aiAssisted }
             }),
             invalidatesTags: ['FocusSession' as any],
         }),
@@ -262,9 +272,96 @@ export const api = createApi({
             query: (taskId) => `/tasks/${taskId}/replay`,
             providesTags: ['Task'],
         }),
+        linkPR: builder.mutation<{ success: boolean; data: any }, { id: string; prUrl: string }>({
+            query: ({ id, prUrl }) => ({
+                url: `/tasks/${id}/pr`,
+                method: 'POST',
+                body: { prUrl }
+            }),
+            invalidatesTags: ['Task'],
+        }),
         getProjectPrediction: builder.query<{ success: boolean; data: any }, string>({
             query: (projectId) => `/projects/${projectId}/prediction`,
             providesTags: ['Project', 'Task'],
+        }),
+        getFocusReports: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/focus-report',
+            providesTags: ['Signal' as any],
+        }),
+        getCurrentFocusReport: builder.query<{ success: boolean; data: any | null }, void>({
+            query: () => '/analytics/focus-report/current',
+            providesTags: ['Signal' as any],
+        }),
+        getEstimationHint: builder.query<{ success: boolean; data: any | null }, { effort: string; keywords: string[] }>({
+            query: ({ effort, keywords }) => `/analytics/estimation-hint?effort=${effort}&keywords=${keywords.join(',')}`,
+        }),
+        getEstimationAccuracy: builder.query<{ success: boolean; data: any }, void>({
+            query: () => '/analytics/estimation-accuracy',
+            providesTags: ['Signal' as any],
+        }),
+        disconnectGitHub: builder.mutation<{ success: boolean; message: string }, void>({
+            query: () => ({ url: '/auth/github', method: 'DELETE' }),
+            invalidatesTags: ['User'],
+        }),
+        getFocusWindows: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/focus-windows',
+            providesTags: ['Signal' as any],
+        }),
+        getGoogleCalendarStatus: builder.query<{ success: boolean; data: any }, void>({
+            query: () => '/auth/google-calendar/status',
+            providesTags: ['User'],
+        }),
+        disconnectGoogleCalendar: builder.mutation<{ success: boolean; message: string }, void>({
+            query: () => ({ url: '/auth/google-calendar', method: 'DELETE' }),
+            invalidatesTags: ['User'],
+        }),
+        getNarratives: builder.query<{ success: boolean; data: any[]; pagination: any }, { page?: number; limit?: number }>({
+            query: ({ page = 1, limit = 10 }) => `/narrative?page=${page}&limit=${limit}`,
+            providesTags: ['Signal' as any],
+        }),
+        getCurrentEffortNarrative: builder.query<{ success: boolean; data: any }, void>({
+            query: () => '/narrative/current',
+            providesTags: ['Signal' as any],
+        }),
+        updateNarrative: builder.mutation<{ success: boolean; data: any }, { id: string; body: string }>({
+            query: ({ id, body }) => ({
+                url: `/narrative/${id}`,
+                method: 'PATCH',
+                body: { body },
+            }),
+            invalidatesTags: ['Signal' as any],
+        }),
+        shareNarrative: builder.mutation<{ success: boolean; data: { shareUrl: string; shareToken: string; shareExpiry: Date } }, string>({
+            query: (id) => ({
+                url: `/narrative/${id}/share`,
+                method: 'POST',
+            }),
+            invalidatesTags: ['Signal' as any],
+        }),
+        revokeNarrativeShare: builder.mutation<{ success: boolean; message: string }, string>({
+            query: (id) => ({
+                url: `/narrative/${id}/share`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Signal' as any],
+        }),
+        getSharedNarrative: builder.query<{ success: boolean; data: any }, string>({
+            query: (token) => `/narrative/shared/${token}`,
+        }),
+        getAiDisplacement: builder.query<{ success: boolean; data: any[] }, void>({
+            query: () => '/analytics/ai-displacement',
+            providesTags: ['Signal' as any],
+        }),
+        getHasRealTasks: builder.query<{ success: boolean; data: { hasRealTasks: boolean } }, void>({
+            query: () => '/users/me/has-real-tasks',
+            providesTags: ['Task' as any],
+        }),
+        deleteSampleTasks: builder.mutation<{ success: boolean; message: string }, void>({
+            query: () => ({
+                url: '/tasks/samples',
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Task' as any],
         }),
     }),
 });
@@ -278,6 +375,7 @@ export const {
     useToggleTaskStarMutation,
     useLoginMutation,
     useRegisterMutation,
+    useSetupWorkspaceMutation,
     useGoogleLoginMutation,
     useGetMyTeamsQuery,
     useCreateTeamMutation,
@@ -309,5 +407,23 @@ export const {
     useGetBottlenecksQuery,
     useGetBurnoutTrendQuery,
     useGetTaskReplayQuery,
+    useLinkPRMutation,
     useGetProjectPredictionQuery,
+    useGetFocusReportsQuery,
+    useGetCurrentFocusReportQuery,
+    useGetEstimationHintQuery,
+    useGetEstimationAccuracyQuery,
+    useDisconnectGitHubMutation,
+    useGetFocusWindowsQuery,
+    useGetGoogleCalendarStatusQuery,
+    useDisconnectGoogleCalendarMutation,
+    useGetNarrativesQuery,
+    useGetCurrentEffortNarrativeQuery,
+    useUpdateNarrativeMutation,
+    useShareNarrativeMutation,
+    useRevokeNarrativeShareMutation,
+    useGetSharedNarrativeQuery,
+    useGetAiDisplacementQuery,
+    useGetHasRealTasksQuery,
+    useDeleteSampleTasksMutation,
 } = api;

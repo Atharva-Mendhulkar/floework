@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useCreateTeamMutation } from "@/store/api";
+import { useCreateTeamMutation, useSetupWorkspaceMutation } from "@/store/api";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowRight, Wand2 } from "lucide-react";
 
 export default function OnboardingPage() {
     const navigate = useNavigate();
@@ -12,15 +12,17 @@ export default function OnboardingPage() {
     const [hasTeam, setHasTeam] = useState<boolean | null>(null);
 
     const [teamName, setTeamName] = useState("");
+    const [projectName, setProjectName] = useState("");
+    const [sprintName, setSprintName] = useState("");
+
     const [createTeam, { isLoading: isCreating }] = useCreateTeamMutation();
+    const [setupWorkspace, { isLoading: isSettingUp }] = useSetupWorkspaceMutation();
 
     const handleNext = async () => {
         if (step === 1) {
             if (!useCase) return;
             if (useCase === "solo") {
-                // Skip team creation entirely
-                toast.success("Welcome to floework");
-                navigate("/dashboard");
+                setStep(4);
                 return;
             }
             setStep(2);
@@ -40,6 +42,25 @@ export default function OnboardingPage() {
             } catch (err) {
                 toast.error("Failed to create workspace");
             }
+        } else if (step === 4) {
+            if (!projectName.trim() || !sprintName.trim()) return;
+            try {
+                await setupWorkspace({ projectName, sprintName }).unwrap();
+                toast.success("Workspace configured!");
+                navigate("/dashboard");
+            } catch (err) {
+                toast.error("Failed to build custom workspace");
+            }
+        }
+    };
+
+    const handleSkipSandbox = async () => {
+        try {
+            await setupWorkspace({ useSandbox: true }).unwrap();
+            toast.success("Sandbox initialized!");
+            navigate("/dashboard");
+        } catch (err) {
+            toast.error("Failed to inject sandbox");
         }
     };
 
@@ -149,6 +170,46 @@ export default function OnboardingPage() {
                     </div>
                 )}
 
+                {/* Step 4: Individual Setup */}
+                {step === 4 && (
+                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
+                        <div className="text-center space-y-4">
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Design your space</h1>
+                            <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
+                                Name your workspace and define your first Sprint.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-5 w-full">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 ml-2">Workspace Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. My startup side-project"
+                                    value={projectName}
+                                    onChange={(e) => setProjectName(e.target.value)}
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 ml-2">Initial Sprint Tracker</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Sprint 1 or MVP Launch"
+                                    value={sprintName}
+                                    onChange={(e) => setSprintName(e.target.value)}
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                />
+                            </div>
+                        </div>
+
+                        <button onClick={handleSkipSandbox} className="mt-4 text-slate-500 hover:text-slate-800 font-medium text-sm flex items-center gap-2 transition-colors">
+                            <Wand2 size={16} /> Skip & build me a sandbox template instead
+                        </button>
+                    </div>
+                )}
+
                 {/* Action Bar */}
                 <div className="w-full flex justify-center mt-12 animate-[fade-in_1s_ease-in-out_both] delay-500">
                     <Button
@@ -156,12 +217,13 @@ export default function OnboardingPage() {
                         disabled={
                             (step === 1 && !useCase) ||
                             (step === 2 && hasTeam === null) ||
-                            (step === 3 && (!teamName.trim() || isCreating))
+                            (step === 3 && (!teamName.trim() || isCreating)) ||
+                            (step === 4 && (!projectName.trim() || !sprintName.trim() || isSettingUp))
                         }
                         size="lg"
                         className="h-14 px-10 rounded-full bg-slate-900 text-white font-semibold shadow-lg shadow-black/10 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:shadow-none min-w-[200px]"
                     >
-                        {step === 3 ? (isCreating ? "Preparing..." : "Enter floework") : "Continue"}
+                        {step === 3 || step === 4 ? ((isCreating || isSettingUp) ? "Preparing..." : "Enter floework") : "Continue"}
                     </Button>
                 </div>
 

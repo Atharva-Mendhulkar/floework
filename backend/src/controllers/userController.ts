@@ -98,3 +98,15 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 };
+
+export const hasRealTasks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const count = await prisma.task.count({
+            where: { assigneeId: userId, isSample: false } as any
+        });
+        res.json({ success: true, data: { hasRealTasks: count > 0 } });
+    } catch (error) {
+        next(error);
+    }
+};

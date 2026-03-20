@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Play, Pause, AlertTriangle, ChevronDown, Zap } from "lucide-react";
+import { Play, Pause, AlertTriangle, ChevronDown, Zap, Sparkles } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from "recharts";
 import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation, useGetTasksQuery } from "@/store/api";
 import { toast } from "sonner";
@@ -20,6 +20,15 @@ const FocusPage = () => {
   const [qualityData, setQualityData] = useState(generateQualityData);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessionNote, setSessionNote] = useState("");
+
+  const [aiAssisted, setAiAssisted] = useState(() => {
+    return localStorage.getItem('floework_ai_toggle_default') === 'true';
+  });
+
+  const handleAiAssistedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAiAssisted(e.target.checked);
+    localStorage.setItem('floework_ai_toggle_default', String(e.target.checked));
+  };
 
   const [startSessionApi] = useStartFocusSessionMutation();
   const [stopSessionApi] = useStopFocusSessionMutation();
@@ -93,7 +102,11 @@ const FocusPage = () => {
         toast.info("Focus session started.");
       } else {
         setIsRunning(false);
-        setShowPostSession(true); // Show confirmation screen
+        if (activeTask?.isSample) {
+            handleLogAndReturn();
+        } else {
+            setShowPostSession(true); // Show confirmation screen
+        }
       }
     } catch {
       toast.error("Could not sync with server.");
@@ -103,7 +116,7 @@ const FocusPage = () => {
   const handleLogAndReturn = async () => {
     try {
       if (activeSessionId) {
-        await stopSessionApi(activeSessionId).unwrap();
+        await stopSessionApi({ sessionId: activeSessionId, aiAssisted }).unwrap();
         const finalScore = Math.round(qualityData[qualityData.length - 1].quality);
         await logProductivityApi({ metric: "focus_quality", value: finalScore }).unwrap();
         toast.success(`Session saved with ${finalScore}% quality.`);
@@ -157,6 +170,22 @@ const FocusPage = () => {
           </div>
         </div>
       )}
+
+      {/* AI Toggle */}
+      <div className="flex items-center gap-2 mb-2 bg-purple-50 px-4 py-2 rounded-xl border border-purple-100">
+        <Sparkles size={14} className="text-purple-500" />
+        <span className="text-sm font-medium text-slate-700">AI-assisted session</span>
+        <label className="relative inline-flex items-center cursor-pointer ml-2">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={aiAssisted} 
+              onChange={handleAiAssistedChange}
+              disabled={isRunning || showPostSession} 
+            />
+            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500 peer-disabled:opacity-50"></div>
+        </label>
+      </div>
 
       {/* Active task chip */}
       <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm">

@@ -11,6 +11,12 @@ import apiRoutes from './routes';
 
 // Start BullMQ signal worker (gracefully handles missing Redis)
 import './workers/signalWorker';
+import { scheduleWeeklyFocusAuditor } from './workers/weeklyFocusAuditor';
+import { schedulePRStatusChecker } from './workers/prStatusChecker';
+import { scheduleGlobalGcalSync } from './workers/gcalSync';
+import { scheduleNarrativeGenerator } from './workers/narrativeGenerator';
+import { scheduleAIDisplacementRoller } from './workers/aiDisplacementRoller';
+import './workers/prStatusChecker';
 
 dotenv.config();
 
@@ -53,7 +59,13 @@ export { app, server };
 
 // Start the server using the HTTP instance instead of express app
 if (process.env.NODE_ENV !== 'test') {
-    server.listen(PORT, () => {
+    server.listen(PORT, async () => {
         console.log(`[floework backend] Server is running on port ${PORT}`);
+        // Schedule automated background tasks
+        await scheduleWeeklyFocusAuditor().catch(console.error);
+        await schedulePRStatusChecker().catch(console.error);
+        await scheduleGlobalGcalSync().catch(console.error);
+        await scheduleNarrativeGenerator().catch(console.error);
+        await scheduleAIDisplacementRoller().catch(console.error);
     });
 }

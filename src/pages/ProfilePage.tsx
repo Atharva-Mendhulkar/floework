@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useGetProfileQuery, useUpdateProfileMutation } from "@/store/api";
+import { useGetProfileQuery, useUpdateProfileMutation, useDisconnectGitHubMutation } from "@/store/api";
 import { toast } from "sonner";
-import { User as UserIcon, Lock, Mail, Save } from "lucide-react";
+import { User as UserIcon, Lock, Mail, Save, Github, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
-    const { data: profileRes, isLoading: isLoadingProfile } = useGetProfileQuery();
+    const { data: profileRes, isLoading: isLoadingProfile, refetch } = useGetProfileQuery();
     const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+    const [disconnectGitHub, { isLoading: isDisconnecting }] = useDisconnectGitHubMutation();
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -104,6 +105,66 @@ export default function ProfilePage() {
                         </Button>
                     </div>
                 </form>
+            </div>
+
+            <div>
+                <h2 className="text-xl font-bold text-foreground">Integrations</h2>
+                <p className="text-text-secondary mt-1">Connect external services to Floework.</p>
+            </div>
+
+            <div className="bg-surface rounded-2xl shadow-card border border-border p-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+                            <Github size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-foreground">GitHub</h3>
+                            <p className="text-sm text-text-muted mt-0.5">
+                                {profileRes?.data?.gitHubConnection ? `Connected as @${profileRes.data.gitHubConnection.githubLogin}` : "Link PRs to tasks and track blocked execution state."}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {profileRes?.data?.gitHubConnection ? (
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                                <CheckCircle2 size={14} /> Connected
+                            </span>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-slate-500"
+                                disabled={isDisconnecting}
+                                onClick={async () => {
+                                    await disconnectGitHub().unwrap();
+                                    toast.success("Disconnected GitHub");
+                                    refetch();
+                                }}
+                            >
+                                Disconnect
+                            </Button>
+                        </div>
+                    ) : (
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                                const token = localStorage.getItem('token');
+                                const popup = window.open(`/api/v1/auth/github?token=${token}`, 'github-oauth', 'width=600,height=700');
+                                window.addEventListener('message', (e) => {
+                                    if (e.data === 'github:connected') {
+                                        popup?.close();
+                                        toast.success("GitHub connected successfully!");
+                                        refetch();
+                                    }
+                                }, { once: true });
+                            }}
+                        >
+                            Connect
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     );

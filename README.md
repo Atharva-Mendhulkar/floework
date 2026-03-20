@@ -368,6 +368,15 @@ Hovering over the Burnout chart reveals these exact risk factors.
 ### 10.4 Predictive Delivery Engine
 The FlowBoard header features an AI Delivery Predictor badge. The backend engine calculates the team's historical execution velocity (average focus hours over trailing 4 weeks) and maps it against the estimated required hours for the remaining priority backlog tasks. If the required effort exceeds the historical capacity within the sprint boundary, the badge warns of Slippage Risk in real-time.
 
+### 10.5 Context-Switch Audit & Blocker Signals
+Weekly automated contextual audits parse your execution timeline to tell you explicitly what forces disrupted your deep work. For engineering workflows, we explicitly map external blockers natively into the task hierarchy (e.g., GitHub OAuth directly syncing PR Wait-Times via Webhooks to flag stalled cycle-times dynamically).
+
+### 10.6 Auto-Calibrating Estimation Engine
+floework tracks organic delta between sprint point estimations and actual real-time effort captured inside focus sessions. The AI engine continuously generates probabilistic "Estimate Hints" when you create new tasks dynamically surfacing your baseline estimation gaps.
+
+### 10.7 Deep Work Window Recommender
+floework tracks peak cognitive windows historically mapping Focus Stability across a standard 7-day grid. We generate custom deep-focus boundaries downloadable as an `.ics` schema to automatically protect your calendar using Google Auth. 
+
 ---
 
 ## 11. Landing Page & Marketing Site

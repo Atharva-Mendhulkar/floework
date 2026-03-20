@@ -1,5 +1,8 @@
-import { X, Clock, User, AlertTriangle, CheckCircle } from "lucide-react";
+import { X, Clock, User, AlertTriangle, CheckCircle, Github, Link } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
+import { useState } from "react";
+import { useLinkPRMutation } from "@/store/api";
+import { toast } from "sonner";
 import TaskExecutionPanel from "@/components/TaskExecutionPanel";
 import TaskReplayTimeline from "@/components/TaskReplayTimeline";
 
@@ -27,8 +30,23 @@ const statusStyle: Record<string, string> = {
 };
 
 const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
+  const [prUrl, setPrUrl] = useState("");
+  const [linkPR, { isLoading: isLinking }] = useLinkPRMutation();
 
   if (!task) return null;
+
+  const handleLinkPR = async () => {
+    if (!prUrl.trim()) return;
+    try {
+      await linkPR({ id: task.id, prUrl }).unwrap();
+      toast.success("GitHub Pull Request linked successfully");
+      setPrUrl("");
+    } catch (e) {
+      toast.error("Failed to link PR. Invalid URL or missing permissions.");
+    }
+  };
+
+  const activePR = (task as any).linkedPRs?.[0];
 
   return (
     <>
@@ -82,6 +100,46 @@ const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
               <p className="text-[13px] text-slate-600 leading-relaxed">{task.description}</p>
             </div>
           )}
+
+          {/* PR Integration */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                 <Github size={14} className="text-slate-600" />
+                 <span className="text-[12px] font-semibold text-slate-800">Linked Pull Request</span>
+              </div>
+              {activePR ? (
+                  <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                         <a href={`https://github.com/${activePR.owner}/${activePR.repo}/pull/${activePR.prNumber}`} target="_blank" rel="noreferrer" className="text-[13px] font-medium text-indigo-600 hover:underline truncate">
+                             {activePR.owner}/{activePR.repo}#{activePR.prNumber} — {activePR.prTitle || "Pending sync..."}
+                         </a>
+                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${activePR.state === 'merged' ? 'bg-purple-100 text-purple-700' : activePR.state === 'closed' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                             {activePR.state}
+                         </span>
+                      </div>
+                  </div>
+              ) : (
+                  <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                          <Link size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input 
+                              type="text" 
+                              value={prUrl}
+                              onChange={(e) => setPrUrl(e.target.value)}
+                              placeholder="Paste GitHub PR URL..." 
+                              className="w-full pl-7 pr-3 py-1.5 text-[12px] bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                          />
+                      </div>
+                      <button 
+                          onClick={handleLinkPR}
+                          disabled={isLinking || !prUrl.trim()}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                      >
+                          {isLinking ? "Linking..." : "Link PR"}
+                      </button>
+                  </div>
+              )}
+          </div>
 
           {/* Execution Signals & History — live from backend */}
           <TaskExecutionPanel taskId={task.id} />

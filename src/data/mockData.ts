@@ -37,6 +37,7 @@ export interface TaskNode {
   priority?: string;
   isStarred?: boolean;
   projectId: string;
+  isSample?: boolean;
 }
 
 export interface Phase {

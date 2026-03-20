@@ -103,6 +103,18 @@ const PhilosophyPage = () => {
                             </p>
                         </section>
                     </Reveal>
+
+                    <Reveal>
+                        <section>
+                            <h2 className="text-2xl font-semibold text-slate-900 mb-4 tracking-tight">4. Autonomous Execution Intelligence</h2>
+                            <p className="mb-4">
+                                Beyond modeling focus, floework acts as an intelligent execution layer. By integrating directly with GitHub to flag stalled PRs and auto-calibrating point estimations based on your historical organic effort boundaries, the platform transforms from a passive ledger into an active engineering coach.
+                            </p>
+                            <p>
+                                We prioritize human cognitive limits. The platform tracks your peak cognitive windows historically and generates native `.ics` protection blocks synced directly to your Google Calendar — shielding the human element from systemic sprint burnout automatically. 
+                            </p>
+                        </section>
+                    </Reveal>
                 </div>
 
                 <Reveal>

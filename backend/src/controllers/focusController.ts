@@ -39,6 +39,7 @@ export const stopFocusSession = async (req: Request, res: Response, next: NextFu
     try {
         const { id } = req.params; // Session ID
         const userId = (req as any).user.id;
+        const { aiAssisted } = req.body;
 
         const existingSession = await prisma.focusSession.findUnique({ where: { id } });
         if (!existingSession) {
@@ -59,7 +60,8 @@ export const stopFocusSession = async (req: Request, res: Response, next: NextFu
             data: {
                 endTime,
                 durationSecs,
-            },
+                aiAssisted: Boolean(aiAssisted)
+            } as any,
         });
 
         logExecutionEvent(existingSession.taskId, userId, 'FOCUS_STOP', { durationSecs, interrupts: existingSession.interrupts });

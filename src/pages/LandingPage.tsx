@@ -439,8 +439,11 @@ export default function LandingPage() {
                                 {/* Text side */}
                                 <div className="w-full md:w-[55%] flex flex-col justify-center pr-10 py-10">
                                     <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Protecting the Human Element</h3>
+                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
+                                        Our analytics go beyond basic time tracking to model actual cognitive burden. The system automatically detects burnout risks by penalizing fragmented micro-sessions and out-of-hours volume spikes.
+                                    </p>
                                     <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
-                                        Our analytics go beyond basic time tracking to model actual cognitive burden. The system automatically detects and flags burnout risks heavily penalizing focus fragmentation (micro-sessions) and late-night execution volume spikes.
+                                        Using historic data, floework pinpoints your optimal peak Deep Work windows and safely locks them directly into your Google Calendar.
                                     </p>
                                 </div>
                             </div>
@@ -484,9 +487,12 @@ export default function LandingPage() {
                                 </div>
                                 {/* Text side */}
                                 <div className="w-full md:w-[55%] flex flex-col justify-center pl-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Slippage Predicted via History</h3>
+                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Autonomous Calibration & Delivery</h3>
+                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
+                                        Stop guessing your capacity. Our Auto-Calibrating Estimation Engine learns your personal effort biases (e.g., "frontend tasks typically take you 1.5x longer than estimated") and dynamically generates coaching hints at task creation.
+                                    </p>
                                     <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
-                                        Stop guessing when a sprint will finish. The AI Predictive Delivery Engine maps your specific team's historical execution velocity against the exact effort estimations required for remaining backlog tasks, proactively warning you of structural blockers and capacity overruns.
+                                        Meanwhile, the Predictive Delivery Engine flags systemic sprint risks caused by external forces like PR Wait-Times mapped natively from GitHub Webhooks.
                                     </p>
                                 </div>
                             </div>

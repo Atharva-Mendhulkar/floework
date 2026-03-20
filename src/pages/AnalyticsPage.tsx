@@ -4,8 +4,12 @@ import {
 } from "recharts";
 import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery } from "@/store/api";
 import { TrendingUp, Users, Zap, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import React, { useState } from "react";
 import FocusStabilityMap from "@/components/FocusStabilityMap";
 import BottleneckPanel from "@/components/BottleneckPanel";
+import FocusReportCard from "@/components/analytics/FocusReportCard";
+import EstimationAccuracyTab from "@/components/analytics/EstimationAccuracyTab";
+import PeakFocusWindows from "@/components/analytics/PeakFocusWindows";
 
 const BLUE = "#007dff";
 const BLUE_LIGHT = "#60a5fa";
@@ -63,6 +67,8 @@ const BurnoutTooltip = ({ active, payload, label }: any) => {
 };
 
 const AnalyticsPage = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'estimation'>('overview');
+  
   const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
   const { data: narrativeRes } = useGetExecutionNarrativeQuery();
@@ -99,13 +105,36 @@ const AnalyticsPage = () => {
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
-      {/* Page title */}
-      <div>
-        <h2 className="text-[15px] font-semibold text-slate-900">Analytics</h2>
-        <p className="text-[12px] text-slate-400">Focus patterns, effort signals, and team health.</p>
+      {/* Page title and tabs */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-[15px] font-semibold text-slate-900">Analytics</h2>
+          <p className="text-[12px] text-slate-400">Focus patterns, effort signals, and team health.</p>
+        </div>
+        
+        <div className="flex items-center gap-1 border-b border-slate-200">
+          <button 
+            onClick={() => setActiveTab('overview')}
+            className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${activeTab === 'overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Overview
+          </button>
+          <button 
+            onClick={() => setActiveTab('estimation')}
+            className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${activeTab === 'estimation' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Estimation Accuracy
+          </button>
+        </div>
       </div>
 
-      {/* Stat cards */}
+      {activeTab === 'estimation' ? (
+        <EstimationAccuracyTab />
+      ) : (
+        <>
+          <FocusReportCard />
+
+          {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={Zap} label="Focus Hours" value={`${totalFocusHrs}h`} sub="This week" color={BLUE} />
         <StatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} sub="This week" color="#10b981" />
@@ -194,6 +223,9 @@ const AnalyticsPage = () => {
       {/* Focus Stability Heatmap */}
       <FocusStabilityMap />
 
+      {/* Peak Focus Windows */}
+      <PeakFocusWindows />
+
       {/* Bottleneck Report */}
       <BottleneckPanel />
 
@@ -232,6 +264,8 @@ const AnalyticsPage = () => {
           )}
         </div>
       )}
+     </>
+    )}
     </div>
   );
 };

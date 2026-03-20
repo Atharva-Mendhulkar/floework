@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateTaskMutation } from "@/store/api";
+import { useCreateTaskMutation, useGetEstimationHintQuery } from "@/store/api";
 import { toast } from "sonner";
 import { team } from "@/data/mockData";
 
@@ -22,6 +22,15 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
     const [assigneeId, setAssigneeId] = useState<string>("unassigned");
     const [priority, setPriority] = useState("medium");
     const [dueDate, setDueDate] = useState("");
+    const [dismissHint, setDismissHint] = useState(false);
+
+    const STOP_WORDS = new Set(['a','an','the','and','or','to','of','for','in','on','with','add','fix','update','create','implement']);
+    const keywords = title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
+    
+    // Convert priority to S/M/L format
+    const effortLevel = priority === 'low' ? 'S' : priority === 'high' ? 'L' : 'M';
+    const { data: hintRes } = useGetEstimationHintQuery({ effort: effortLevel, keywords }, { skip: keywords.length === 0 });
+    const hint = hintRes?.data;
 
     const handleSubmit = async () => {
         if (!title.trim()) {
@@ -47,6 +56,7 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
             setAssigneeId("unassigned");
             setPriority("medium");
             setDueDate("");
+            setDismissHint(false);
 
             onClose();
         } catch (error) {
@@ -100,6 +110,16 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
                                     <SelectItem value="high">High</SelectItem>
                                 </SelectContent>
                             </Select>
+                            {hint && !dismissHint && (
+                                <div className="mt-1.5 flex items-start justify-between bg-yellow-50 text-yellow-700/90 p-2.5 rounded-lg border border-yellow-200/50">
+                                   <p className="text-[11px] font-medium leading-tight">
+                                     Your {priority} '{hint.keyword}' tasks usually run {hint.ratio.toFixed(1)}x over. Consider {priority === 'low' ? 'Medium' : 'High'}.
+                                   </p>
+                                   <button onClick={() => setDismissHint(true)} className="text-yellow-600/70 hover:text-yellow-800 ml-2 shrink-0 text-[14px] leading-none">
+                                      &times;
+                                   </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

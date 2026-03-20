@@ -13,6 +13,8 @@ import { SocketProvider } from "./modules/socket/SocketContext";
 import Index from "./pages/Index";
 import BoardsPage from "./pages/BoardsPage";
 import FocusPage from "./pages/FocusPage";
+import NarrativePage from "@/pages/NarrativePage";
+import SharedNarrativePage from "@/pages/SharedNarrativePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import LandingPage from "./pages/LandingPage";
@@ -40,6 +42,7 @@ const App = () => (
                 {/* Public landing page */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/philosophy" element={<PhilosophyPage />} />
+                <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
 
                 {/* Auth */}
                 <Route path="/login" element={<LoginPage />} />
@@ -53,6 +56,7 @@ const App = () => (
                   <Route path="/dashboard" element={<Index />} />
                   <Route path="/boards" element={<BoardsPage />} />
                   <Route path="/focus" element={<DashboardLayout><FocusPage /></DashboardLayout>} />
+                  <Route path="/narrative" element={<DashboardLayout><NarrativePage /></DashboardLayout>} />
                   <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
                   <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
                   <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />

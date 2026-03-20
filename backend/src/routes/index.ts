@@ -12,7 +12,9 @@ import teamRoutes from './teamRoutes';
 import analyticsRoutes from './analyticsRoutes';
 import billingRoutes from './billingRoutes';
 import sprintRoutes from './sprintRoutes';
+import narrativeRoutes from './narrativeRoutes';
 import { protect } from '../middleware/authMiddleware';
+import { enforceDataOwnership } from '../middleware/enforceDataOwnership';
 
 const router = Router();
 
@@ -26,7 +28,8 @@ router.use('/tasks', protect, taskRoutes);
 router.use('/focus', focusRoutes);
 router.use('/productivity', productivityRoutes);
 router.use('/alerts', protect, alertRoutes);
-router.use('/analytics', protect, analyticsRoutes);
+router.use('/analytics', protect, enforceDataOwnership, analyticsRoutes);
 router.use('/billing', billingRoutes);
+router.use('/narrative', narrativeRoutes);
 
 export default router;
