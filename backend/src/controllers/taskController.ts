@@ -17,7 +17,18 @@ export const getTaskReplay = async (req: Request, res: Response, next: NextFunct
 export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { projectId, starred } = req.query;
-        const filter: any = {};
+        const userId = (req as any).user?.id;
+
+        // Build user-scoped filter — only return tasks in projects the user is a member of
+        const memberFilter = {
+            project: {
+                team: {
+                    members: { some: { userId } }
+                }
+            }
+        };
+
+        const filter: any = { ...memberFilter };
         if (projectId) filter.projectId = String(projectId);
         if (starred === 'true') filter.isStarred = true;
 
@@ -37,20 +48,43 @@ export const getTasks = async (req: Request, res: Response, next: NextFunction) 
 
 export const updateTaskState = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { status, phase } = req.body;
+        const { status, phase, title, description, dueDate, priority, assigneeId } = req.body;
+        const userId = (req as any).user?.id;
 
         const oldTask = await prisma.task.findUnique({ where: { id: req.params.id } });
+        if (!oldTask) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        // Ownership check: user must be assignee OR a member of the task's project team
+        if (userId) {
+            const membership = await prisma.teamMember.findFirst({
+                where: {
+                    userId,
+                    team: { projects: { some: { id: oldTask.projectId } } }
+                }
+            });
+            if (!membership) {
+                return res.status(403).json({ success: false, message: 'Forbidden: you are not a member of this task\'s project' });
+            }
+        }
+
+        const updateData: any = {};
+        if (status !== undefined) updateData.status = status;
+        if (phase !== undefined) updateData.phase = phase;
+        if (title !== undefined) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
+        if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+        if (priority !== undefined) updateData.priority = priority;
+        if (assigneeId !== undefined) updateData.assigneeId = assigneeId;
 
         const task = await prisma.task.update({
             where: { id: req.params.id },
-            data: { status, phase },
+            data: updateData,
         });
 
-        if (status === 'Done' && oldTask && oldTask.status !== 'Done') {
+        if (status === 'Done' && oldTask.status !== 'Done') {
             estimationLoggerQueue.add('log-estimation-record', { taskId: task.id }).catch(console.error);
         }
 
-        const userId = (req as any).user?.id;
         if (userId) {
             logExecutionEvent(task.id, userId, 'STATUS_CHANGE', { status, phase });
         }
@@ -64,13 +98,30 @@ export const updateTaskState = async (req: Request, res: Response, next: NextFun
 export const toggleTaskStar = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { isStarred } = req.body;
+        const userId = (req as any).user?.id;
 
-        const task = await prisma.task.update({
+        // Verify user has access to this task's project
+        const task = await prisma.task.findUnique({ where: { id: req.params.id } });
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        if (userId) {
+            const membership = await prisma.teamMember.findFirst({
+                where: {
+                    userId,
+                    team: { projects: { some: { id: task.projectId } } }
+                }
+            });
+            if (!membership) {
+                return res.status(403).json({ success: false, message: 'Forbidden' });
+            }
+        }
+
+        const updated = await prisma.task.update({
             where: { id: req.params.id },
             data: { isStarred },
         });
 
-        res.json({ success: true, data: task });
+        res.json({ success: true, data: updated });
     } catch (error) {
         next(error);
     }

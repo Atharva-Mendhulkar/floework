@@ -5,6 +5,9 @@ export interface User {
   role: string;
   initials?: string;
   color?: string;
+  weeklyReportEnabled?: boolean;
+  gitHubConnection?: { githubLogin: string } | null;
+  googleCalendarConnection?: { googleEmail: string; lastSynced?: string | null } | null;
 }
 
 export interface Project {

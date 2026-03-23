@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { protect } from '../middleware/authMiddleware';
+import { enforceDataOwnership } from '../middleware/enforceDataOwnership';
 import { 
     getNarratives, 
     getCurrentNarrative, 
@@ -13,7 +14,7 @@ const router = Router();
 
 router.get('/shared/:token', getSharedNarrative); // PUBLIC
 
-router.use(protect);
+router.use(protect, enforceDataOwnership);
 
 router.get('/', getNarratives);
 router.get('/current', getCurrentNarrative);

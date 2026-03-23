@@ -23,6 +23,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
+  const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(() => {
+    return !localStorage.getItem('floework_onboarding_v1_complete');
+  });
 
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
@@ -94,7 +97,35 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-5">
+    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-5 relative">
+      {/* Onboarding Tooltip Overlay */}
+      {showOnboardingTooltip && totalTasks > 0 && (
+        <div className="absolute top-1/3 left-1/3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl p-4 flex items-start gap-3 max-w-sm relative">
+            {/* Pointer arrow */}
+            <div className="absolute -bottom-2 left-6 w-4 h-4 bg-slate-900 border-b border-r border-slate-700 rotate-45" />
+            
+            <div className="w-8 h-8 rounded-full bg-[#007dff]/20 flex items-center justify-center shrink-0">
+              <Zap size={16} className="text-[#007dff]" fill="currentColor" />
+            </div>
+            <div>
+              <h4 className="text-[13px] font-semibold text-white mb-1">Start your first session</h4>
+              <p className="text-[12px] text-slate-300 mb-3 leading-relaxed">
+                Hover over any task card below and click the lightning bolt to start your first focus session. See how Floework tracks your cognitive load.
+              </p>
+              <button 
+                onClick={() => {
+                  localStorage.setItem('floework_onboarding_v1_complete', 'true');
+                  setShowOnboardingTooltip(false);
+                }}
+                className="text-[11px] font-bold text-slate-900 bg-white hover:bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

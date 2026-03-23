@@ -38,15 +38,22 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     try {
         const { name, email, password } = req.body;
 
+        if (!name || !email || !password) {
+            return next(new AppError('Please provide name, email, and password', 400));
+        }
+
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return next(new AppError('Email already in use', 400));
         }
 
-        // Note: Password should be hashed in production using bcryptjs
+        // Always hash the password before storing
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const user = await prisma.user.create({
-            data: { name, email, password },
+            data: { name, email, password: hashedPassword },
             select: { id: true, name: true, email: true, role: true },
         });
 
@@ -61,14 +68,26 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
         const userId = (req as any).user.id;
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { id: true, name: true, email: true, role: true, createdAt: true },
+            select: { id: true, name: true, email: true, role: true, createdAt: true, weeklyReportEnabled: true },
         });
 
         if (!user) {
             return next(new AppError('User not found', 404));
         }
 
-        res.json({ success: true, data: user });
+        // Include GitHub and Google Calendar connections for the profile page
+        let gitHubConnection = null;
+        let googleCalendarConnection = null;
+        try {
+            const gh = await (prisma as any).gitHubConnection.findUnique({ where: { userId } });
+            if (gh) gitHubConnection = { githubLogin: gh.githubLogin };
+        } catch (e) {}
+        try {
+            const gc = await (prisma as any).googleCalendarConnection.findUnique({ where: { userId } });
+            if (gc) googleCalendarConnection = { googleEmail: gc.googleEmail, lastSynced: gc.lastSynced };
+        } catch (e) {}
+
+        res.json({ success: true, data: { ...user, gitHubConnection, googleCalendarConnection } });
     } catch (error) {
         next(error);
     }
@@ -77,7 +96,7 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
 export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as any).user.id;
-        const { name, email, password } = req.body;
+        const { name, email, password, weeklyReportEnabled } = req.body;
 
         const updateData: any = {};
         if (name) updateData.name = name;
@@ -86,11 +105,14 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
             const salt = await bcrypt.genSalt(10);
             updateData.password = await bcrypt.hash(password, salt);
         }
+        if (weeklyReportEnabled !== undefined) {
+            updateData.weeklyReportEnabled = Boolean(weeklyReportEnabled);
+        }
 
         const user = await prisma.user.update({
             where: { id: userId },
             data: updateData,
-            select: { id: true, name: true, email: true, role: true },
+            select: { id: true, name: true, email: true, role: true, weeklyReportEnabled: true },
         });
 
         res.json({ success: true, data: user });

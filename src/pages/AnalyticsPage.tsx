@@ -2,9 +2,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery } from "@/store/api";
-import { TrendingUp, Users, Zap, AlertTriangle, CheckCircle2, Info } from "lucide-react";
-import React, { useState } from "react";
+import { useGetAnalyticsDashboardQuery, useGetBurnoutTrendQuery } from "@/store/api";
+import { useState } from "react";
 import FocusStabilityMap from "@/components/FocusStabilityMap";
 import BottleneckPanel from "@/components/BottleneckPanel";
 import FocusReportCard from "@/components/analytics/FocusReportCard";
@@ -15,20 +14,13 @@ const BLUE = "#007dff";
 const BLUE_LIGHT = "#60a5fa";
 const RED = "#f87171";
 
-const StatCard = ({ icon: Icon, label, value, sub, color }: {
-  icon: any; label: string; value: string; sub?: string; color: string;
-}) => (
-  <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0`} style={{ background: `${color}18` }}>
-      <Icon size={17} style={{ color }} />
-    </div>
-    <div>
-      <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">{label}</p>
-      <p className="text-xl font-bold text-slate-900 leading-tight">{value}</p>
-      {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
-    </div>
-  </div>
-);
+const tooltipStyle = {
+  background: "#ffffff",
+  border: "1px solid #e2e8f0",
+  borderRadius: 10,
+  boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+  fontSize: 12,
+};
 
 const BurnoutTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -49,13 +41,12 @@ const BurnoutTooltip = ({ active, payload, label }: any) => {
             </div>
           ))}
         </div>
-        {data.factors && data.factors.length > 0 && (
+        {data.factors?.length > 0 && (
           <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex flex-col gap-1.5">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Risk Factors</p>
             {data.factors.map((f: string, i: number) => (
               <p key={i} className="text-[11px] font-medium text-red-500/90 leading-snug flex items-start">
-                <span className="mr-1.5">•</span>
-                <span>{f}</span>
+                <span className="mr-1.5">•</span><span>{f}</span>
               </p>
             ))}
           </div>
@@ -66,15 +57,26 @@ const BurnoutTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+type Tab = 'focus' | 'burnout' | 'signals' | 'estimation';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'focus', label: 'Focus' },
+  { id: 'burnout', label: 'Burnout & Health' },
+  { id: 'signals', label: 'Execution Signals' },
+  { id: 'estimation', label: 'Estimation' },
+];
+
+const EmptyChart = ({ msg }: { msg: string }) => (
+  <div className="h-full flex items-center justify-center text-[12px] text-slate-400">{msg}</div>
+);
+
 const AnalyticsPage = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'estimation'>('overview');
-  
-  const { data: dashboardRes, isLoading: isLoadingDash } = useGetAnalyticsDashboardQuery();
-  const { data: teamStatusRes, isLoading: isLoadingTeam } = useGetTeamStatusQuery();
-  const { data: narrativeRes } = useGetExecutionNarrativeQuery();
+  const [activeTab, setActiveTab] = useState<Tab>('focus');
+
+  const { data: dashboardRes, isLoading } = useGetAnalyticsDashboardQuery();
   const { data: burnoutRes } = useGetBurnoutTrendQuery();
 
-  if (isLoadingDash || isLoadingTeam) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -85,187 +87,115 @@ const AnalyticsPage = () => {
     );
   }
 
-  const { barData = [], burnoutData: rawBurnout = [] } = dashboardRes?.data || {};
-  // Prefer real 4-week burnout signal; fall back to dashboard data
-  const burnoutData = (burnoutRes?.data?.length ?? 0) > 0 ? burnoutRes!.data : rawBurnout;
-  const teamStatus = teamStatusRes?.data || [];
-
-  const totalFocusHrs = (barData as any[]).reduce((s: number, d: any) => s + (d.focusHrs || 0), 0);
-  const totalTasks = (barData as any[]).reduce((s: number, d: any) => s + (d.tasksCompleted || 0), 0);
-  const inFocusNow = (teamStatus as any[]).filter((ts: any) => ts.status === "In Focus").length;
-  const latestBurnout = (burnoutData as any[]).at(-1)?.burnoutRisk ?? 0;
-
-  const tooltipStyle = {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: 10,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-    fontSize: 12,
-  };
+  const barData = (dashboardRes?.data?.barData || []) as any[];
+  const burnoutData = ((burnoutRes?.data?.length ?? 0) > 0 ? burnoutRes!.data : dashboardRes?.data?.burnoutData || []) as any[];
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
-      {/* Page title and tabs */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-[15px] font-semibold text-slate-900">Analytics</h2>
-          <p className="text-[12px] text-slate-400">Focus patterns, effort signals, and team health.</p>
-        </div>
-        
-        <div className="flex items-center gap-1 border-b border-slate-200">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${activeTab === 'overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-          >
-            Overview
-          </button>
-          <button 
-            onClick={() => setActiveTab('estimation')}
-            className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${activeTab === 'estimation' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-          >
-            Estimation Accuracy
-          </button>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-[15px] font-semibold text-slate-900">Analytics</h2>
+        <p className="text-[12px] text-slate-400">Deep-dive into your focus patterns, signals, and health.</p>
       </div>
 
-      {activeTab === 'estimation' ? (
-        <EstimationAccuracyTab />
-      ) : (
-        <>
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-slate-200">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap
+              ${activeTab === tab.id
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Focus Tab ── */}
+      {activeTab === 'focus' && (
+        <div className="flex flex-col gap-4">
           <FocusReportCard />
 
-          {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Zap} label="Focus Hours" value={`${totalFocusHrs}h`} sub="This week" color={BLUE} />
-        <StatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} sub="This week" color="#10b981" />
-        <StatCard icon={Users} label="In Focus Now" value={String(inFocusNow)} sub="Team members" color="#8b5cf6" />
-        <StatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} sub="Current estimate" color="#f59e0b" />
-      </div>
-
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Focus Hours vs Tasks */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-          <div>
-            <h3 className="text-[13px] font-semibold text-slate-900">Focus Hours vs Tasks Completed</h3>
-            <p className="text-[11px] text-slate-400">Daily breakdown this week</p>
-          </div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} barGap={4} barCategoryGap="35%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="focusHrs" name="Focus Hrs" fill={BLUE} radius={[5, 5, 0, 0]} />
-                <Bar dataKey="tasksCompleted" name="Tasks Done" fill={BLUE_LIGHT} radius={[5, 5, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Burnout Risk */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-          <div>
-            <h3 className="text-[13px] font-semibold text-slate-900">Burnout Risk Trend</h3>
-            <p className="text-[11px] text-slate-400">Weekly rolling analysis</p>
-          </div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={burnoutData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip content={<BurnoutTooltip />} cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="interrupts" name="Interrupts" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} />
-                <Line type="monotone" dataKey="burnoutRisk" name="Burnout Risk %" stroke={RED} strokeWidth={2.5} dot={{ r: 3, fill: RED }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Team Status */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-        <div>
-          <h3 className="text-[13px] font-semibold text-slate-900">Team Status</h3>
-          <p className="text-[11px] text-slate-400">Live execution state across the team</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {(teamStatus as any[]).map((ts: any) => (
-            <div
-              key={ts.member.id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all bg-slate-50/50"
-            >
-              <div className={`w-9 h-9 rounded-xl ${ts.member.color} flex items-center justify-center text-[11px] font-bold text-slate-700 shrink-0`}>
-                {ts.member.initials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-slate-800 truncate">{ts.member.name}</p>
-                {ts.task && <p className="text-[11px] text-slate-400 truncate">{ts.task}</p>}
-              </div>
-              <span className={`shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-lg
-                ${ts.status === "In Focus"
-                  ? "bg-[#007dff]/10 text-[#007dff]"
-                  : "bg-slate-100 text-slate-500"
-                }`}
-              >
-                {ts.status === "In Focus" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#007dff] animate-pulse" />
-                )}
-                {ts.status}
-              </span>
+          {/* Focus Hours chart */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="text-[13px] font-semibold text-slate-900">Focus Hours vs Tasks Completed</h3>
+              <p className="text-[11px] text-slate-400">Daily breakdown this week</p>
             </div>
-          ))}
-        </div>
-      </div>
-      {/* Focus Stability Heatmap */}
-      <FocusStabilityMap />
-
-      {/* Peak Focus Windows */}
-      <PeakFocusWindows />
-
-      {/* Bottleneck Report */}
-      <BottleneckPanel />
-
-      {/* Execution Narrative Card */}
-      {narrativeRes?.data && (
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-3">
-          <div>
-            <h3 className="text-[13px] font-semibold text-slate-900">Execution Summary</h3>
-            <p className="text-[11px] text-slate-400">Auto-generated from your focus and task data</p>
+            <div className="h-56">
+              {barData.length === 0 ? (
+                <EmptyChart msg="No focus data yet — complete a session to see your chart." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} barGap={4} barCategoryGap="35%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Bar dataKey="focusHrs" name="Focus Hrs" fill={BLUE} radius={[5, 5, 0, 0]} />
+                    <Bar dataKey="tasksCompleted" name="Tasks Done" fill={BLUE_LIGHT} radius={[5, 5, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <p className="text-[13px] font-medium text-slate-700 leading-relaxed">{narrativeRes.data.summary}</p>
-          </div>
+          {/* Peak Focus Windows */}
+          <PeakFocusWindows />
 
-          {narrativeRes.data.highlights.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {narrativeRes.data.highlights.map((h, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />
-                  <p className="text-[12px] text-slate-600">{h}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {narrativeRes.data.warnings.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {narrativeRes.data.warnings.map((w, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <Info size={13} className="text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[12px] text-slate-600">{w}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Focus Stability Heatmap */}
+          <FocusStabilityMap />
         </div>
       )}
-     </>
-    )}
+
+      {/* ── Burnout & Health Tab ── */}
+      {activeTab === 'burnout' && (
+        <div className="flex flex-col gap-4">
+          {/* Burnout Trend */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="text-[13px] font-semibold text-slate-900">Burnout Risk Trend</h3>
+              <p className="text-[11px] text-slate-400">4-week rolling analysis of interruption and after-hours load</p>
+            </div>
+            <div className="h-60">
+              {burnoutData.length === 0 ? (
+                <EmptyChart msg="No burnout data yet — accumulates after a few weeks of usage." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={burnoutData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<BurnoutTooltip />} cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    <Line type="monotone" dataKey="interrupts" name="Interrupts" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} />
+                    <Line type="monotone" dataKey="burnoutRisk" name="Burnout Risk %" stroke={RED} strokeWidth={2.5} dot={{ r: 3, fill: RED }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* Bottleneck Report */}
+          <BottleneckPanel />
+        </div>
+      )}
+
+      {/* ── Execution Signals Tab ── */}
+      {activeTab === 'signals' && (
+        <div className="flex flex-col gap-4">
+          <FocusStabilityMap />
+          <BottleneckPanel />
+        </div>
+      )}
+
+      {/* ── Estimation Tab ── */}
+      {activeTab === 'estimation' && (
+        <EstimationAccuracyTab />
+      )}
     </div>
   );
 };

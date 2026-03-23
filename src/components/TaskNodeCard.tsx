@@ -161,7 +161,11 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
         {task.hasFocus && (
           <div className="w-2 h-2 rounded-full bg-focus animate-pulse-soft" />
         )}
-        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-secondary text-text-muted hover:text-foreground">
+        <button
+          onClick={(e) => { e.stopPropagation(); onClick?.(task); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-secondary text-text-muted hover:text-foreground"
+          title="View details"
+        >
           <MoreHorizontal size={14} />
         </button>
       </div>

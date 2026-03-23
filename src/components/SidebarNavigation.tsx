@@ -1,4 +1,4 @@
-import { Home, Target, BarChart3, Settings, Send, AlertTriangle, Star, Layers, Zap } from "lucide-react";
+import { Home, Target, BarChart3, Settings, Send, AlertTriangle, Star, Layers, Zap, FileText } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGetAlertsQuery } from "@/store/api";
 
@@ -8,6 +8,7 @@ const navItems = [
   { icon: Star, label: "Starred", path: "/starred" },
   { icon: Target, label: "Focus", path: "/focus" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: FileText, label: "Narrative", path: "/narrative" },
   { icon: Send, label: "Messages", path: "/messages" },
 ];
 

@@ -13,12 +13,19 @@ const generateQualityData = () =>
 
 const FocusPage = () => {
   const navigate = useNavigate();
-  const [isRunning, setIsRunning] = useState(false);
+
+  // Restore state from sessionStorage on mount (survives navigation away/back)
+  const [isRunning, setIsRunning] = useState(() => sessionStorage.getItem('focus_running') === 'true');
   const [showPostSession, setShowPostSession] = useState(false);
-  const [seconds, setSeconds] = useState(25 * 60);
+  const [seconds, setSeconds] = useState(() => {
+    const stored = sessionStorage.getItem('focus_seconds');
+    return stored ? parseInt(stored, 10) : 25 * 60;
+  });
   const [interrupts, setInterrupts] = useState(0);
   const [qualityData, setQualityData] = useState(generateQualityData);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(
+    () => sessionStorage.getItem('focus_session_id')
+  );
   const [sessionNote, setSessionNote] = useState("");
 
   const [aiAssisted, setAiAssisted] = useState(() => {
@@ -46,13 +53,28 @@ const FocusPage = () => {
 
   const activeTaskId = activeTask?.id || "";
   const activeTaskTitle = activeTask?.title || "No Active Tasks";
+  // Persist timer seconds to sessionStorage every tick
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => {
-      setSeconds((s) => (s > 0 ? s - 1 : 0));
+      setSeconds((s) => {
+        const next = s > 0 ? s - 1 : 0;
+        sessionStorage.setItem('focus_seconds', String(next));
+        return next;
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, [isRunning]);
+
+  // Persist running state and session id
+  useEffect(() => {
+    sessionStorage.setItem('focus_running', String(isRunning));
+  }, [isRunning]);
+
+  useEffect(() => {
+    if (activeSessionId) sessionStorage.setItem('focus_session_id', activeSessionId);
+    else sessionStorage.removeItem('focus_session_id');
+  }, [activeSessionId]);
 
   useEffect(() => {
     if (!isRunning) return;
