@@ -25,10 +25,12 @@ router.use('/projects', protect, projectRoutes);
 router.use('/projects/:projectId/messages', protect, messageRoutes);
 router.use('/projects/:projectId/sprints', protect, sprintRoutes);
 router.use('/tasks', protect, taskRoutes);
-router.use('/focus', focusRoutes);
-router.use('/productivity', productivityRoutes);
+router.use('/focus', focusRoutes); // protect applied internally inside focusRoutes
+router.use('/productivity', protect, productivityRoutes); // defence-in-depth: protect both here & inside
 router.use('/alerts', protect, alertRoutes);
 router.use('/analytics', protect, enforceDataOwnership, analyticsRoutes);
+// NOTE: billing webhook (/billing/webhook) MUST stay unauthenticated (raw body needed for Stripe sig verification);
+// protect is applied inside billingRoutes AFTER the webhook route.
 router.use('/billing', billingRoutes);
 router.use('/narrative', narrativeRoutes);
 

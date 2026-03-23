@@ -38,7 +38,10 @@ const limiter = rateLimit({
 
 // Security and Logging Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors()); // Allow all origins in development to prevent localhost/127.0.0.1 mismatches
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+}));
 app.use(limiter); // Apply rate limiter to all requests
 app.use(morgan('dev'));
 app.use(express.json());

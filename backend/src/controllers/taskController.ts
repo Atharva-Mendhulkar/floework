@@ -4,10 +4,27 @@ import { AppError } from '../middleware/errorHandler';
 import { logExecutionEvent, getTaskExecutionTimeline } from '../services/executionGraph.service';
 import { estimationLoggerQueue } from '../workers/estimationLogger';
 import { prStatusCheckerQueue } from '../workers/prStatusChecker';
+import axios from 'axios';
 
 export const getTaskReplay = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const events = await getTaskExecutionTimeline(req.params.id);
+        const userId = (req as any).user?.id;
+        const taskId = req.params.id;
+
+        // Ownership check: verify user is a member of the task's project team
+        if (userId) {
+            const task = await prisma.task.findUnique({ where: { id: taskId } });
+            if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+            const membership = await prisma.teamMember.findFirst({
+                where: { userId, team: { projects: { some: { id: task.projectId } } } }
+            });
+            if (!membership) {
+                return res.status(403).json({ success: false, message: 'Forbidden: not a project member' });
+            }
+        }
+
+        const events = await getTaskExecutionTimeline(taskId);
         res.json({ success: true, count: events.length, data: events });
     } catch (error) {
         next(error);
@@ -36,7 +53,8 @@ export const getTasks = async (req: Request, res: Response, next: NextFunction) 
             where: filter,
             include: { 
                 assignee: { select: { id: true, name: true } },
-                linkedPRs: { take: 1, orderBy: { openedAt: 'desc' } }
+                linkedPRs: { take: 1, orderBy: { openedAt: 'desc' } },
+                sprint: { select: { id: true, name: true, status: true } },
             },
         });
 
@@ -130,10 +148,21 @@ export const toggleTaskStar = async (req: Request, res: Response, next: NextFunc
 export const createTask = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, description, projectId, assigneeId, dueDate, priority } = req.body;
+        const userId = (req as any).user?.id;
 
         const project = await prisma.project.findUnique({ where: { id: projectId } });
         if (!project) {
             return next(new AppError('Project not found for the provided projectId', 404));
+        }
+
+        // Verify the requesting user is a member of the project's team
+        if (userId) {
+            const membership = await prisma.teamMember.findFirst({
+                where: { userId, team: { projects: { some: { id: projectId } } } }
+            });
+            if (!membership) {
+                return res.status(403).json({ success: false, message: 'Forbidden: you are not a member of this project' });
+            }
         }
 
         const task = await prisma.task.create({
@@ -147,7 +176,6 @@ export const createTask = async (req: Request, res: Response, next: NextFunction
             },
         });
 
-        const userId = (req as any).user?.id;
         if (userId) {
             logExecutionEvent(task.id, userId, 'TASK_CREATED', { title, priority });
         }
@@ -180,8 +208,6 @@ export const linkPR = async (req: Request, res: Response, next: NextFunction) =>
             return res.status(403).json({ success: false, message: 'GitHub account not connected.' });
         }
 
-        // Technically we should fetch PR from GitHub to verify it exists and get initial state, 
-        // but for now we create the LinkedPR and let the worker fetch it.
         const linkedPr = await (prisma as any).linkedPR.upsert({
             where: { taskId_owner_repo_prNumber: { taskId, owner: prData.owner, repo: prData.repo, prNumber: prData.prNumber } },
             update: {},
@@ -194,12 +220,34 @@ export const linkPR = async (req: Request, res: Response, next: NextFunction) =>
             }
         });
 
-        // Enqueue status checker immediately for the newly linked PR
+        // Immediately fetch real PR state from GitHub (non-blocking, best-effort)
+        try {
+            const { decrypt } = await import('../utils/crypto');
+            const token = decrypt(connection.accessToken);
+            const ghRes = await axios.get(
+                `https://api.github.com/repos/${prData.owner}/${prData.repo}/pulls/${prData.prNumber}`,
+                { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
+            );
+            const pr = ghRes.data;
+            const state = pr.merged_at ? 'merged' : pr.state; // 'open' | 'closed' | 'merged'
+            await (prisma as any).linkedPR.update({
+                where: { taskId_owner_repo_prNumber: { taskId, owner: prData.owner, repo: prData.repo, prNumber: prData.prNumber } },
+                data: {
+                    state,
+                    title: pr.title,
+                    openedAt: new Date(pr.created_at),
+                    mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+                }
+            });
+        } catch (ghErr) {
+            // Non-fatal: worker will pick it up on next scheduled run
+            console.warn('[linkPR] Could not fetch initial PR state:', (ghErr as any)?.message);
+        }
+
+        // Enqueue status checker to keep polling the new PR
         await prStatusCheckerQueue.add('check-prs', {}).catch(console.error);
 
         logExecutionEvent(taskId, userId, 'PR_LINKED', { prNumber: prData.prNumber, owner: prData.owner, repo: prData.repo });
-
-        // Update task response includes linkedPr? Build.md says "Extend GET /tasks/:id response" - wait, getTasks already includes stuff. We'll update getTasks if needed.
 
         res.json({ success: true, data: linkedPr });
     } catch (error) {

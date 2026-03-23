@@ -75,12 +75,12 @@ export async function getBurnoutSignal(userId: string) {
     });
 
     // Bucket by week
-    type WeekData = { focusSecs: number; interrupts: number; sessions: number; fragmented: number; afterHours: number };
+    type WeekData = { focusSecs: number; interrupts: number; sessions: number; fragmented: number; afterHours: number; activeDays: Set<string> };
     const weeks: WeekData[] = [
-        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0 },
-        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0 },
-        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0 },
-        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0 },
+        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0, activeDays: new Set() },
+        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0, activeDays: new Set() },
+        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0, activeDays: new Set() },
+        { focusSecs: 0, interrupts: 0, sessions: 0, fragmented: 0, afterHours: 0, activeDays: new Set() },
     ];
 
     const now = Date.now();
@@ -92,6 +92,9 @@ export async function getBurnoutSignal(userId: string) {
         weeks[wIdx].focusSecs += s.durationSecs;
         weeks[wIdx].interrupts += s.interrupts;
         weeks[wIdx].sessions += 1;
+        // Track distinct calendar days for accurate hoursPerDay
+        const dateKey = s.startTime.toISOString().split('T')[0];
+        weeks[wIdx].activeDays.add(dateKey);
 
         // Fragmentation Penalty (< 10 min sessions)
         if (s.durationSecs < 600) {
@@ -111,7 +114,8 @@ export async function getBurnoutSignal(userId: string) {
 
     return weeks.map((w, i) => {
         const avgInterrupts = w.sessions > 0 ? w.interrupts / w.sessions : 0;
-        const hoursPerDay = (w.focusSecs / 3600) / 7;
+        const activeDays = Math.max(1, w.activeDays.size);
+        const hoursPerDay = (w.focusSecs / 3600) / activeDays; // use actual active days, not 7
         const totalFocusHrs = w.focusSecs / 3600;
 
         // Base risk: high interrupts + high hours per day

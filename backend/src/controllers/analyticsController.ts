@@ -15,6 +15,17 @@ export const getTaskExecutionSignals = async (req: Request, res: Response, next:
         const { taskId } = req.params;
         const userId = (req as any).user.id;
 
+        // Ownership check: verify user is a project member for this task
+        const task = await prisma.task.findUnique({ where: { id: taskId } });
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        const membership = await prisma.teamMember.findFirst({
+            where: { userId, team: { projects: { some: { id: task.projectId } } } }
+        });
+        if (!membership) {
+            return res.status(403).json({ success: false, message: 'Forbidden: not a project member' });
+        }
+
         const signal = await getOrSet(
             `signals:task:${taskId}:${userId}`,
             TTL_SECONDS,
@@ -209,10 +220,11 @@ export const getEstimationAccuracy = async (req: Request, res: Response, next: N
         let best = null;
         let worst = null;
         
+        // Sort by deviation from 1.0 — worst = farthest from 1, best = closest to 1
         if (patterns.length > 0) {
-            worst = patterns[0];
-            const sorted = [...patterns].sort((a,b) => Math.abs(a.ratio - 1) - Math.abs(b.ratio - 1));
-            best = sorted[0];
+            const sorted = [...patterns].sort((a, b) => Math.abs(b.ratio - 1) - Math.abs(a.ratio - 1));
+            worst = sorted[0];   // highest deviation (most inaccurate)
+            best = sorted[sorted.length - 1]; // closest to 1.0 (most accurate)
         }
         
         res.json({ 

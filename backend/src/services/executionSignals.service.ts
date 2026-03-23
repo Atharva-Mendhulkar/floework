@@ -19,8 +19,8 @@ export async function computeTaskSignals(taskId: string, userId: string) {
 
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     const progressVelocity: string =
-        task?.status === 'DONE' ? 'high' :
-            task?.status === 'IN_PROGRESS' && effortDensity > 0.6 ? 'medium' : 'low';
+        task?.status === 'Done' ? 'high' :
+            task?.status === 'In Progress' && effortDensity > 0.6 ? 'medium' : 'low';
 
     const blockerRisk = effortDensity < 0.4 && progressVelocity === 'low' && sessions.length > 2;
 
