@@ -16,6 +16,8 @@ import { schedulePRStatusChecker } from './workers/prStatusChecker';
 import { scheduleGlobalGcalSync } from './workers/gcalSync';
 import { scheduleNarrativeGenerator } from './workers/narrativeGenerator';
 import { scheduleAIDisplacementRoller } from './workers/aiDisplacementRoller';
+import { scheduleFocusWindowsRoller } from './workers/focusWindowsRoller';
+import { scheduleAlertGenerator } from './workers/alertGenerator';
 import './workers/prStatusChecker';
 
 dotenv.config();
@@ -70,5 +72,7 @@ if (process.env.NODE_ENV !== 'test') {
         await scheduleGlobalGcalSync().catch(console.error);
         await scheduleNarrativeGenerator().catch(console.error);
         await scheduleAIDisplacementRoller().catch(console.error);
+        await scheduleFocusWindowsRoller().catch(console.error);
+        await scheduleAlertGenerator().catch(console.error);
     });
 }

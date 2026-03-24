@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProjectSprints, createSprint, updateSprint } from '../controllers/sprintController';
+import { getProjectSprints, createSprint, updateSprint, deleteSprint, assignTaskToSprint } from '../controllers/sprintController';
 import { protect } from '../middleware/authMiddleware';
 
 // Note: Mounted via /api/v1/projects/:projectId/sprints from core routes
@@ -12,6 +12,10 @@ router.route('/')
     .post(createSprint);
 
 router.route('/:sprintId')
-    .patch(updateSprint);
+    .patch(updateSprint)
+    .delete(deleteSprint);
+
+router.route('/:sprintId/tasks/:taskId')
+    .post(assignTaskToSprint);
 
 export default router;

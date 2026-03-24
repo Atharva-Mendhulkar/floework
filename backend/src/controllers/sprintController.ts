@@ -98,3 +98,54 @@ export const updateSprint = async (req: Request, res: Response, next: NextFuncti
         next(error);
     }
 };
+
+// Delete a sprint — moves incomplete tasks back to backlog first
+export const deleteSprint = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { sprintId } = req.params;
+
+        const sprint = await prisma.sprint.findUnique({
+            where: { id: sprintId },
+            include: { tasks: true }
+        });
+        if (!sprint) return next(new AppError('Sprint not found', 404));
+
+        await prisma.$transaction(async (tx) => {
+            if (sprint.tasks.length > 0) {
+                await tx.task.updateMany({ where: { sprintId }, data: { sprintId: null } });
+            }
+            await tx.sprint.delete({ where: { id: sprintId } });
+        });
+
+        res.json({ success: true, message: 'Sprint deleted, tasks moved to backlog' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Assign or unassign a task to/from a sprint
+export const assignTaskToSprint = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { sprintId, taskId } = req.params;
+        const { remove } = req.body; // remove: true → unassign
+
+        const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } });
+        if (!sprint) return next(new AppError('Sprint not found', 404));
+
+        const task = await prisma.task.findUnique({ where: { id: taskId } });
+        if (!task) return next(new AppError('Task not found', 404));
+
+        if (task.projectId !== sprint.projectId) {
+            return next(new AppError("Task does not belong to this sprint's project", 400));
+        }
+
+        const updated = await prisma.task.update({
+            where: { id: taskId },
+            data: { sprintId: remove ? null : sprintId },
+        });
+
+        res.json({ success: true, data: updated });
+    } catch (error) {
+        next(error);
+    }
+};

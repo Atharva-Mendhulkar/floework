@@ -7,6 +7,16 @@ import { getIO } from '../services/socketService';
 export const getMessages = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { projectId } = req.params;
+        const userId = (req as any).user?.id;
+
+        // Verify user is a member of this project's team
+        const project = await prisma.project.findUnique({ where: { id: projectId } });
+        if (!project) return next(new AppError('Project not found', 404));
+
+        const membership = await prisma.teamMember.findFirst({
+            where: { userId, team: { projects: { some: { id: projectId } } } }
+        });
+        if (!membership) return next(new AppError('Forbidden: not a project member', 403));
 
         const messages = await prisma.message.findMany({
             where: { projectId },
