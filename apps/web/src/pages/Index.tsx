@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import SidebarNavigation from "@/components/SidebarNavigation";
 import TopHeader from "@/components/TopHeader";
 import ActivityTable from "@/components/ActivityTable";
 import ProductivityChart from "@/components/ProductivityChart";
 import { useAuth } from "@/modules/auth/AuthContext";
-import { useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery, useGetCurrentFocusReportQuery } from "@/store/api";
+import { useGetProjectsQuery, useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery, useGetCurrentFocusReportQuery } from "@/store/api";
 import { Zap, TrendingUp, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,6 +23,14 @@ const MiniStatCard = ({ icon: Icon, label, value, color }: { icon: any; label: s
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to onboarding if user has no projects yet
+  const { data: projectsRes, isLoading: projectsLoading } = useGetProjectsQuery();
+  useEffect(() => {
+    if (!projectsLoading && projectsRes && projectsRes.data.length === 0) {
+      navigate('/onboarding', { replace: true });
+    }
+  }, [projectsRes, projectsLoading, navigate]);
 
   const { data: dashboardRes } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes } = useGetTeamStatusQuery();
