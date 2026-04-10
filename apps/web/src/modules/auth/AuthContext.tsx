@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "../../lib/supabase";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface User {
     id: string;
@@ -17,28 +19,47 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function mapSupabaseUser(su: SupabaseUser): User {
+    return {
+        id: su.id,
+        email: su.email || "",
+        name: su.user_metadata?.full_name || su.email?.split("@")[0] || "User",
+        role: "admin",
+    };
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Development mockup: Auto-login or check localStorage
-        const storedUser = localStorage.getItem("floe_user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setIsLoading(false);
+        // Check existing session
+        supabase.auth.getSession().then(({ data }) => {
+            if (data.session?.user) {
+                setUser(mapSupabaseUser(data.session.user));
+            }
+            setIsLoading(false);
+        });
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUser(mapSupabaseUser(session.user));
+            } else {
+                setUser(null);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const login = (token: string, userData: User) => {
-        localStorage.setItem("floe_token", token);
-        localStorage.setItem("floe_user", JSON.stringify(userData));
+    const login = (_token: string, userData: User) => {
+        // Kept for compatibility — Supabase handles session persistence internally
         setUser(userData);
     };
 
-    const logout = () => {
-        localStorage.removeItem("floe_token");
-        localStorage.removeItem("floe_user");
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
     };
 
