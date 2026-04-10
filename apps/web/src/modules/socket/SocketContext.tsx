@@ -1,75 +1,33 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { useAuth } from '../auth/AuthContext';
+import React, { createContext, useContext, ReactNode } from 'react';
 
-// Socket connection URL (Default to backend port)
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5001';
+type MockSocket = {
+  emit: (event: string, ...args: any[]) => void;
+  on: (event: string, callback: (...args: any[]) => void) => void;
+  off: (event: string, callback?: (...args: any[]) => void) => void;
+};
 
 interface SocketContextType {
-    socket: Socket | null;
-    isConnected: boolean;
+  socket: MockSocket;
+  isConnected: boolean;
 }
 
+const mockSocket: MockSocket = {
+  emit: () => {},
+  on: () => {},
+  off: () => {}
+};
+
 const SocketContext = createContext<SocketContextType>({
-    socket: null,
-    isConnected: false,
+  socket: mockSocket,
+  isConnected: true
 });
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-    const [socket, setSocket] = useState<Socket | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
-    const { isAuthenticated } = useAuth();
-
-    useEffect(() => {
-        // Only connect the socket if the user is authenticated
-        if (!isAuthenticated) {
-            if (socket) {
-                socket.disconnect();
-                setSocket(null);
-                setIsConnected(false);
-            }
-            return;
-        }
-
-        // Pass the JWT token for authentication on socket handshake
-        const token = localStorage.getItem('floe_token');
-
-        const newSocket = io(SOCKET_URL, {
-            auth: {
-                token,
-            },
-            transports: ['websocket'],
-        });
-
-        setSocket(newSocket);
-
-        newSocket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-            setIsConnected(true);
-        });
-
-        newSocket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server');
-            setIsConnected(false);
-        });
-
-        // Cleanup on unmount
-        return () => {
-            newSocket.disconnect();
-        };
-    }, [isAuthenticated, SOCKET_URL]);
-
-    return (
-        <SocketContext.Provider value={{ socket, isConnected }}>
-            {children}
-        </SocketContext.Provider>
-    );
+  return (
+    <SocketContext.Provider value={{ socket: mockSocket, isConnected: true }}>
+      {children}
+    </SocketContext.Provider>
+  );
 };
 
-export const useSocket = () => {
-    const context = useContext(SocketContext);
-    if (context === undefined) {
-        throw new Error('useSocket must be used within a SocketProvider');
-    }
-    return context;
-};
+export const useSocket = () => useContext(SocketContext);
