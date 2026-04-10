@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
 
-const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey  = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseKey  = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
+// Graceful fallback — app will load but Supabase calls will fail silently
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables. Check .env.local')
+  console.warn('[floework] Supabase env vars not set. DB features disabled in this build.')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
+export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
