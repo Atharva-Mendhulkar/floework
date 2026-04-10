@@ -1,381 +1,358 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
+import { supabase } from '@/lib/supabase';
 import type { TaskNode, Project, User } from '@/data/mockData';
-
-import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
-
-const baseQuery = fetchBaseQuery({
-    baseUrl: 'http://127.0.0.1:5001/api/v1',
-    prepareHeaders: (headers) => {
-        const token = localStorage.getItem('floe_token');
-        if (token) {
-            headers.set('authorization', `Bearer ${token}`);
-        }
-        return headers;
-    },
-});
-
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-    args,
-    api,
-    extraOptions
-) => {
-    let result = await baseQuery(args, api, extraOptions);
-    if (result.error && result.error.status === 401) {
-        localStorage.removeItem('floe_token');
-        localStorage.removeItem('floe_user');
-        window.location.href = '/login';
-    }
-    return result;
-};
 
 export const api = createApi({
     reducerPath: 'api',
-    baseQuery: baseQueryWithReauth,
-    tagTypes: ['Task', 'Project', 'User'],
+    baseQuery: fakeBaseQuery(),
+    tagTypes: ['Task', 'Project', 'User', 'FocusSession', 'Signal', 'Alert', 'Message', 'Billing'],
     endpoints: (builder) => ({
         getUsers: builder.query<{ success: boolean; data: User[] }, void>({
-            query: () => '/users',
+            queryFn: async () => {
+                const { data, error } = await supabase.from('profiles').select('*');
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: (data || []).map(p => ({ id: p.id, email: '', name: p.full_name || 'User', role: 'member', avatarUrl: p.avatar_url })) as any } };
+            },
             providesTags: ['User'],
         }),
         getProjects: builder.query<{ success: boolean; data: Project[] }, void>({
-            query: () => '/projects',
+            queryFn: async () => {
+                const { data, error } = await supabase.from('projects').select('*, teams(name, slug)');
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: (data || []).map(p => ({ id: p.id, name: p.name, sprintName: p.sprint_name, teamId: p.team_id, createdAt: p.created_at })) as any } };
+            },
             providesTags: ['Project'],
         }),
         getTasks: builder.query<{ success: boolean; data: TaskNode[] }, string | void>({
-            query: (projectId) => projectId ? `/tasks?projectId=${projectId}` : '/tasks',
+            queryFn: async (projectId) => {
+                let q = supabase.from('tasks').select('*, profiles(full_name, avatar_url)');
+                if (projectId) q = q.eq('project_id', projectId);
+                const { data, error } = await q.order('created_at', { ascending: false });
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: (data || []).map(t => ({
+                    id: t.id, title: t.title, description: t.description, status: t.status,
+                    phase: t.status, effort: t.effort, focusCount: t.focus_count,
+                    dueDate: t.due_date, projectId: t.project_id, assigneeId: t.assignee_id,
+                    blockerRisk: t.blocker_risk, createdAt: t.created_at, updatedAt: t.updated_at,
+                    isStarred: false, assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
+                })) as any } };
+            },
             providesTags: ['Task'],
         }),
         updateTask: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; status?: string; phase?: string; title?: string; description?: string; dueDate?: string; priority?: string; assigneeId?: string }>({
-            query: ({ id, ...patch }) => ({
-                url: `/tasks/${id}`,
-                method: 'PATCH',
-                body: patch,
-            }),
+            queryFn: async ({ id, phase, ...patch }) => {
+                const updateData: any = {};
+                if (patch.status || phase) updateData.status = patch.status || phase;
+                if (patch.title) updateData.title = patch.title;
+                if (patch.description) updateData.description = patch.description;
+                if (patch.dueDate) updateData.due_date = patch.dueDate;
+                if (patch.assigneeId) updateData.assignee_id = patch.assigneeId;
+                updateData.updated_at = new Date().toISOString();
+                const { data, error } = await supabase.from('tasks').update(updateData).eq('id', id).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: data as any } };
+            },
             invalidatesTags: ['Task'],
         }),
         createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string }>({
-            query: (newTask) => ({
-                url: '/tasks',
-                method: 'POST',
-                body: newTask,
-            }),
+            queryFn: async (newTask) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                const { data, error } = await supabase.from('tasks').insert({
+                    title: newTask.title,
+                    description: newTask.description || null,
+                    project_id: newTask.projectId,
+                    assignee_id: newTask.assigneeId || user?.id || null,
+                    due_date: newTask.dueDate || null,
+                    effort: newTask.priority === 'high' ? 'L' : newTask.priority === 'low' ? 'S' : 'M',
+                }).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: data as any } };
+            },
             invalidatesTags: ['Task'],
         }),
         toggleTaskStar: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; isStarred: boolean }>({
-            query: ({ id, isStarred }) => ({
-                url: `/tasks/${id}/star`,
-                method: 'PATCH',
-                body: { isStarred },
-            }),
+            queryFn: async () => {
+                // Star feature not in Supabase schema — no-op for showcase
+                return { data: { success: true, data: {} as any } };
+            },
             invalidatesTags: ['Task'],
         }),
-        login: builder.mutation<{ success: boolean; data: { token: string; id: string; name: string; email: string; role: string } }, any>({
-            query: (credentials) => ({
-                url: '/auth/login',
-                method: 'POST',
-                body: credentials,
-            }),
+        login: builder.mutation<any, any>({
+            queryFn: async ({ email, password }) => {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) return { error: { status: 401, data: { message: error.message } } };
+                return { data: { success: true, data: { token: data.session?.access_token, id: data.user?.id, email: data.user?.email, name: data.user?.user_metadata?.full_name || 'User', role: 'admin' } } };
+            },
         }),
-        register: builder.mutation<{ success: boolean; data: { token: string; id: string; name: string; email: string; role: string } }, any>({
-            query: (userData) => ({
-                url: '/auth/register',
-                method: 'POST',
-                body: userData,
-            }),
+        register: builder.mutation<any, any>({
+            queryFn: async ({ name, email, password }) => {
+                const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+                if (error) return { error: { status: 400, data: { message: error.message } } };
+                return { data: { success: true, data: { token: '', id: data.user?.id, email: data.user?.email, name, role: 'admin' } } };
+            },
         }),
-        forgotPassword: builder.mutation<{ success: boolean; message: string; devResetToken?: string }, { email: string }>({
-            query: (body) => ({
-                url: '/auth/forgot-password',
-                method: 'POST',
-                body,
-            }),
+        forgotPassword: builder.mutation<{ success: boolean; message: string }, { email: string }>({
+            queryFn: async ({ email }) => {
+                const { error } = await supabase.auth.resetPasswordForEmail(email);
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, message: 'Reset email sent' } };
+            },
         }),
         resetPassword: builder.mutation<{ success: boolean; message: string }, { token: string; password: string }>({
-            query: ({ token, password }) => ({
-                url: `/auth/reset-password/${token}`,
-                method: 'POST',
-                body: { password },
-            }),
+            queryFn: async ({ password }) => {
+                const { error } = await supabase.auth.updateUser({ password });
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, message: 'Password updated' } };
+            },
         }),
-        googleLogin: builder.mutation<{ success: boolean; data: { token: string; id: string; name: string; email: string; role: string; picture?: string } }, { idToken: string }>({
-            query: (payload) => ({
-                url: '/auth/google',
-                method: 'POST',
-                body: payload,
-            }),
-            invalidatesTags: ['User'],
+        googleLogin: builder.mutation<any, { idToken: string }>({
+            queryFn: async () => ({ data: { success: true, data: {} } }),
         }),
         setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { projectName?: string; sprintName?: string; useSandbox?: boolean }>({
-            query: (setupData) => ({
-                url: '/auth/setup-workspace',
-                method: 'POST',
-                body: setupData,
-            }),
+            queryFn: async ({ projectName, sprintName, useSandbox }) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+
+                // Create a team for the user
+                const teamSlug = (projectName || 'my-workspace').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const { data: team, error: teamErr } = await supabase.from('teams')
+                    .insert({ name: projectName || 'My Workspace', slug: `${teamSlug}-${Date.now()}` }).select().single();
+                if (teamErr) return { error: { status: 400, data: teamErr.message } };
+
+                // Add user as admin
+                await supabase.from('team_members').insert({ team_id: team.id, user_id: user.id, role: 'admin' });
+
+                // Create project
+                const { data: proj, error: projErr } = await supabase.from('projects')
+                    .insert({ team_id: team.id, name: projectName || 'Core Platform', sprint_name: sprintName || 'Sprint 1' }).select().single();
+                if (projErr) return { error: { status: 400, data: projErr.message } };
+
+                if (useSandbox) {
+                    // Seed sample tasks
+                    await supabase.from('tasks').insert([
+                        { project_id: proj.id, assignee_id: user.id, title: 'Setup Realtime channels', status: 'done', effort: 'M', focus_count: 4 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'FlowBoard drag-and-drop', status: 'done', effort: 'L', focus_count: 7 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Focus session post-confirm', status: 'done', effort: 'S', focus_count: 2 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Burnout risk trend chart', status: 'in_progress', effort: 'L', focus_count: 3 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Execution signal backend', status: 'in_progress', effort: 'L', focus_count: 5 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Focus Stability Heatmap', status: 'review', effort: 'M', focus_count: 2 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Stripe billing stubs', status: 'backlog', effort: 'S', focus_count: 0 },
+                        { project_id: proj.id, assignee_id: user.id, title: 'Deep Work .ics export', status: 'backlog', effort: 'M', focus_count: 0 },
+                    ]);
+                }
+
+                return { data: { success: true, data: { team, project: proj }, message: 'Workspace ready' } };
+            },
             invalidatesTags: ['Project', 'Task', 'User'],
         }),
-
         getMyTeams: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/teams',
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { data: { success: true, data: [] } };
+                const { data } = await supabase.from('team_members').select('*, teams(*)').eq('user_id', user.id);
+                return { data: { success: true, data: (data || []).map(m => m.teams) } };
+            },
             providesTags: ['User'],
         }),
         createTeam: builder.mutation<{ success: boolean; data: any }, { name: string; description?: string }>({
-            query: (teamData) => ({
-                url: '/teams',
-                method: 'POST',
-                body: teamData,
-            }),
+            queryFn: async ({ name }) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
+                const { data: team, error } = await supabase.from('teams').insert({ name, slug }).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                await supabase.from('team_members').insert({ team_id: team.id, user_id: user.id, role: 'admin' });
+                // Auto-create a default project
+                await supabase.from('projects').insert({ team_id: team.id, name: 'Core Platform', sprint_name: 'Sprint 1' });
+                return { data: { success: true, data: team } };
+            },
             invalidatesTags: ['User'],
         }),
         inviteToTeam: builder.mutation<{ success: boolean; data: any }, { teamId: string; email: string; role?: string }>({
-            query: ({ teamId, ...inviteData }) => ({
-                url: `/teams/${teamId}/invite`,
-                method: 'POST',
-                body: inviteData,
-            }),
-            invalidatesTags: ['User'],
+            queryFn: async () => ({ data: { success: true, data: { message: 'Invites disabled in showcase mode' } } }),
         }),
         joinTeam: builder.mutation<{ success: boolean; data: any }, { token: string }>({
-            query: (joinData) => ({
-                url: '/teams/join',
-                method: 'POST',
-                body: joinData,
-            }),
-            invalidatesTags: ['User', 'Project'],
+            queryFn: async () => ({ data: { success: true, data: { message: 'Join disabled in showcase mode' } } }),
         }),
         getProjectSprints: builder.query<{ success: boolean; data: any[] }, string>({
-            query: (projectId) => `/projects/${projectId}/sprints`,
+            queryFn: async () => ({ data: { success: true, data: [] } }),
             providesTags: ['Task'],
         }),
-        createSprint: builder.mutation<{ success: boolean; data: any }, { projectId: string; name: string; startDate: string; endDate: string }>({
-            query: ({ projectId, ...sprintData }) => ({
-                url: `/projects/${projectId}/sprints`,
-                method: 'POST',
-                body: sprintData,
-            }),
-            invalidatesTags: ['Task'], // Tasks list updates with new sprint
-        }),
-        updateSprint: builder.mutation<{ success: boolean; data: any }, { projectId: string; sprintId: string; status: string }>({
-            query: ({ projectId, sprintId, status }) => ({
-                url: `/projects/${projectId}/sprints/${sprintId}`,
-                method: 'PATCH',
-                body: { status },
-            }),
-            invalidatesTags: ['Task'], // Status changes bubble tasks to backlog
-        }),
+        createSprint: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
+        updateSprint: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
         getFocusSessions: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/focus',
-            providesTags: ['FocusSession' as any],
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { data: { success: true, data: [] } };
+                const { data } = await supabase.from('focus_sessions').select('*, tasks(title)').eq('user_id', user.id).order('started_at', { ascending: false });
+                return { data: { success: true, data: data || [] } };
+            },
+            providesTags: ['FocusSession'],
         }),
         startFocusSession: builder.mutation<{ success: boolean; data: any }, string>({
-            query: (taskId) => ({
-                url: '/focus',
-                method: 'POST',
-                body: { taskId },
-            }),
-            invalidatesTags: ['FocusSession' as any],
+            queryFn: async (taskId) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                const { data, error } = await supabase.from('focus_sessions').insert({ task_id: taskId, user_id: user.id }).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data } };
+            },
+            invalidatesTags: ['FocusSession'],
         }),
         stopFocusSession: builder.mutation<{ success: boolean; data: any }, { sessionId: string; aiAssisted?: boolean }>({
-            query: ({ sessionId, aiAssisted }) => ({
-                url: `/focus/${sessionId}/stop`,
-                method: 'PATCH',
-                body: { aiAssisted }
-            }),
-            invalidatesTags: ['FocusSession' as any],
+            queryFn: async ({ sessionId }) => {
+                const now = new Date().toISOString();
+                const { data: session } = await supabase.from('focus_sessions').select('started_at').eq('id', sessionId).single();
+                const durationSecs = session ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000) : 0;
+                const { data, error } = await supabase.from('focus_sessions').update({ ended_at: now, duration_secs: durationSecs }).eq('id', sessionId).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data } };
+            },
+            invalidatesTags: ['FocusSession', 'Task'],
         }),
         getDailyProductivity: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/productivity',
-            providesTags: ['ProductivityLog' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
         }),
-        logProductivity: builder.mutation<{ success: boolean; data: any }, { metric: string; value: number }>({
-            query: (logData) => ({
-                url: '/productivity',
-                method: 'POST',
-                body: logData,
-            }),
-            invalidatesTags: ['ProductivityLog' as any],
-        }),
+        logProductivity: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }) }),
         getTeamStatus: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/productivity/team-status',
+            queryFn: async () => ({ data: { success: true, data: [] } }),
             providesTags: ['User'],
         }),
         getAnalyticsDashboard: builder.query<{ success: boolean; data: { barData: any[], burnoutData: any[] } }, void>({
-            query: () => '/productivity/dashboard',
-            providesTags: ['ProductivityLog' as any],
+            queryFn: async () => ({ data: { success: true, data: { barData: [], burnoutData: [] } } }),
         }),
         getMessages: builder.query<{ success: boolean; data: any[] }, string>({
-            query: (projectId) => `/projects/${projectId}/messages`,
-            providesTags: ['Message' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Message'],
         }),
-        postMessage: builder.mutation<{ success: boolean; data: any }, { projectId: string; content: string }>({
-            query: ({ projectId, content }) => ({
-                url: `/projects/${projectId}/messages`,
-                method: 'POST',
-                body: { content },
-            }),
-            invalidatesTags: ['Message' as any],
-        }),
+        postMessage: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Message'] }),
         getProfile: builder.query<{ success: boolean; data: User }, void>({
-            query: () => '/users/me',
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+                return { data: { success: true, data: { id: user.id, email: user.email || '', name: profile?.full_name || user.user_metadata?.full_name || 'User', role: 'admin', avatarUrl: profile?.avatar_url } as any } };
+            },
             providesTags: ['User'],
         }),
         updateProfile: builder.mutation<{ success: boolean; data: User }, Partial<User> & { password?: string }>({
-            query: (profileData) => ({
-                url: '/users/me',
-                method: 'PUT',
-                body: profileData,
-            }),
+            queryFn: async (profileData) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                if (profileData.name) await supabase.from('profiles').update({ full_name: profileData.name }).eq('id', user.id);
+                if (profileData.password) await supabase.auth.updateUser({ password: profileData.password });
+                return { data: { success: true, data: profileData as any } };
+            },
             invalidatesTags: ['User'],
         }),
         getAlerts: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/alerts',
-            providesTags: ['Alert' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Alert'],
         }),
-        markAlertRead: builder.mutation<{ success: boolean; data: any }, string>({
-            query: (id) => ({
-                url: `/alerts/${id}/read`,
-                method: 'PATCH',
-            }),
-            invalidatesTags: ['Alert' as any],
-        }),
-        markAllAlertsRead: builder.mutation<{ success: boolean; message: string }, void>({
-            query: () => ({
-                url: '/alerts/read-all',
-                method: 'POST',
-            }),
-            invalidatesTags: ['Alert' as any],
-        }),
+        markAlertRead: builder.mutation<any, string>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Alert'] }),
+        markAllAlertsRead: builder.mutation<any, void>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['Alert'] }),
         getTaskSignals: builder.query<{ success: boolean; data: any | null }, string>({
-            query: (taskId) => `/analytics/task/${taskId}/signals`,
-            providesTags: ['Signal' as any],
+            queryFn: async (taskId) => {
+                const { data } = await supabase.from('execution_signals').select('*').eq('task_id', taskId).single();
+                return { data: { success: true, data: data || null } };
+            },
+            providesTags: ['Signal'],
         }),
         getStabilityGrid: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/stability',
-            providesTags: ['Signal' as any],
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { data: { success: true, data: [] } };
+                const { data } = await supabase.from('focus_stability_slots').select('*').eq('user_id', user.id);
+                return { data: { success: true, data: data || [] } };
+            },
+            providesTags: ['Signal'],
         }),
         getExecutionNarrative: builder.query<{ success: boolean; data: { summary: string; highlights: string[]; warnings: string[] } }, void>({
-            query: () => '/analytics/narrative',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: { summary: 'Showcase mode — connect Supabase data for live narrative insights.', highlights: ['Your workspace is set up and running.', 'Focus sessions are being tracked.'], warnings: [] } } }),
+            providesTags: ['Signal'],
         }),
         getBillingStatus: builder.query<{ success: boolean; data: any }, void>({
-            query: () => '/billing/status',
-            providesTags: ['Billing' as any],
+            queryFn: async () => ({ data: { success: true, data: { plan: 'FREE', status: 'ACTIVE' } } }),
+            providesTags: ['Billing'],
         }),
-        createCheckoutSession: builder.mutation<{ success: boolean; data: { url: string | null; devMode?: boolean; plan?: string } }, 'PRO' | 'TEAM'>({
-            query: (plan) => ({
-                url: '/billing/checkout',
-                method: 'POST',
-                body: { plan },
-            }),
-            invalidatesTags: ['Billing' as any],
+        createCheckoutSession: builder.mutation<any, 'PRO' | 'TEAM'>({
+            queryFn: async () => ({ data: { success: true, data: { url: null, devMode: true } } }),
         }),
-        createPortalSession: builder.mutation<{ success: boolean; data: { url: string } }, void>({
-            query: () => ({
-                url: '/billing/portal',
-                method: 'POST',
-            }),
+        createPortalSession: builder.mutation<any, void>({
+            queryFn: async () => ({ data: { success: true, data: { url: '' } } }),
         }),
         getBottlenecks: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/bottlenecks',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Signal'],
         }),
         getBurnoutTrend: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/burnout',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Signal'],
         }),
         getTaskReplay: builder.query<{ success: boolean; data: any[] }, string>({
-            query: (taskId) => `/tasks/${taskId}/replay`,
+            queryFn: async () => ({ data: { success: true, data: [] } }),
             providesTags: ['Task'],
         }),
-        linkPR: builder.mutation<{ success: boolean; data: any }, { id: string; prUrl: string }>({
-            query: ({ id, prUrl }) => ({
-                url: `/tasks/${id}/pr`,
-                method: 'POST',
-                body: { prUrl }
-            }),
-            invalidatesTags: ['Task'],
-        }),
+        linkPR: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
         getProjectPrediction: builder.query<{ success: boolean; data: any }, string>({
-            query: (projectId) => `/projects/${projectId}/prediction`,
+            queryFn: async () => ({ data: { success: true, data: { risk: 'low', message: 'On track' } } }),
             providesTags: ['Project', 'Task'],
         }),
         getFocusReports: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/focus-report',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Signal'],
         }),
         getCurrentFocusReport: builder.query<{ success: boolean; data: any | null }, void>({
-            query: () => '/analytics/focus-report/current',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: null } }),
+            providesTags: ['Signal'],
         }),
         getEstimationHint: builder.query<{ success: boolean; data: any | null }, { effort: string; keywords: string[] }>({
-            query: ({ effort, keywords }) => `/analytics/estimation-hint?effort=${effort}&keywords=${keywords.join(',')}`,
+            queryFn: async () => ({ data: { success: true, data: null } }),
         }),
         getEstimationAccuracy: builder.query<{ success: boolean; data: any }, void>({
-            query: () => '/analytics/estimation-accuracy',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: {} } }),
+            providesTags: ['Signal'],
         }),
-        disconnectGitHub: builder.mutation<{ success: boolean; message: string }, void>({
-            query: () => ({ url: '/auth/github', method: 'DELETE' }),
-            invalidatesTags: ['User'],
-        }),
+        disconnectGitHub: builder.mutation<any, void>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['User'] }),
         getFocusWindows: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/focus-windows',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Signal'],
         }),
         getGoogleCalendarStatus: builder.query<{ success: boolean; data: any }, void>({
-            query: () => '/auth/google-calendar/status',
+            queryFn: async () => ({ data: { success: true, data: { connected: false } } }),
             providesTags: ['User'],
         }),
-        disconnectGoogleCalendar: builder.mutation<{ success: boolean; message: string }, void>({
-            query: () => ({ url: '/auth/google-calendar', method: 'DELETE' }),
-            invalidatesTags: ['User'],
-        }),
+        disconnectGoogleCalendar: builder.mutation<any, void>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['User'] }),
         getNarratives: builder.query<{ success: boolean; data: any[]; pagination: any }, { page?: number; limit?: number }>({
-            query: ({ page = 1, limit = 10 }) => `/narrative?page=${page}&limit=${limit}`,
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [], pagination: { page: 1, limit: 10, total: 0 } } }),
+            providesTags: ['Signal'],
         }),
         getCurrentEffortNarrative: builder.query<{ success: boolean; data: any }, void>({
-            query: () => '/narrative/current',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: {} } }),
+            providesTags: ['Signal'],
         }),
-        updateNarrative: builder.mutation<{ success: boolean; data: any }, { id: string; body: string }>({
-            query: ({ id, body }) => ({
-                url: `/narrative/${id}`,
-                method: 'PATCH',
-                body: { body },
-            }),
-            invalidatesTags: ['Signal' as any],
-        }),
-        shareNarrative: builder.mutation<{ success: boolean; data: { shareUrl: string; shareToken: string; shareExpiry: Date } }, string>({
-            query: (id) => ({
-                url: `/narrative/${id}/share`,
-                method: 'POST',
-            }),
-            invalidatesTags: ['Signal' as any],
-        }),
-        revokeNarrativeShare: builder.mutation<{ success: boolean; message: string }, string>({
-            query: (id) => ({
-                url: `/narrative/${id}/share`,
-                method: 'DELETE',
-            }),
-            invalidatesTags: ['Signal' as any],
-        }),
+        updateNarrative: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Signal'] }),
+        shareNarrative: builder.mutation<any, string>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Signal'] }),
+        revokeNarrativeShare: builder.mutation<any, string>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['Signal'] }),
         getSharedNarrative: builder.query<{ success: boolean; data: any }, string>({
-            query: (token) => `/narrative/shared/${token}`,
+            queryFn: async () => ({ data: { success: true, data: {} } }),
         }),
         getAiDisplacement: builder.query<{ success: boolean; data: any[] }, void>({
-            query: () => '/analytics/ai-displacement',
-            providesTags: ['Signal' as any],
+            queryFn: async () => ({ data: { success: true, data: [] } }),
+            providesTags: ['Signal'],
         }),
         getHasRealTasks: builder.query<{ success: boolean; data: { hasRealTasks: boolean } }, void>({
-            query: () => '/users/me/has-real-tasks',
-            providesTags: ['Task' as any],
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { data: { success: true, data: { hasRealTasks: false } } };
+                const { count } = await supabase.from('tasks').select('*', { count: 'exact', head: true });
+                return { data: { success: true, data: { hasRealTasks: (count || 0) > 0 } } };
+            },
+            providesTags: ['Task'],
         }),
         deleteSampleTasks: builder.mutation<{ success: boolean; message: string }, void>({
-            query: () => ({
-                url: '/tasks/samples',
-                method: 'DELETE',
-            }),
-            invalidatesTags: ['Task' as any],
+            queryFn: async () => ({ data: { success: true, message: 'ok' } }),
+            invalidatesTags: ['Task'],
         }),
     }),
 });
