@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "apps/web/dist",
   "crons": [
     {
       "path": "/api/cron/refresh-analytics",

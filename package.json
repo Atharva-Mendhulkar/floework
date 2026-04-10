@@ -3,5 +3,9 @@
   "private": true,
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "scripts": {
+    "build": "cd apps/web && npm run build",
+    "vercel-build": "cd apps/web && npm run build"
+  }
 }
