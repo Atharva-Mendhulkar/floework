@@ -51,8 +51,10 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     socket.emit("join_project", effectiveProjectId);
 
     socket.on("task_updated", (data: { taskId: string; phase: string; projectId: string }) => {
+      // v1.2 Fix: Use activeProjectId (or undefined) as context to match the query cache key
       dispatch(
-        api.util.updateQueryData("getTasks", undefined, (draft) => {
+        api.util.updateQueryData("getTasks", activeProjectId || undefined, (draft) => {
+          if (!draft || !draft.data) return;
           const task = draft.data.find((t: any) => t.id === data.taskId);
           if (task) {
             task.phase = data.phase;
@@ -83,7 +85,8 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
   /* Re-group tasks into phase columns */
   const phases = useMemo(() => {
-    const structuredPhases = initialPhases.map((phase) => ({ ...phase, tasks: [] as TaskNode[] }));
+    console.log("Floework Board v1.2 Active - Scoped:", activeProjectId);
+    const structuredPhases = (initialPhases || []).map((phase) => ({ ...phase, tasks: [] as TaskNode[] }));
     if (response?.data) {
       response.data.forEach((task: TaskNode) => {
         const target = structuredPhases.find((p) => p.id === task.phase) || structuredPhases[0];
@@ -204,7 +207,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
           {/* Team avatars with presence indicators */}
           <div className="flex -space-x-1.5 px-2">
-            {team.slice(0, 4).map((member, idx) => {
+            {(team || []).slice(0, 4).map((member, idx) => {
               // Mock presence: 1st is in focus, 2nd available, 3rd/4th away
               const status = idx === 0 ? "focus" : idx === 1 ? "available" : "offline";
               return (
@@ -273,7 +276,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
         </div>
       ) : viewMode === "kanban" ? (
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {phases.map((phase, i) => (
+          {(phases || []).map((phase, i) => (
             <PhaseColumn
               key={phase.id}
               phase={phase}

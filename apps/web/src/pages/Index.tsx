@@ -120,26 +120,27 @@ const Index = () => {
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <p className="text-[13px] font-medium text-slate-700 leading-relaxed">{narrativeRes.data.summary}</p>
                   </div>
-                  {narrativeRes.data.highlights.length > 0 && (
+                  {(narrativeRes?.data?.highlights || []).length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      {narrativeRes.data.highlights.slice(0, 3).map((h, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <CheckCircle2 size={12} className="text-emerald-500 shrink-0 mt-0.5" />
-                          <p className="text-[12px] text-slate-600">{h}</p>
+                      {(narrativeRes?.data?.highlights || []).slice(0, 3).map((h: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                          <p className="text-[11px] text-slate-600 leading-tight font-medium">{h}</p>
                         </div>
                       ))}
                     </div>
                   )}
-                  {narrativeRes.data.warnings.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Watchpoints</p>
                     <div className="flex flex-col gap-1.5">
-                      {narrativeRes.data.warnings.slice(0, 2).map((w, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <Info size={12} className="text-amber-500 shrink-0 mt-0.5" />
-                          <p className="text-[12px] text-slate-600">{w}</p>
+                      {(narrativeRes?.data?.warnings || []).slice(0, 2).map((w: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 bg-amber-50 border border-amber-100 p-2 rounded-xl">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                          <p className="text-[11px] text-amber-700 leading-tight font-medium">{w}</p>
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>

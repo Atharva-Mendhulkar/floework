@@ -30,8 +30,8 @@ const TopHeader = () => {
     navigate("/login");
   };
 
-  const initials = user?.name
-    ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+  const initials = (user?.name || "")
+    ? (user?.name || "").split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "US";
 
   return (
