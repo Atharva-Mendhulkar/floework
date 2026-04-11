@@ -108,15 +108,16 @@ export const api = createApi({
         googleLogin: builder.mutation<any, { idToken: string }>({
             queryFn: async () => ({ data: { success: true, data: {} } }),
         }),
-        setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { projectName?: string; sprintName?: string; useSandbox?: boolean }>({
-            queryFn: async ({ projectName, sprintName, useSandbox }) => {
+        setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { workspaceName?: string; projectName?: string; sprintName?: string; useSandbox?: boolean }>({
+            queryFn: async ({ workspaceName, projectName, sprintName, useSandbox }) => {
                 const user = (await supabase.auth.getUser()).data.user;
                 if (!user) return { error: { status: 401, data: 'Not authenticated' } };
 
                 // Create a team for the user
-                const teamSlug = (projectName || 'my-workspace').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const teamName = workspaceName || projectName || 'My Workspace';
+                const teamSlug = teamName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                 const { data: team, error: teamErr } = await supabase.from('teams')
-                    .insert({ name: projectName || 'My Workspace', slug: `${teamSlug}-${Date.now()}` }).select().single();
+                    .insert({ name: teamName, slug: `${teamSlug}-${Date.now()}` }).select().single();
                 if (teamErr) return { error: { status: 400, data: teamErr.message } };
 
                 // Add user as admin

@@ -33,9 +33,9 @@ export default function OnboardingPage() {
             
             try {
                 await setupWorkspace({ 
-                    projectName: workspaceName, // Use workspace name for the team
+                    workspaceName: workspaceName,
+                    projectName: projectName,
                     sprintName: sprintName,
-                    // We'll pass the project name as part of the setup
                 }).unwrap();
                 
                 // Note: setupWorkspace mutation currently takes projectName and sprintName
