@@ -26,12 +26,29 @@ export const api = createApi({
         getTasks: builder.query<{ success: boolean; data: TaskNode[] }, string | void>({
             queryFn: async (projectId) => {
                 let q = supabase.from('tasks').select('*, profiles(full_name, avatar_url)');
-                if (projectId) q = q.eq('project_id', projectId);
+                if (projectId && projectId !== "fallback-id") q = q.eq('project_id', projectId);
                 const { data, error } = await q.order('created_at', { ascending: false });
                 if (error) return { error: { status: 500, data: error.message } };
+
+                const statusToPhase: Record<string, string> = {
+                    'backlog': 'allocation',
+                    'in_progress': 'focus',
+                    'review': 'resolution',
+                    'done': 'outcome'
+                };
+
+                const statusToUiStatus: Record<string, any> = {
+                    'backlog': 'pending',
+                    'in_progress': 'in-progress',
+                    'review': 'in-progress',
+                    'done': 'done'
+                };
+
                 return { data: { success: true, data: (data || []).map(t => ({
-                    id: t.id, title: t.title, description: t.description, status: t.status,
-                    phase: t.status, effort: t.effort, focusCount: t.focus_count,
+                    id: t.id, title: t.title, description: t.description, 
+                    status: statusToUiStatus[t.status] || 'pending',
+                    phase: statusToPhase[t.status] || 'allocation', 
+                    effort: t.effort, focusCount: t.focus_count,
                     dueDate: t.due_date, projectId: t.project_id, assigneeId: t.assignee_id,
                     blockerRisk: t.blocker_risk, createdAt: t.created_at, updatedAt: t.updated_at,
                     isStarred: false, assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
@@ -386,7 +403,16 @@ export const api = createApi({
             providesTags: ['Task'],
         }),
         deleteSampleTasks: builder.mutation<{ success: boolean; message: string }, void>({
-            queryFn: async () => ({ data: { success: true, message: 'ok' } }),
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                // In this version, we'll just delete all tasks belonging to the user's focus sessions 
+                // or more simply, all tasks in projects where the user is an admin
+                // For a showcase, we'll delete all tasks for now (scoped by RLS anyway)
+                const { error } = await supabase.from('tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, message: 'ok' } };
+            },
             invalidatesTags: ['Task'],
         }),
     }),

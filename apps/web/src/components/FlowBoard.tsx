@@ -14,11 +14,13 @@ import { TaskCreateModal } from "./TaskCreateModal";
 import { TaskCalendarView } from "./TaskCalendarView";
 
 interface FlowBoardProps {
-  onTaskClick?: (task: TaskNode) => void;
+  onTaskClick?: (task: TaskNode | null) => void;
 }
 
 const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
-  const { data: response, isLoading, error } = useGetTasksQuery();
+  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+  const { data: response, isLoading, error } = useGetTasksQuery(activeProjectId || undefined);
   const { socket, isConnected } = useSocket();
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -28,8 +30,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   });
 
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
-  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
-  const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+  // Remove the old redeclarations here (around line 31 in original)
 
   const { data: sprintsRes } = api.endpoints.getProjectSprints.useQueryState(activeProjectId!, { skip: !activeProjectId });
   const activeSprint = sprintsRes?.data?.find((s: any) => s.id === activeSprintId);
