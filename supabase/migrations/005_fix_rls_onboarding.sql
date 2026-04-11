@@ -35,6 +35,10 @@ create policy "team members can create projects" on public.projects
     )
   );
 
+-- Allow authenticated users to see other profiles (needed for team boards)
+create policy "anyone authenticated can see profiles" on public.profiles
+  for select using (auth.role() = 'authenticated');
+
 -- Allow authenticated users to see projects they belong to
 -- (Already covered by "team projects" policy in 002_rls.sql, but ensuring here)
 create policy "members can see projects" on public.projects
@@ -45,3 +49,8 @@ create policy "members can see projects" on public.projects
       and user_id = auth.uid()
     )
   );
+
+-- v1.1 Fix: Ensure all project data is retrievable
+create policy "select any team" on public.teams
+  for select using (auth.role() = 'authenticated');
+
