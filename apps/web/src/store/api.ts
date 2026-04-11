@@ -59,12 +59,27 @@ export const api = createApi({
         updateTask: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; status?: string; phase?: string; title?: string; description?: string; dueDate?: string; priority?: string; assigneeId?: string }>({
             queryFn: async ({ id, phase, ...patch }) => {
                 const updateData: any = {};
-                if (patch.status || phase) updateData.status = patch.status || phase;
+                
+                // v1.2 Fix: Map UI phases back to database status values
+                const phaseToStatus: Record<string, string> = {
+                    'allocation': 'backlog',
+                    'focus': 'in_progress',
+                    'resolution': 'review',
+                    'outcome': 'done'
+                };
+
+                if (phase && phaseToStatus[phase]) {
+                    updateData.status = phaseToStatus[phase];
+                } else if (patch.status) {
+                    updateData.status = patch.status;
+                }
+
                 if (patch.title) updateData.title = patch.title;
                 if (patch.description) updateData.description = patch.description;
                 if (patch.dueDate) updateData.due_date = patch.dueDate;
                 if (patch.assigneeId) updateData.assignee_id = patch.assigneeId;
                 updateData.updated_at = new Date().toISOString();
+
                 const { data, error } = await supabase.from('tasks').update(updateData).eq('id', id).select().single();
                 if (error) return { error: { status: 400, data: error.message } };
                 return { data: { success: true, data: data as any } };

@@ -90,7 +90,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     if (response?.data) {
       response.data.forEach((task: TaskNode) => {
         const target = structuredPhases.find((p) => p.id === task.phase) || structuredPhases[0];
-        target.tasks.push(task);
+        if (target && target.tasks) {
+          target.tasks.push(task);
+        }
       });
     }
     return structuredPhases;
