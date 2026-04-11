@@ -92,7 +92,7 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
         <div
           className={`flex-shrink-0 w-8 h-8 rounded-lg ${task.assignee.color} flex items-center justify-center text-xs font-semibold text-foreground`}
         >
-          {task.assignee.initials}
+          {task.assignee?.name?.[0] || 'U'}
         </div>
       )}
 

@@ -30,9 +30,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   });
 
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
-  // Remove the old redeclarations here (around line 31 in original)
 
   const { data: sprintsRes } = api.endpoints.getProjectSprints.useQueryState(activeProjectId!, { skip: !activeProjectId });
+  console.log("[Floework] Stabilization v1.3 - Defensive Mapping Active");
   const activeSprint = sprintsRes?.data?.find((s: any) => s.id === activeSprintId);
 
   // Refetch tasks if sprint changes (backend mapping via sprintId would ideally be passed to getTasks query param)

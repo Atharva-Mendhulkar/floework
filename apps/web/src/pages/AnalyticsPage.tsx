@@ -44,7 +44,7 @@ const BurnoutTooltip = ({ active, payload, label }: any) => {
         {data.factors?.length > 0 && (
           <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex flex-col gap-1.5">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Risk Factors</p>
-            {data.factors.map((f: string, i: number) => (
+            {(data.factors || []).map((f: string, i: number) => (
               <p key={i} className="text-[11px] font-medium text-red-500/90 leading-snug flex items-start">
                 <span className="mr-1.5">•</span><span>{f}</span>
               </p>

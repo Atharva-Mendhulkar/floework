@@ -102,7 +102,7 @@ export default function StarredPage() {
                                 {task.assignee && (
                                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100">
                                         <div className="w-5 h-5 rounded-full bg-[#007dff]/20 text-[#007dff] flex items-center justify-center text-[9px] font-bold">
-                                            {task.assignee.name.charAt(0).toUpperCase()}
+                                            {task.assignee?.name?.[0]?.toUpperCase() || 'U'}
                                         </div>
                                         <span className="text-[11px] font-medium text-slate-600">{task.assignee.name}</span>
                                     </div>
