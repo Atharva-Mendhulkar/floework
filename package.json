@@ -4,6 +4,13 @@
   "workspaces": [
     "apps/*"
   ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
   "scripts": {
     "build": "cd apps/web && npm run build",
     "vercel-build": "cd apps/web && npm run build"

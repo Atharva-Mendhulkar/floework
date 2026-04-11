@@ -1,9 +1,9 @@
-import { team } from "@/data/mockData";
 import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
 import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
-import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, api } from "@/store/api";
+import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, api } from "@/store/api";
+import { toast } from "sonner";
 import { useMemo, useEffect, useState } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useDispatch } from "react-redux";
@@ -20,6 +20,9 @@ interface FlowBoardProps {
 const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
   const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+  const { data: usersRes } = useGetUsersQuery();
+  const team = usersRes?.data || [];
+  
   const { data: response, isLoading, error } = useGetTasksQuery(activeProjectId || undefined);
   const { socket, isConnected } = useSocket();
   const dispatch = useDispatch<AppDispatch>();
@@ -39,8 +42,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   // For now, if activeSprintId is null, it's Backlog. We should probably pass activeSprintId to useGetTasksQuery!
 
   const { data: projectsRes } = useGetProjectsQuery();
-  const fallbackProjectId = projectsRes?.data?.[0]?.id || "fallback-id";
-  const effectiveProjectId = activeProjectId || fallbackProjectId;
+  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
 
   const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId, { skip: !activeProjectId });
   const prediction = predictionRes?.data;
@@ -250,7 +252,13 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
               {viewMode === "kanban" ? <Calendar size={15} /> : <ListTodo size={15} />}
             </button>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                if (!effectiveProjectId) {
+                  toast.error("Please create or select a project first");
+                  return;
+                }
+                setIsCreateModalOpen(true);
+              }}
               className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-[12px] font-semibold bg-[#007dff] text-white hover:bg-[#0070e8] transition-colors shadow-sm shadow-[#007dff]/20"
             >
               <Plus size={13} /> New Task
@@ -270,7 +278,13 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
             "Eliminate noise. Decide what matters. Watch how it unfolds."
           </p>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              if (!effectiveProjectId) {
+                toast.error("Please create or select a project first");
+                return;
+              }
+              setIsCreateModalOpen(true);
+            }}
             className="h-12 px-6 rounded-2xl bg-[#007dff] text-white font-semibold text-[14px] shadow-lg shadow-[#007dff]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             Create your first task
@@ -291,11 +305,13 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
         <TaskCalendarView tasks={response?.data || []} onTaskClick={onTaskClick} />
       )}
 
-      <TaskCreateModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        projectId={effectiveProjectId}
-      />
+      {effectiveProjectId && (
+        <TaskCreateModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          projectId={effectiveProjectId}
+        />
+      )}
     </div>
   );
 };

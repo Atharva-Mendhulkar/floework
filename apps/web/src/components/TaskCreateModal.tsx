@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateTaskMutation, useGetEstimationHintQuery } from "@/store/api";
+import { useCreateTaskMutation, useGetEstimationHintQuery, useGetUsersQuery } from "@/store/api";
 import { toast } from "sonner";
-import { team } from "@/data/mockData";
 
 interface TaskCreateModalProps {
     isOpen: boolean;
@@ -16,6 +15,8 @@ interface TaskCreateModalProps {
 
 export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalProps) {
     const [createTask, { isLoading }] = useCreateTaskMutation();
+    const { data: usersRes } = useGetUsersQuery();
+    const team = usersRes?.data || [];
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -59,8 +60,8 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
             setDismissHint(false);
 
             onClose();
-        } catch (error) {
-            toast.error("Failed to create task");
+        } catch (error: any) {
+            toast.error(error?.data || "Failed to create task");
             console.error(error);
         }
     };
