@@ -117,16 +117,34 @@ export const api = createApi({
                 const teamName = workspaceName || projectName || 'My Workspace';
                 const teamSlug = teamName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                 const { data: team, error: teamErr } = await supabase.from('teams')
-                    .insert({ name: teamName, slug: `${teamSlug}-${Date.now()}` }).select().single();
-                if (teamErr) return { error: { status: 400, data: teamErr.message } };
+                    .insert({ name: teamName, slug: `${teamSlug}-${Date.now()}` })
+                    .select()
+                    .single();
+                
+                if (teamErr) {
+                    console.error("Team Creation Error:", teamErr);
+                    return { error: { status: 400, data: `Team creation failed: ${teamErr.message}` } };
+                }
 
                 // Add user as admin
-                await supabase.from('team_members').insert({ team_id: team.id, user_id: user.id, role: 'admin' });
+                const { error: memberErr } = await supabase.from('team_members')
+                    .insert({ team_id: team.id, user_id: user.id, role: 'admin' });
+                
+                if (memberErr) {
+                    console.error("Member Creation Error:", memberErr);
+                    return { error: { status: 400, data: `Joining team failed: ${memberErr.message}` } };
+                }
 
                 // Create project
                 const { data: proj, error: projErr } = await supabase.from('projects')
-                    .insert({ team_id: team.id, name: projectName || 'Core Platform', sprint_name: sprintName || 'Sprint 1' }).select().single();
-                if (projErr) return { error: { status: 400, data: projErr.message } };
+                    .insert({ team_id: team.id, name: projectName || 'Core Platform', sprint_name: sprintName || 'Sprint 1' })
+                    .select()
+                    .single();
+                
+                if (projErr) {
+                    console.error("Project Creation Error:", projErr);
+                    return { error: { status: 400, data: `Project creation failed: ${projErr.message}` } };
+                }
 
                 if (useSandbox) {
                     // Seed sample tasks

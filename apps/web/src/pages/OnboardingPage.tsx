@@ -45,7 +45,9 @@ export default function OnboardingPage() {
                 toast.success("Welcome to floework!");
                 navigate("/dashboard");
             } catch (err: any) {
-                toast.error(err.data || "Failed to finalize workspace");
+                console.error("Onboarding setup failed:", err);
+                const errMsg = err.data || err.message || "Failed to finalize workspace";
+                toast.error(errMsg);
             }
         }
     };
@@ -201,7 +203,7 @@ export default function OnboardingPage() {
                         size="lg"
                         className="h-16 px-12 rounded-full bg-slate-900 text-white font-bold shadow-2xl shadow-black/20 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:shadow-none min-w-[220px] text-lg flex gap-3 items-center"
                     >
-                        {step === 3 ? (isSettingUp ? "Initializing..." : "Enter floework") : "Continue"}
+                        {step === 3 ? (isSettingUp ? "Initializing..." : "Enter floework.") : "Continue"}
                         <ArrowRight size={20} />
                     </Button>
                     
