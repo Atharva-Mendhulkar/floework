@@ -179,7 +179,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
               <div className="absolute top-full mt-2 right-0 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <p className="text-[11px] font-medium text-slate-300 mb-2">AI Delivery Prediction</p>
                 <div className="flex flex-col gap-1.5">
-                  {prediction.factors.map((f: string, i: number) => (
+                  {prediction.factors?.map((f: string, i: number) => (
                     <p key={i} className="text-[11px] text-slate-100 leading-snug flex items-start">
                       <span className="mr-1.5 opacity-50">•</span>
                       <span>{f}</span>

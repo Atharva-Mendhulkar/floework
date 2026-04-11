@@ -347,7 +347,7 @@ export const api = createApi({
         }),
         linkPR: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
         getProjectPrediction: builder.query<{ success: boolean; data: any }, string>({
-            queryFn: async () => ({ data: { success: true, data: { risk: 'low', message: 'On track' } } }),
+            queryFn: async () => ({ data: { success: true, data: { risk: 'low', message: 'On track', deliveryProbability: 85, factors: ['High focus density', 'Stable velocity'] } } }),
             providesTags: ['Project', 'Task'],
         }),
         getFocusReports: builder.query<{ success: boolean; data: any[] }, void>({
