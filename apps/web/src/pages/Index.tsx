@@ -5,8 +5,10 @@ import ActivityTable from "@/components/ActivityTable";
 import ProductivityChart from "@/components/ProductivityChart";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useGetProjectsQuery, useGetAnalyticsDashboardQuery, useGetTeamStatusQuery, useGetExecutionNarrativeQuery, useGetBurnoutTrendQuery, useGetCurrentFocusReportQuery } from "@/store/api";
-import { Zap, TrendingUp, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
+import { Zap, TrendingUp, AlertTriangle, CheckCircle2, Info, ArrowRight, Rocket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { CreateWorkspaceModal, CreateProjectModal } from "@/components/CreateWorkspaceModal";
 
 const MiniStatCard = ({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) => (
   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
@@ -27,7 +29,7 @@ const Index = () => {
   // Redirect to onboarding if user has no projects yet
   const { data: projectsRes, isLoading: projectsLoading } = useGetProjectsQuery();
   useEffect(() => {
-    if (!projectsLoading && projectsRes && projectsRes.data.length === 0) {
+    if (!projectsLoading && projectsRes?.data && projectsRes.data.length === 0) {
       navigate('/onboarding', { replace: true });
     }
   }, [projectsRes, projectsLoading, navigate]);
@@ -55,12 +57,16 @@ const Index = () => {
         <TopHeader />
 
         <main className="flex-1 overflow-y-auto flex flex-col gap-5 p-2 lg:p-4">
-          {/* Greeting */}
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-              Welcome back, {user?.name?.split(' ')[0] || 'User'}!
-            </h1>
-            <p className="text-slate-500 font-medium mt-0.5">Here's what's happening in your workspace today.</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+                Welcome back, {user?.name?.split(' ')[0] || 'User'}!
+              </h1>
+              <p className="text-slate-500 font-medium mt-0.5">Here's what's happening in your workspace today.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <CreateWorkspaceModal />
+            </div>
           </div>
 
           {/* Quick Stats Row */}

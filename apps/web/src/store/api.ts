@@ -178,7 +178,23 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, data: [] } }),
             providesTags: ['Task'],
         }),
-        createSprint: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
+        createProject: builder.mutation<{ success: boolean; data: Project }, { teamId: string; name: string; sprintName?: string }>({
+            queryFn: async ({ teamId, name, sprintName }) => {
+                const { data, error } = await supabase.from('projects')
+                    .insert({ team_id: teamId, name, sprint_name: sprintName || 'Sprint 1' }).select().single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: data as any } };
+            },
+            invalidatesTags: ['Project'],
+        }),
+        createSprint: builder.mutation<{ success: boolean; message: string }, { projectId: string; sprintName: string }>({
+            queryFn: async ({ projectId, sprintName }) => {
+                const { error } = await supabase.from('projects').update({ sprint_name: sprintName }).eq('id', projectId);
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, message: 'Sprint updated' } };
+            },
+            invalidatesTags: ['Project', 'Task'],
+        }),
         updateSprint: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Task'] }),
         getFocusSessions: builder.query<{ success: boolean; data: any[] }, void>({
             queryFn: async () => {
@@ -376,6 +392,7 @@ export const {
     useJoinTeamMutation,
     useGetProjectSprintsQuery,
     useCreateSprintMutation,
+    useCreateProjectMutation,
     useUpdateSprintMutation,
     useGetFocusSessionsQuery,
     useStartFocusSessionMutation,

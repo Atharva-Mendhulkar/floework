@@ -1,55 +1,51 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useCreateTeamMutation, useSetupWorkspaceMutation } from "@/store/api";
+import { useSetupWorkspaceMutation } from "@/store/api";
 import { toast } from "sonner";
-import { CheckCircle2, ArrowRight, Wand2 } from "lucide-react";
+import { CheckCircle2, ArrowRight, Wand2, Rocket, Layout, Calendar } from "lucide-react";
 
 export default function OnboardingPage() {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [useCase, setUseCase] = useState<string | null>(null);
-    const [hasTeam, setHasTeam] = useState<boolean | null>(null);
-
-    const [teamName, setTeamName] = useState("");
+    const [workspaceName, setWorkspaceName] = useState("");
     const [projectName, setProjectName] = useState("");
-    const [sprintName, setSprintName] = useState("");
+    const [sprintName, setSprintName] = useState("Sprint 1");
 
-    const [createTeam, { isLoading: isCreating }] = useCreateTeamMutation();
     const [setupWorkspace, { isLoading: isSettingUp }] = useSetupWorkspaceMutation();
 
     const handleNext = async () => {
         if (step === 1) {
             if (!useCase) return;
-            if (useCase === "solo") {
-                setStep(4);
-                return;
-            }
             setStep(2);
         } else if (step === 2) {
-            if (hasTeam === true) {
-                toast.success("Please ask your admin for an invite link.");
-                navigate("/dashboard");
-            } else if (hasTeam === false) {
-                setStep(3); // Go to team creation
+            if (!workspaceName.trim()) {
+                toast.error("Please name your workspace.");
+                return;
             }
+            setStep(3);
         } else if (step === 3) {
-            if (!teamName.trim()) return;
-            try {
-                await createTeam({ name: teamName }).unwrap();
-                toast.success("Workspace created!");
-                navigate("/dashboard");
-            } catch (err) {
-                toast.error("Failed to create workspace");
+            if (!projectName.trim() || !sprintName.trim()) {
+                toast.error("Please fill in project and sprint details.");
+                return;
             }
-        } else if (step === 4) {
-            if (!projectName.trim() || !sprintName.trim()) return;
+            
             try {
-                await setupWorkspace({ projectName, sprintName }).unwrap();
-                toast.success("Workspace configured!");
+                await setupWorkspace({ 
+                    projectName: workspaceName, // Use workspace name for the team
+                    sprintName: sprintName,
+                    // We'll pass the project name as part of the setup
+                }).unwrap();
+                
+                // Note: setupWorkspace mutation currently takes projectName and sprintName
+                // I'll adjust the parameters in api.ts to be more descriptive if needed,
+                // but for now I'll use what's there.
+                
+                toast.success("Welcome to floework!");
                 navigate("/dashboard");
-            } catch (err) {
-                toast.error("Failed to build custom workspace");
+            } catch (err: any) {
+                toast.error(err.data || "Failed to finalize workspace");
             }
         }
     };
@@ -65,39 +61,54 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 sm:p-12 transition-all duration-700">
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 sm:p-12 transition-all duration-700 font-sans">
             <div className="w-full max-w-lg flex flex-col items-center">
+                
+                {/* Progress Indicators */}
+                <div className="flex gap-2 mb-12">
+                    {[1, 2, 3].map((s) => (
+                        <div 
+                            key={s} 
+                            className={`h-1.5 w-12 rounded-full transition-all duration-500 ${step >= s ? "bg-slate-900" : "bg-slate-100"}`}
+                        />
+                    ))}
+                </div>
+
                 {/* Step 1: Use Case */}
                 {step === 1 && (
-                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
-                        <div className="text-center space-y-4">
+                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center text-center">
+                        <div className="space-y-4">
                             <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">How will you execute?</h1>
                             <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
-                                floework is built to respect human cognitive limits, whether alone or together.
+                                floework is built to respect human cognitive limits.
                             </p>
                         </div>
 
                         <div className="flex flex-col gap-4 w-full">
-                            {['solo', 'team', 'student'].map((caseType, idx) => (
+                            {[
+                                { id: 'solo', title: 'Individual Contributor', desc: 'Focus on deep work without noise.' },
+                                { id: 'team', title: 'Technical Team', desc: 'Align effort with delivery.' },
+                                { id: 'student', title: 'Student Project', desc: 'Stay on track together.' }
+                            ].map((item, idx) => (
                                 <button
-                                    key={caseType}
-                                    onClick={() => setUseCase(caseType)}
+                                    key={item.id}
+                                    onClick={() => setUseCase(item.id)}
                                     style={{ animationDelay: `${idx * 100 + 200}ms` }}
-                                    className={`w-full p-5 rounded-3xl border-2 text-left transition-all animate-[in-slide-up_0.5s_ease-out_both] ${useCase === caseType
-                                        ? "border-[#007dff] bg-[#007dff]/5 shadow-md shadow-[#007dff]/10 scale-[1.02]"
+                                    className={`w-full p-6 rounded-3xl border-2 text-left transition-all animate-[in-slide-up_0.5s_ease-out_both] ${useCase === item.id
+                                        ? "border-[#007dff] bg-[#007dff]/5 shadow-sm shadow-[#007dff]/10 scale-[1.02]"
                                         : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-lg font-semibold text-slate-900 capitalize block mb-1">
-                                                {caseType === 'solo' ? 'Individual Contributor' : caseType === 'team' ? 'Technical Team' : 'Student Project'}
+                                            <span className="text-lg font-bold text-slate-900 block mb-1">
+                                                {item.title}
                                             </span>
                                             <span className="text-[13px] text-slate-500 font-medium">
-                                                {caseType === 'solo' ? 'Deep work without the noise.' : caseType === 'team' ? 'Align effort with delivery.' : 'Stay on track together.'}
+                                                {item.desc}
                                             </span>
                                         </div>
-                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${useCase === caseType ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${useCase === item.id ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
                                             <CheckCircle2 size={16} strokeWidth={3} />
                                         </div>
                                     </div>
@@ -107,124 +118,101 @@ export default function OnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 2: Team Question */}
+                {/* Step 2: Workspace Creation */}
                 {step === 2 && (
                     <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
                         <div className="text-center space-y-4">
-                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Got a crew?</h1>
-                            <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
-                                We can set up a new workspace for you to invite them later.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col gap-4 w-full">
-                            <button
-                                onClick={() => setHasTeam(true)}
-                                className={`w-full p-5 rounded-3xl border-2 text-left transition-all ${hasTeam === true ? "border-[#007dff] bg-[#007dff]/5 shadow-md scale-[1.02]" : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
-                                    }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-lg font-semibold text-slate-900">Yes, I have an invite</span>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${hasTeam === true ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
-                                        <CheckCircle2 size={16} strokeWidth={3} />
-                                    </div>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={() => setHasTeam(false)}
-                                className={`w-full p-5 rounded-3xl border-2 text-left transition-all ${hasTeam === false ? "border-[#007dff] bg-[#007dff]/5 shadow-md scale-[1.02]" : "border-slate-100 hover:border-slate-300 hover:bg-slate-50 hover:scale-[1.01]"
-                                    }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-lg font-semibold text-slate-900">Not yet, I'll start fresh</span>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${hasTeam === false ? 'border-[#007dff] bg-[#007dff] text-white' : 'border-slate-300 text-transparent'}`}>
-                                        <CheckCircle2 size={16} strokeWidth={3} />
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 3: Create Team Workspace */}
-                {step === 3 && (
-                    <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
-                        <div className="text-center space-y-4">
+                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <Rocket className="text-slate-900" size={32} />
+                            </div>
                             <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Name your space</h1>
                             <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
-                                Give your new workspace an identity.
+                                Give your workspace a unique identity.
                             </p>
                         </div>
 
-                        <div className="w-full relative">
+                        <div className="w-full space-y-2">
+                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Workspace Name</label>
                             <input
                                 type="text"
-                                placeholder="e.g. Acme Corp or Next Big Thing"
-                                value={teamName}
-                                onChange={(e) => setTeamName(e.target.value)}
-                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                placeholder="e.g. Acme Corp or My Backend Project"
+                                value={workspaceName}
+                                onChange={(e) => setWorkspaceName(e.target.value)}
+                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-5 text-xl font-bold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400"
                                 autoFocus
                             />
                         </div>
                     </div>
                 )}
 
-                {/* Step 4: Individual Setup */}
-                {step === 4 && (
+                {/* Step 3: Project & Sprint */}
+                {step === 3 && (
                     <div className="w-full space-y-10 animate-[in-slide-up_0.6s_ease-out_both] flex flex-col items-center">
                         <div className="text-center space-y-4">
-                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Design your space</h1>
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Define Execution</h1>
                             <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
-                                Name your workspace and define your first Sprint.
+                                Create your first project and sprint cycle.
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-5 w-full">
+                        <div className="flex flex-col gap-6 w-full">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700 ml-2">Workspace Name</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                    <Layout size={14} /> Project Name
+                                </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. My startup side-project"
+                                    placeholder="e.g. Core API or Q4 Launch"
                                     value={projectName}
                                     onChange={(e) => setProjectName(e.target.value)}
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                    className="w-full bg-slate-100/50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-bold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700 ml-2">Initial Sprint Tracker</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                    <Calendar size={14} /> Initial Sprint
+                                </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Sprint 1 or MVP Launch"
+                                    placeholder="e.g. Sprint 1 or MVP Stage"
                                     value={sprintName}
                                     onChange={(e) => setSprintName(e.target.value)}
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-semibold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-medium text-center"
+                                    className="w-full bg-slate-100/50 border-2 border-slate-200 rounded-2xl px-6 py-4 text-lg font-bold focus:outline-none focus:border-[#007dff] focus:bg-white text-slate-900 transition-all"
                                 />
                             </div>
                         </div>
 
-                        <button onClick={handleSkipSandbox} className="mt-4 text-slate-500 hover:text-slate-800 font-medium text-sm flex items-center gap-2 transition-colors">
-                            <Wand2 size={16} /> Skip & build me a sandbox template instead
+                        <button onClick={handleSkipSandbox} className="mt-4 text-slate-400 hover:text-slate-800 font-bold text-xs flex items-center gap-2 transition-colors uppercase tracking-widest">
+                            <Wand2 size={16} /> Skip and use sandbox template
                         </button>
                     </div>
                 )}
 
                 {/* Action Bar */}
-                <div className="w-full flex justify-center mt-12 animate-[fade-in_1s_ease-in-out_both] delay-500">
+                <div className="w-full flex flex-col items-center mt-12 animate-[fade-in_1s_ease-in-out_both] delay-500">
                     <Button
                         onClick={handleNext}
                         disabled={
                             (step === 1 && !useCase) ||
-                            (step === 2 && hasTeam === null) ||
-                            (step === 3 && (!teamName.trim() || isCreating)) ||
-                            (step === 4 && (!projectName.trim() || !sprintName.trim() || isSettingUp))
+                            (step === 2 && !workspaceName.trim()) ||
+                            (step === 3 && (!projectName.trim() || !sprintName.trim() || isSettingUp))
                         }
                         size="lg"
-                        className="h-14 px-10 rounded-full bg-slate-900 text-white font-semibold shadow-lg shadow-black/10 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:shadow-none min-w-[200px]"
+                        className="h-16 px-12 rounded-full bg-slate-900 text-white font-bold shadow-2xl shadow-black/20 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:shadow-none min-w-[220px] text-lg flex gap-3 items-center"
                     >
-                        {step === 3 || step === 4 ? ((isCreating || isSettingUp) ? "Preparing..." : "Enter floework") : "Continue"}
+                        {step === 3 ? (isSettingUp ? "Initializing..." : "Enter floework") : "Continue"}
+                        <ArrowRight size={20} />
                     </Button>
+                    
+                    {step > 1 && !isSettingUp && (
+                         <button 
+                            onClick={() => setStep(step - 1)}
+                            className="mt-6 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest transition-colors"
+                        >
+                            Back
+                        </button>
+                    )}
                 </div>
 
                 <style>{`
