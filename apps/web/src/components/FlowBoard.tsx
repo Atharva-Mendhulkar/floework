@@ -280,7 +280,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
             <PhaseColumn
               key={phase.id}
               phase={phase}
-              isLast={i === phases.length - 1}
+              isLast={i === (phases?.length || 0) - 1}
               onTaskClick={onTaskClick}
             />
           ))}
