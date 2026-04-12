@@ -289,10 +289,60 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, data: { barData: [], burnoutData: [] } } }),
         }),
         getMessages: builder.query<{ success: boolean; data: any[] }, string>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
+            queryFn: async (projectId) => {
+                const { data, error } = await supabase
+                    .from('messages')
+                    .select('*, author:profiles(full_name, avatar_url)')
+                    .eq('project_id', projectId)
+                    .order('created_at', { ascending: true });
+                
+                if (error) return { error: { status: 500, data: error.message } };
+                
+                return { data: { 
+                    success: true, 
+                    data: (data || []).map(m => ({
+                        id: m.id,
+                        content: m.content,
+                        createdAt: m.created_at,
+                        author: {
+                            id: m.author_id,
+                            name: m.author?.full_name || 'Unknown',
+                            avatarUrl: m.author?.avatar_url
+                        }
+                    }))
+                } };
+            },
             providesTags: ['Message'],
         }),
-        postMessage: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Message'] }),
+        postMessage: builder.mutation<{ success: boolean; data: any }, { projectId: string; content: string }>({
+            queryFn: async ({ projectId, content }) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+
+                const { data, error } = await supabase
+                    .from('messages')
+                    .insert({ project_id: projectId, content, author_id: user.id })
+                    .select('*, author:profiles(full_name, avatar_url)')
+                    .single();
+                
+                if (error) return { error: { status: 400, data: error.message } };
+                
+                return { data: { 
+                    success: true, 
+                    data: {
+                        id: data.id,
+                        content: data.content,
+                        createdAt: data.created_at,
+                        author: {
+                            id: data.author_id,
+                            name: data.author?.full_name || 'Unknown',
+                            avatarUrl: data.author?.avatar_url
+                        }
+                    }
+                } };
+            },
+            invalidatesTags: ['Message'],
+        }),
         getProfile: builder.query<{ success: boolean; data: User }, void>({
             queryFn: async () => {
                 const user = (await supabase.auth.getUser()).data.user;

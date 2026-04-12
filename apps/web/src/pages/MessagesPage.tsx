@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useGetMessagesQuery, usePostMessageMutation, useGetProjectsQuery, api } from "@/store/api";
-import { useSocket } from "@/modules/socket/SocketContext";
+import { supabase } from "@/lib/supabase";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
 import { Send, ChevronDown } from "lucide-react";
@@ -27,7 +27,7 @@ export default function MessagesPage() {
 
     const { data: response, isLoading } = useGetMessagesQuery(projectId!, { skip: !projectId });
     const [postMessage, { isLoading: isPosting }] = usePostMessageMutation();
-    const { socket, isConnected } = useSocket();
+    const isConnected = true; // Supabase handles connection state internally
     const dispatch = useDispatch<AppDispatch>();
 
     const messages = response?.data || [];
@@ -37,22 +37,53 @@ export default function MessagesPage() {
     }, [messages]);
 
     useEffect(() => {
-        if (!socket || !isConnected || !projectId) return;
-        socket.emit("join_project", projectId);
-        socket.on("new_message", (newMessage: any) => {
-            dispatch(
-                api.util.updateQueryData("getMessages", projectId, (draft) => {
-                    if (!draft.data.find((m: any) => m.id === newMessage.id)) {
-                        draft.data.push(newMessage);
-                    }
-                })
-            );
-        });
+        if (!projectId) return;
+
+        // Subscribe to New Messages via Supabase Realtime
+        const channel = supabase
+            .channel(`project-chat-${projectId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `project_id=eq.${projectId}`
+                },
+                async (payload) => {
+                    // Fetch profile info for the new message author
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, avatar_url')
+                        .eq('id', payload.new.author_id)
+                        .single();
+
+                    const enrichedMessage = {
+                        id: payload.new.id,
+                        content: payload.new.content,
+                        createdAt: payload.new.created_at,
+                        author: {
+                            id: payload.new.author_id,
+                            name: profile?.full_name || 'Unknown',
+                            avatarUrl: profile?.avatar_url
+                        }
+                    };
+
+                    dispatch(
+                        api.util.updateQueryData("getMessages", projectId, (draft) => {
+                            if (!draft.data.find((m: any) => m.id === enrichedMessage.id)) {
+                                draft.data.push(enrichedMessage);
+                            }
+                        })
+                    );
+                }
+            )
+            .subscribe();
+
         return () => {
-            socket.emit("leave_project", projectId);
-            socket.off("new_message");
+            supabase.removeChannel(channel);
         };
-    }, [socket, isConnected, dispatch, projectId]);
+    }, [dispatch, projectId]);
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
