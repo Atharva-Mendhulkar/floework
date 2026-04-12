@@ -220,10 +220,45 @@ export const api = createApi({
             invalidatesTags: ['User'],
         }),
         inviteToTeam: builder.mutation<{ success: boolean; data: any }, { teamId: string; email: string; role?: string }>({
-            queryFn: async () => ({ data: { success: true, data: { message: 'Invites disabled in showcase mode' } } }),
+            queryFn: async ({ teamId, email, role }) => {
+                const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                const { data, error } = await supabase
+                    .from('team_invitations')
+                    .insert({ team_id: teamId, email, role: role || 'member', token })
+                    .select()
+                    .single();
+                
+                if (error) return { error: { status: 400, data: { message: error.message } } };
+                return { data: { success: true, data: { ...data, token } } };
+            },
         }),
         joinTeam: builder.mutation<{ success: boolean; data: any }, { token: string }>({
-            queryFn: async () => ({ data: { success: true, data: { message: 'Join disabled in showcase mode' } } }),
+            queryFn: async ({ token }) => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+
+                // 1. Find invitation
+                const { data: invite, error: inviteErr } = await supabase
+                    .from('team_invitations')
+                    .select('*')
+                    .eq('token', token)
+                    .single();
+                
+                if (inviteErr || !invite) return { error: { status: 404, data: { message: 'Invalid or expired token' } } };
+
+                // 2. Add as member
+                const { error: joinErr } = await supabase
+                    .from('team_members')
+                    .insert({ team_id: invite.team_id, user_id: user.id, role: invite.role });
+
+                if (joinErr) return { error: { status: 400, data: { message: joinErr.message } } };
+
+                // 3. Cleanup invite
+                await supabase.from('team_invitations').delete().eq('id', invite.id);
+
+                return { data: { success: true, data: { teamId: invite.team_id } } };
+            },
+            invalidatesTags: ['User', 'Project', 'Task'],
         }),
         getProjectSprints: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async () => ({ data: { success: true, data: [] } }),
