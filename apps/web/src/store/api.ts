@@ -440,21 +440,28 @@ export const api = createApi({
                 
                 if (error) return { error: { status: 500, data: error.message } };
 
-                const statuses = (data || []).map(fs => {
+                const uniqueUsers = new Map();
+                
+                (data || []).forEach(fs => {
                     const profile = Array.isArray(fs.profiles) ? fs.profiles[0] : fs.profiles;
                     
-                    return {
-                        status: "In Focus",
-                        task: fs.tasks?.title || "Productive Work",
-                        member: {
-                            id: fs.user_id,
-                            name: profile?.full_name || "Unknown Member",
-                            initials: (profile?.full_name || "??").substring(0, 2).toUpperCase(),
-                            color: "bg-blue-100 text-blue-600"
-                        }
-                    };
+                    // Only keep the most recent session if duplicates exist
+                    if (!uniqueUsers.has(fs.user_id)) {
+                        uniqueUsers.set(fs.user_id, {
+                            status: "In Focus",
+                            task: fs.tasks?.title || "Productive Work",
+                            member: {
+                                id: fs.user_id,
+                                name: profile?.full_name || "Unknown Member",
+                                initials: (profile?.full_name || "??").substring(0, 2).toUpperCase(),
+                                color: "bg-blue-100 text-blue-600"
+                            }
+                        });
+                    }
                 });
 
+                const statuses = Array.from(uniqueUsers.values());
+                
                 return { data: { success: true, data: statuses, count: statuses.length } };
             },
             providesTags: ['FocusSession', 'User'],

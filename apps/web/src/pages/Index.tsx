@@ -107,11 +107,10 @@ const Index = () => {
           </div>
 
           {/* Quick Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
             <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} color="#10b981" />
             <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} color="#f59e0b" />
-            <MiniStatCard icon={Zap} label="In Focus Now" value={`${inFocusNow} members`} color="#8b5cf6" />
           </div>
 
           {/* Weekly Focus Report banner */}
