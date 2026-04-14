@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, UserPlus, Trash2, LogOut, Settings, MoreVertical } from "lucide-react";
+import { User, Shield, UserPlus, Trash2, LogOut, Settings, MoreVertical, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -36,6 +36,8 @@ const WorkspaceSettingsPage = () => {
 
     const [wsName, setWsName] = useState(activeTeam?.name || "");
     const [inviteEmail, setInviteEmail] = useState("");
+    const [lastInvite, setLastInvite] = useState<{ email: string; token: string } | null>(null);
+    const [copied, setCopied] = useState(false);
 
     const isAdmin = membersRes?.data?.find(m => m.user_id === user?.id)?.role === "admin";
 
@@ -52,12 +54,20 @@ const WorkspaceSettingsPage = () => {
     const handleInvite = async () => {
         if (!activeTeam || !inviteEmail) return;
         try {
-            await inviteMember({ teamId: activeTeam.id, email: inviteEmail }).unwrap();
-            toast.success("Invitation sent to " + inviteEmail);
+            const res = await inviteMember({ teamId: activeTeam.id, email: inviteEmail }).unwrap();
+            setLastInvite({ email: inviteEmail, token: res.data.token });
             setInviteEmail("");
+            toast.success("Token generated successfully!");
         } catch (e) {
-            toast.error("Failed to send invitation");
+            toast.error("Failed to generate token");
         }
+    };
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("Token copied to clipboard!");
     };
 
     const handleChangeRole = async (targetUserId: string, newRole: string) => {
@@ -158,20 +168,52 @@ const WorkspaceSettingsPage = () => {
                         {isAdmin && (
                             <div className="flex gap-2">
                                 <Input 
-                                    placeholder="email@example.com" 
-                                    className="h-9 w-64 text-sm"
+                                    placeholder="Enter invitee email (for tracking)" 
+                                    className="h-9 w-72 text-sm"
                                     value={inviteEmail}
                                     onChange={(e) => setInviteEmail(e.target.value)}
                                 />
                                 <Button onClick={handleInvite} size="sm" className="bg-[#007dff] hover:bg-[#0066cc]">
                                     <UserPlus size={14} className="mr-2" />
-                                    Invite
+                                    Generate Token
                                 </Button>
                             </div>
                         )}
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
+                    {/* Latest Invite Banner */}
+                    {lastInvite && (
+                        <div className="bg-[#007dff]/5 border-b border-[#007dff]/20 p-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold text-[#007dff]">New Token Generated for {lastInvite.email}</p>
+                                    <p className="text-xs text-slate-500">Send this token to the user so they can join during onboarding.</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <code className="bg-white border text-[#007dff] px-3 py-1.5 rounded-lg font-mono text-sm font-bold shadow-sm">
+                                        {lastInvite.token}
+                                    </code>
+                                    <Button 
+                                        size="icon" 
+                                        variant="outline" 
+                                        className="h-9 w-9 text-[#007dff] border-[#007dff]/30 hover:bg-[#007dff]/10"
+                                        onClick={() => copyToClipboard(lastInvite.token)}
+                                    >
+                                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                                    </Button>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="text-slate-400 text-xs"
+                                        onClick={() => setLastInvite(null)}
+                                    >
+                                        Close
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="divide-y divide-slate-100">
                         {membersRes?.data?.map((member) => (
                             <div key={member.user_id} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
