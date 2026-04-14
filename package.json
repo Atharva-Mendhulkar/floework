@@ -5,7 +5,8 @@
     "apps/*"
   ],
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "@google/generative-ai": "^0.21.0"
   },
   "devDependencies": {
     "@vercel/node": "^3.0.0",
