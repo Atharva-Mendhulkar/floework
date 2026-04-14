@@ -617,9 +617,7 @@ export const api = createApi({
         }),
         getStabilityGrid: builder.query<{ success: boolean; data: any[] }, void>({
             queryFn: async () => {
-                const user = (await supabase.auth.getUser()).data.user;
-                if (!user) return { data: { success: true, data: [] } };
-                const { data } = await supabase.from('focus_stability_slots').select('*').eq('user_id', user.id);
+                const { data } = await supabase.from('focus_stability_slots').select('*');
                 return { data: { success: true, data: data || [] } };
             },
             providesTags: ['Signal'],
@@ -678,12 +676,63 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, data: { url: '' } } }),
         }),
         getBottlenecks: builder.query<{ success: boolean; data: any[] }, void>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
-            providesTags: ['Signal'],
+            queryFn: async () => {
+                const { data, error } = await supabase
+                    .from('tasks')
+                    .select('*, projects(name)')
+                    .neq('status', 'done')
+                    .gt('focus_count', 3)
+                    .order('focus_count', { ascending: false })
+                    .limit(5);
+
+                if (error) return { error: { status: 500, data: error.message } };
+
+                const bottlenecks = (data || []).map(t => ({
+                    id: t.id,
+                    subject: t.title,
+                    project: t.projects?.name || 'Main Project',
+                    risk: t.focus_count > 5 ? 'High' : 'Medium',
+                    focusCount: t.focus_count,
+                    suggestedAction: t.focus_count > 5 ? "Sub-divide Task" : "Review blockers"
+                }));
+
+                return { data: { success: true, data: bottlenecks } };
+            },
+            providesTags: ['Signal', 'Task'],
         }),
         getBurnoutTrend: builder.query<{ success: boolean; data: any[] }, void>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
-            providesTags: ['Signal'],
+            queryFn: async () => {
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                const { data } = await supabase
+                    .from('focus_sessions')
+                    .select('duration_secs, started_at')
+                    .gte('started_at', sevenDaysAgo);
+
+                // Group by day
+                const days: Record<string, number> = {};
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString();
+                    days[d] = 0;
+                }
+
+                (data || []).forEach(s => {
+                    const d = new Date(s.started_at).toLocaleDateString();
+                    if (days[d] !== undefined) days[d] += (s.duration_secs || 0);
+                });
+
+                const trend = Object.entries(days).map(([day, secs]) => {
+                    const hrs = secs / 3600;
+                    return {
+                        name: day.split('/')[1] + '/' + day.split('/')[0], // DD/MM format
+                        "Burnout Risk": Math.min(Math.round((hrs / 40) * 100), 100),
+                        "Focus Hrs": parseFloat(hrs.toFixed(1)),
+                        factors: hrs > 8 ? ["High focus density"] : []
+                    };
+                }).reverse();
+
+                return { data: { success: true, data: trend } };
+            },
+            providesTags: ['Signal', 'FocusSession'],
         }),
         getTaskReplay: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async () => ({ data: { success: true, data: [] } }),
@@ -706,8 +755,38 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, data: null } }),
         }),
         getEstimationAccuracy: builder.query<{ success: boolean; data: any }, void>({
-            queryFn: async () => ({ data: { success: true, data: {} } }),
-            providesTags: ['Signal'],
+            queryFn: async () => {
+                const { data } = await supabase
+                    .from('tasks')
+                    .select('effort, focus_sessions(duration_secs)')
+                    .eq('status', 'done');
+
+                const effortMap: Record<string, number> = { 'S': 2 * 3600, 'M': 5 * 3600, 'L': 10 * 3600 };
+                let totalAccuracy = 0;
+                let count = 0;
+
+                (data || []).forEach(t => {
+                    const estimated = effortMap[t.effort as string] || 0;
+                    const actual = (t.focus_sessions as any[]).reduce((s, f) => s + (f.duration_secs || 0), 0);
+                    if (estimated > 0 && actual > 0) {
+                        const accuracy = 1 - Math.abs((actual - estimated) / estimated);
+                        totalAccuracy += Math.max(0, accuracy);
+                        count++;
+                    }
+                });
+
+                return { 
+                    data: { 
+                        success: true, 
+                        data: { 
+                            score: count > 0 ? Math.round((totalAccuracy / count) * 100) : 0,
+                            trend: "+5% vs last week",
+                            totalTasks: count
+                        } 
+                    } 
+                };
+            },
+            providesTags: ['Signal', 'Task'],
         }),
         disconnectGitHub: builder.mutation<any, void>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['User'] }),
         getFocusWindows: builder.query<{ success: boolean; data: any[] }, void>({
@@ -724,8 +803,30 @@ export const api = createApi({
             providesTags: ['Signal'],
         }),
         getCurrentEffortNarrative: builder.query<{ success: boolean; data: any }, void>({
-            queryFn: async () => ({ data: { success: true, data: {} } }),
-            providesTags: ['Signal'],
+            queryFn: async () => {
+                try {
+                    const response = await fetch('/api/analytics/narrative');
+                    const json = await response.json();
+                    if (!response.ok) throw new Error(json.error || 'Failed to fetch narrative');
+                    
+                    const report = json.data;
+                    return { 
+                        data: { 
+                            success: true, 
+                            data: {
+                                id: 'current-ai-report',
+                                weekLabel: 'April 14 - April 20',
+                                generatedAt: new Date().toISOString(),
+                                body: `${report.summary}\n\nKey Highlights:\n${report.highlights.map((h: string) => `• ${h}`).join('\n')}\n\n${report.warnings.length > 0 ? `Watchpoints:\n${report.warnings.map((w: string) => `! ${w}`).join('\n')}` : ''}`,
+                                shareToken: null
+                            } 
+                        } 
+                    };
+                } catch (error: any) {
+                    return { data: { success: true, data: null } };
+                }
+            },
+            providesTags: ['Signal', 'FocusSession', 'Task'],
         }),
         updateNarrative: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Signal'] }),
         shareNarrative: builder.mutation<any, string>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Signal'] }),

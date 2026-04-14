@@ -40,9 +40,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       - Tasks Currently in Motion (In Focus/Review): ${activeCount}
       
       Requirements:
-      - Length: Exactly 3 sentences.
+      - Length: Exactly 4 sentences.
       - Tone: Professional, data-driven, yet encouraging. Like a high-end personal assistant.
-      - Highlights: Mention current momentum and any potential bottlenecks if active tasks are high (>5).
+      - Highlights: Mention current momentum and specifically identify a 'Team Spotlight' (e.g., 'Team velocity is high after Sarah Chen completed X task').
       - Style: Avoid corporate jargon; use sleek, modern executive language.
 
       Response Format (JSON only):
