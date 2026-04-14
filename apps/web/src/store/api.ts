@@ -432,11 +432,89 @@ export const api = createApi({
         }),
         logProductivity: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }) }),
         getTeamStatus: builder.query<{ success: boolean; data: any[] }, void>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
-            providesTags: ['User'],
+            queryFn: async () => {
+                const { data, error } = await supabase
+                    .from('focus_sessions')
+                    .select('*, profiles(full_name, avatar_url), tasks(title)')
+                    .is('ended_at', null);
+                
+                if (error) return { error: { status: 500, data: error.message } };
+
+                const statuses = (data || []).map(fs => ({
+                    status: "In Focus",
+                    task: fs.tasks?.title || "Productive Work",
+                    member: {
+                        id: fs.user_id,
+                        name: fs.profiles?.full_name || "Unknown",
+                        initials: fs.profiles?.full_name?.substring(0, 2).toUpperCase() || "??",
+                        color: "bg-blue-100 text-blue-600"
+                    }
+                }));
+
+                return { data: { success: true, data: statuses } };
+            },
+            providesTags: ['FocusSession', 'User'],
         }),
         getAnalyticsDashboard: builder.query<{ success: boolean; data: { barData: any[], burnoutData: any[] } }, void>({
-            queryFn: async () => ({ data: { success: true, data: { barData: [], burnoutData: [] } } }),
+            queryFn: async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { data: { success: true, data: { barData: [], burnoutData: [] } } };
+
+                // Fetch last 7 days of focus sessions for the current user
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                
+                const { data: focusData } = await supabase
+                    .from('focus_sessions')
+                    .select('duration_secs, started_at')
+                    .eq('user_id', user.id)
+                    .gte('started_at', sevenDaysAgo.toISOString());
+                
+                const { data: taskData } = await supabase
+                    .from('tasks')
+                    .select('status, updated_at')
+                    .eq('status', 'done')
+                    .gte('updated_at', sevenDaysAgo.toISOString());
+
+                // Aggregate Focus Hours by day
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const statsMap: Record<string, { focusHrs: number; tasksCompleted: number }> = {};
+                
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dayLabel = days[d.getDay()];
+                    statsMap[dayLabel] = { focusHrs: 0, tasksCompleted: 0 };
+                }
+
+                (focusData || []).forEach(fs => {
+                    const dayLabel = days[new Date(fs.started_at).getDay()];
+                    if (statsMap[dayLabel]) {
+                        statsMap[dayLabel].focusHrs += (fs.duration_secs || 0) / 3600;
+                    }
+                });
+
+                (taskData || []).forEach(t => {
+                    const dayLabel = days[new Date(t.updated_at).getDay()];
+                    if (statsMap[dayLabel]) {
+                        statsMap[dayLabel].tasksCompleted += 1;
+                    }
+                });
+
+                const barData = Object.entries(statsMap).map(([name, data]) => ({
+                    name,
+                    ...data
+                })).reverse();
+
+                // Simple burnout risk calculation
+                const burnoutData = barData.map(d => ({
+                    day: d.name,
+                    burnoutRisk: Math.min(Math.round((d.focusHrs / 8) * 100), 100)
+                }));
+
+                return { data: { success: true, data: { barData, burnoutData } } };
+            },
+            providesTags: ['FocusSession', 'Task'],
         }),
         getMessages: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async (projectId) => {
@@ -539,8 +617,65 @@ export const api = createApi({
             providesTags: ['Signal'],
         }),
         getExecutionNarrative: builder.query<{ success: boolean; data: { summary: string; highlights: string[]; warnings: string[] } }, void>({
-            queryFn: async () => ({ data: { success: true, data: { summary: 'Showcase mode — connect Supabase data for live narrative insights.', highlights: ['Your workspace is set up and running.', 'Focus sessions are being tracked.'], warnings: [] } } }),
-            providesTags: ['Signal'],
+            queryFn: async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { data: { success: true, data: { summary: "Please log in to see your narrative.", highlights: [], warnings: [] } } };
+
+                const { data: focusSessions } = await supabase
+                    .from('focus_sessions')
+                    .select('duration_secs')
+                    .eq('user_id', user.id)
+                    .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+                const { data: tasks } = await supabase
+                    .from('tasks')
+                    .select('status')
+                    .eq('assignee_id', user.id);
+
+                const totalSecs = (focusSessions || []).reduce((acc, curr) => acc + (curr.duration_secs || 0), 0);
+                const hrs = (totalSecs / 3600).toFixed(1);
+                const doneCount = (tasks || []).filter(t => t.status === 'done').length;
+                const inProgressCount = (tasks || []).filter(t => t.status === 'in_progress').length;
+
+                let summary = `Your workspace is active. You've logged ${hrs} hours of deep focus in the last 24h.`;
+                const highlights = [`Reached ${doneCount} completed tasks total.`];
+                const warnings = [];
+
+                if (parseFloat(hrs) > 5) {
+                    highlights.push("Peak productivity detected. High focus density.");
+                } else if (parseFloat(hrs) < 1) {
+                    warnings.push("Low focus time. Consider blocking out a distraction-free hour.");
+                }
+
+                if (inProgressCount > 5) {
+                    warnings.push("High context switching risk. 5+ tasks 'In Progress'.");
+                }
+
+                return { data: { success: true, data: { summary, highlights, warnings } } };
+            },
+        }),
+        getRecentActivity: builder.query<{ success: boolean; data: any[] }, void>({
+            queryFn: async () => {
+                const { data, error } = await supabase
+                    .from('tasks')
+                    .select('*, profiles(full_name)')
+                    .order('updated_at', { ascending: false })
+                    .limit(5);
+
+                if (error) return { error: { status: 500, data: error.message } };
+
+                const activities = (data || []).map(t => ({
+                    id: t.id,
+                    subject: t.title,
+                    status: t.status === 'done' ? 'Executed' : t.status === 'backlog' ? 'Scheduled' : 'In Progress',
+                    startDate: new Date(t.created_at).toLocaleDateString(),
+                    endDate: t.due_date || 'TBD',
+                    assignedUser: t.profiles?.full_name || 'Unassigned'
+                }));
+
+                return { data: { success: true, data: activities } };
+            },
+            providesTags: ['Task'],
         }),
         getBillingStatus: builder.query<{ success: boolean; data: any }, void>({
             queryFn: async () => ({ data: { success: true, data: { plan: 'FREE', status: 'ACTIVE' } } }),
@@ -705,4 +840,5 @@ export const {
     useGetAiDisplacementQuery,
     useGetHasRealTasksQuery,
     useDeleteSampleTasksMutation,
+    useGetRecentActivityQuery,
 } = api;

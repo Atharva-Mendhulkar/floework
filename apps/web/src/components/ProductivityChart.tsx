@@ -1,8 +1,24 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { chartData } from "@/data/mockData";
+import { useGetTasksQuery } from "@/store/api";
 import { Plus, Upload, Calendar } from "lucide-react";
 
 const ProductivityChart = () => {
+  const { data: tasksRes } = useGetTasksQuery();
+  const tasks = tasksRes?.data || [];
+
+  const stats = tasks.reduce((acc: any, t) => {
+    const status = t.status || 'backlog';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const chartData = [
+    { name: "Backlog", value: stats.backlog || 0, fill: "#94a3b8" },
+    { name: "Focus", value: stats.in_progress || 0, fill: "#007dff" },
+    { name: "Review", value: stats.review || 0, fill: "#8b5cf6" },
+    { name: "Outcome", value: stats.done || 0, fill: "#10b981" },
+  ];
+
   const total = chartData.reduce((sum, d) => sum + d.value, 0);
 
   return (

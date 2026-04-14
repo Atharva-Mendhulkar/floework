@@ -1,4 +1,4 @@
-import { activities } from "@/data/mockData";
+import { useGetRecentActivityQuery } from "@/store/api";
 import { Plus, Upload, Calendar, Star } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 
@@ -11,7 +11,10 @@ const statusColors: Record<string, string> = {
 
 const ActivityTable = () => {
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
-  const filteredActivities = activities.filter((a) =>
+  const { data: activityRes, isLoading } = useGetRecentActivityQuery();
+  const activities = activityRes?.data || [];
+  
+  const filteredActivities = activities.filter((a: any) =>
     !searchQuery ||
     a.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
     a.assignedUser.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,7 +51,13 @@ const ActivityTable = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredActivities.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-sm font-medium text-slate-400">
+                  Loading activity...
+                </td>
+              </tr>
+            ) : filteredActivities.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-8 text-center text-sm font-medium text-slate-400">
                   No activity found matching your search.

@@ -3,9 +3,39 @@ import { useGetMessagesQuery, usePostMessageMutation, useGetProjectsQuery, api }
 import { supabase } from "@/lib/supabase";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
-import { Send, ChevronDown } from "lucide-react";
+import { Send, ChevronDown, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/modules/auth/AuthContext";
+
+const MessageBubble = ({ msg }: { msg: any }) => {
+    const { user } = useAuth();
+    const isMe = msg.author?.id === user?.id;
+    const initials = msg.author?.name ? msg.author.name.substring(0, 2).toUpperCase() : "?";
+
+    return (
+        <div className={`flex items-start gap-3 group ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-[11px] shrink-0 shadow-sm
+                ${isMe ? "bg-white border border-slate-100 text-[#007dff]" : "bg-[#007dff]/10 text-[#007dff]"}`}>
+                {msg.author?.avatarUrl ? <img src={msg.author.avatarUrl} className="w-full h-full object-cover rounded-xl" /> : initials}
+            </div>
+            <div className={`flex flex-col gap-0.5 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
+                <div className={`flex items-center gap-2 mb-0.5 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                    <span className="text-[11px] font-bold text-slate-900">{isMe ? "You" : (msg.author?.name || "Unknown")}</span>
+                    <span className="text-[9px] text-slate-400 font-medium">
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                </div>
+                <div className={`text-[13px] px-3.5 py-2.5 shadow-sm transition-all
+                    ${isMe 
+                        ? "bg-[#007dff] text-white rounded-2xl rounded-tr-none font-medium" 
+                        : "bg-slate-100/80 text-slate-700 border border-slate-200/50 rounded-2xl rounded-tl-none font-medium"}`}>
+                    {msg.content}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function MessagesPage() {
     const [content, setContent] = useState("");
@@ -149,27 +179,9 @@ export default function MessagesPage() {
                         <p className="text-[11px]">Start the conversation below.</p>
                     </div>
                 )}
-                {messages.map((msg: any) => {
-                    const initials = msg.author?.name ? msg.author.name.substring(0, 2).toUpperCase() : "?";
-                    return (
-                        <div key={msg.id} className="flex items-start gap-3 group">
-                            <div className="w-8 h-8 rounded-xl bg-[#007dff]/10 text-[#007dff] flex items-center justify-center font-bold text-[11px] shrink-0">
-                                {initials}
-                            </div>
-                            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[12px] font-semibold text-slate-800">{msg.author?.name || "Unknown"}</span>
-                                    <span className="text-[10px] text-slate-400">
-                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                    </span>
-                                </div>
-                                <div className="text-[13px] text-slate-600 bg-slate-50 border border-slate-100 rounded-b-xl rounded-tr-xl px-3 py-2 w-fit max-w-[80%] break-words">
-                                    {msg.content}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                {messages.map((msg: any) => (
+                    <MessageBubble key={msg.id} msg={msg} />
+                ))}
                 <div ref={messagesEndRef} />
             </div>
 
