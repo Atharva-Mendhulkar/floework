@@ -431,7 +431,7 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, data: [] } }),
         }),
         logProductivity: builder.mutation<any, any>({ queryFn: async () => ({ data: { success: true, data: {} } }) }),
-        getTeamStatus: builder.query<{ success: boolean; data: any[] }, void>({
+        getTeamStatus: builder.query<{ success: boolean; data: any[]; count: number }, void>({
             queryFn: async () => {
                 const { data, error } = await supabase
                     .from('focus_sessions')
@@ -440,18 +440,22 @@ export const api = createApi({
                 
                 if (error) return { error: { status: 500, data: error.message } };
 
-                const statuses = (data || []).map(fs => ({
-                    status: "In Focus",
-                    task: fs.tasks?.title || "Productive Work",
-                    member: {
-                        id: fs.user_id,
-                        name: fs.profiles?.full_name || "Unknown",
-                        initials: fs.profiles?.full_name?.substring(0, 2).toUpperCase() || "??",
-                        color: "bg-blue-100 text-blue-600"
-                    }
-                }));
+                const statuses = (data || []).map(fs => {
+                    const profile = Array.isArray(fs.profiles) ? fs.profiles[0] : fs.profiles;
+                    
+                    return {
+                        status: "In Focus",
+                        task: fs.tasks?.title || "Productive Work",
+                        member: {
+                            id: fs.user_id,
+                            name: profile?.full_name || "Unknown Member",
+                            initials: (profile?.full_name || "??").substring(0, 2).toUpperCase(),
+                            color: "bg-blue-100 text-blue-600"
+                        }
+                    };
+                });
 
-                return { data: { success: true, data: statuses } };
+                return { data: { success: true, data: statuses, count: statuses.length } };
             },
             providesTags: ['FocusSession', 'User'],
         }),
@@ -628,21 +632,20 @@ export const api = createApi({
                 const { data: focusSessions } = await supabase
                     .from('focus_sessions')
                     .select('duration_secs')
-                    .eq('user_id', user.id)
                     .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
                 const { data: tasks } = await supabase
                     .from('tasks')
-                    .select('status')
-                    .eq('assignee_id', user.id);
+                    .select('status');
 
                 const totalSecs = (focusSessions || []).reduce((acc, curr) => acc + (curr.duration_secs || 0), 0);
                 const hrs = (totalSecs / 3600).toFixed(1);
                 const doneCount = (tasks || []).filter(t => t.status === 'done').length;
                 const inProgressCount = (tasks || []).filter(t => t.status === 'in_progress').length;
 
-                let summary = `Your workspace is active. You've logged ${hrs} hours of deep focus in the last 24h.`;
-                const highlights = [`Reached ${doneCount} completed tasks total.`];
+                let summary = `Workspace is active. The team has logged ${hrs} hours of deep focus in the last 24h.`;
+                const highlights = [`Workspace velocity: ${doneCount} tasks completed total.`];
+                if (inProgressCount > 0) highlights.push(`${inProgressCount} tasks currently in motion.`);
                 const warnings = [];
 
                 if (parseFloat(hrs) > 5) {
@@ -657,6 +660,7 @@ export const api = createApi({
 
                 return { data: { success: true, data: { summary, highlights, warnings } } };
             },
+            providesTags: ['Signal', 'FocusSession'],
         }),
         getRecentActivity: builder.query<{ success: boolean; data: any[] }, void>({
             queryFn: async () => {

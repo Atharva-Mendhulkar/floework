@@ -50,7 +50,7 @@ const Index = () => {
   const totalFocusHrs = barData.reduce((s, d) => s + (d.focusHrs || 0), 0).toFixed(1);
   const totalTasks = barData.reduce((s, d) => s + (d.tasksCompleted || 0), 0);
   const latestBurnout = burnoutData.at(-1)?.burnoutRisk ?? 0;
-  const inFocusNow = teamStatus.filter((ts) => ts.status === "In Focus").length;
+  const inFocusNow = (teamStatusRes?.data as any)?.count ?? 0;
 
   const dispatch = useDispatch();
 
