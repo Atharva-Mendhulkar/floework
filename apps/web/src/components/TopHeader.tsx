@@ -125,9 +125,9 @@ const TopHeader = () => {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsManageModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
+            <DropdownMenuItem onClick={() => navigate("/workspace/settings")} className="cursor-pointer text-slate-700 font-medium py-2">
               <Users className="mr-2 h-4 w-4" />
-              <span>Manage Workspace</span>
+              <span>Workspace Settings</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setIsJoinModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
               <UserPlus className="mr-2 h-4 w-4" />

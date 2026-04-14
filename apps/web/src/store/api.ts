@@ -231,6 +231,71 @@ export const api = createApi({
                 if (error) return { error: { status: 400, data: { message: error.message } } };
                 return { data: { success: true, data: { ...data, token } } };
             },
+            invalidatesTags: ['Message'],
+        }),
+        getWorkspaceMembers: builder.query<{ success: boolean; data: any[] }, string>({
+            queryFn: async (workspaceId) => {
+                const { data, error } = await supabase
+                    .from('team_members')
+                    .select('*, profiles(full_name, avatar_url)')
+                    .eq('team_id', workspaceId);
+                
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: data || [] } };
+            },
+            providesTags: ['User'],
+        }),
+        updateWorkspaceMember: builder.mutation<{ success: boolean; data: any }, { workspaceId: string; userId: string; role: string }>({
+            queryFn: async ({ workspaceId, userId, role }) => {
+                const { data, error } = await supabase
+                    .from('team_members')
+                    .update({ role })
+                    .match({ team_id: workspaceId, user_id: userId })
+                    .select()
+                    .single();
+                
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data } };
+            },
+            invalidatesTags: ['User'],
+        }),
+        removeWorkspaceMember: builder.mutation<{ success: boolean; data: any }, { workspaceId: string; userId: string }>({
+            queryFn: async ({ workspaceId, userId }) => {
+                const { error } = await supabase
+                    .from('team_members')
+                    .delete()
+                    .match({ team_id: workspaceId, user_id: userId });
+                
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: {} } };
+            },
+            invalidatesTags: ['User', 'Project', 'Task'],
+        }),
+        deleteWorkspace: builder.mutation<{ success: boolean; data: any }, string>({
+            queryFn: async (workspaceId) => {
+                const { error } = await supabase
+                    .from('teams')
+                    .delete()
+                    .eq('id', workspaceId);
+                
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: {} } };
+            },
+            invalidatesTags: ['User', 'Project', 'Task'],
+        }),
+        updateWorkspace: builder.mutation<{ success: boolean; data: any }, { id: string; name: string; description?: string }>({
+            queryFn: async ({ id, name }) => {
+                const { data, error } = await supabase
+                    .from('teams')
+                    .update({ name })
+                    .eq('id', id)
+                    .select()
+                    .single();
+                
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data } };
+            },
+            invalidatesTags: ['User', 'Project'],
         }),
         joinTeam: builder.mutation<{ success: boolean; data: any }, { token: string }>({
             queryFn: async ({ token }) => {
@@ -539,6 +604,11 @@ export const {
     useCreateTeamMutation,
     useInviteToTeamMutation,
     useJoinTeamMutation,
+    useGetWorkspaceMembersQuery,
+    useUpdateWorkspaceMemberMutation,
+    useRemoveWorkspaceMemberMutation,
+    useDeleteWorkspaceMutation,
+    useUpdateWorkspaceMutation,
     useGetProjectSprintsQuery,
     useCreateSprintMutation,
     useCreateProjectMutation,

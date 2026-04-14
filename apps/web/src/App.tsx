@@ -27,6 +27,7 @@ import AlertsPage from "./pages/AlertsPage";
 import DashboardLayout from "./components/DashboardLayout";
 import BillingPage from "./pages/BillingPage";
 import PhilosophyPage from "./pages/PhilosophyPage";
+import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => (
                   <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/billing" element={<DashboardLayout><BillingPage /></DashboardLayout>} />
+                  <Route path="/workspace/settings" element={<DashboardLayout><WorkspaceSettingsPage /></DashboardLayout>} />
                 </Route>
 
                 {/* Fallback */}
