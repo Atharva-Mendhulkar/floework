@@ -11,8 +11,12 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 -- 2. Clean Up Old Policies
 DROP POLICY IF EXISTS "own profile" ON public.profiles;
 DROP POLICY IF EXISTS "anyone authenticated can see profiles" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_authenticated" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "Users can see messages in their projects" ON public.messages;
 DROP POLICY IF EXISTS "Users can send messages to their projects" ON public.messages;
+DROP POLICY IF EXISTS "messages_select_authenticated" ON public.messages;
+DROP POLICY IF EXISTS "messages_insert_authenticated" ON public.messages;
 
 -- 3. PROFILES: Visibility Fix
 -- Allows all logged-in users to see names and avatars (Fixes 403 Forbidden)
