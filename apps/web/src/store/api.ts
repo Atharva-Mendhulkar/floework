@@ -354,13 +354,17 @@ export const api = createApi({
                 const user = (await supabase.auth.getUser()).data.user;
                 if (!user) return { error: { status: 401, data: 'Not authenticated' } };
 
+                // 1. Insert the message
                 const { data, error } = await supabase
                     .from('messages')
                     .insert({ project_id: projectId, content, author_id: user.id })
                     .select('*, author:profiles(full_name, avatar_url)')
                     .single();
                 
-                if (error) return { error: { status: 400, data: error.message } };
+                if (error) {
+                    console.error('[Floework] Message Insert Error:', error);
+                    return { error: { status: 400, data: error.message } };
+                }
                 
                 return { data: { 
                     success: true, 
@@ -370,7 +374,7 @@ export const api = createApi({
                         createdAt: data.created_at,
                         author: {
                             id: data.author_id,
-                            name: data.author?.full_name || 'Unknown',
+                            name: data.author?.full_name || 'Me',
                             avatarUrl: data.author?.avatar_url
                         }
                     }
