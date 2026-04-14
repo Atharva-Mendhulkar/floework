@@ -435,7 +435,7 @@ export const api = createApi({
             queryFn: async () => {
                 const { data, error } = await supabase
                     .from('focus_sessions')
-                    .select('*, profiles(full_name, avatar_url), tasks(title)')
+                    .select('*, profiles!left(full_name, avatar_url), tasks!left(title)')
                     .is('ended_at', null);
                 
                 if (error) return { error: { status: 500, data: error.message } };
@@ -466,8 +466,7 @@ export const api = createApi({
                 
                 const { data: focusData } = await supabase
                     .from('focus_sessions')
-                    .select('duration_secs, started_at')
-                    .eq('user_id', user.id)
+                    .select('duration_secs, started_at, ended_at, user_id')
                     .gte('started_at', sevenDaysAgo.toISOString());
                 
                 const { data: taskData } = await supabase
@@ -490,7 +489,12 @@ export const api = createApi({
                 (focusData || []).forEach(fs => {
                     const dayLabel = days[new Date(fs.started_at).getDay()];
                     if (statsMap[dayLabel]) {
-                        statsMap[dayLabel].focusHrs += (fs.duration_secs || 0) / 3600;
+                        // Estimate duration if session is still active
+                        let duration = fs.duration_secs || 0;
+                        if (!fs.ended_at) {
+                            duration = Math.floor((Date.now() - new Date(fs.started_at).getTime()) / 1000);
+                        }
+                        statsMap[dayLabel].focusHrs += Math.max(0, duration) / 3600;
                     }
                 });
 
@@ -506,10 +510,10 @@ export const api = createApi({
                     ...data
                 })).reverse();
 
-                // Simple burnout risk calculation
+                // Calculate team-wide burnout risk
                 const burnoutData = barData.map(d => ({
                     day: d.name,
-                    burnoutRisk: Math.min(Math.round((d.focusHrs / 8) * 100), 100)
+                    burnoutRisk: Math.min(Math.round((d.focusHrs / 40) * 100), 100) // 40h team capacity baseline
                 }));
 
                 return { data: { success: true, data: { barData, burnoutData } } };

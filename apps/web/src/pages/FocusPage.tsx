@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Play, Pause, AlertTriangle, ChevronDown, Zap, Sparkles } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from "recharts";
-import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation, useGetTasksQuery } from "@/store/api";
+import { useStartFocusSessionMutation, useStopFocusSessionMutation, useLogProductivityMutation, useGetTasksQuery, useUpdateTaskMutation } from "@/store/api";
 import { toast } from "sonner";
 
 const generateQualityData = () =>
@@ -40,6 +40,9 @@ const FocusPage = () => {
   const [startSessionApi] = useStartFocusSessionMutation();
   const [stopSessionApi] = useStopFocusSessionMutation();
   const [logProductivityApi] = useLogProductivityMutation();
+  const [updateTaskApi] = useUpdateTaskMutation();
+
+  const CHIME_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
   const [searchParams] = useSearchParams();
   const urlTaskId = searchParams.get("taskId");
@@ -70,6 +73,14 @@ const FocusPage = () => {
   useEffect(() => {
     sessionStorage.setItem('focus_running', String(isRunning));
   }, [isRunning]);
+
+  // v1.3.1: Completion Monitor
+  useEffect(() => {
+    if (seconds === 0 && isRunning) {
+      setIsRunning(false);
+      handleAutoCompletion();
+    }
+  }, [seconds, isRunning]);
 
   useEffect(() => {
     if (activeSessionId) sessionStorage.setItem('focus_session_id', activeSessionId);
@@ -119,9 +130,13 @@ const FocusPage = () => {
           return;
         }
         const res = await startSessionApi(activeTaskId).unwrap();
+        
+        // v1.3: Automatically transition task to "Focus" (In Progress)
+        await updateTaskApi({ id: activeTaskId, phase: 'focus' }).unwrap();
+        
         setActiveSessionId(res.data.id);
         setIsRunning(true);
-        toast.info("Focus session started.");
+        toast.info("Task moved to Focus. Session started.");
       } else {
         setIsRunning(false);
         if (activeTask?.isSample) {
@@ -147,6 +162,29 @@ const FocusPage = () => {
     } catch {
       toast.error("Failed to finalize session.");
     }
+  };
+
+  const handleAutoCompletion = async () => {
+    // 1. Play Chime
+    const audio = new Audio(CHIME_URL);
+    audio.play().catch(e => console.log("Audio play blocked", e));
+
+    // 2. Finalize Session automatically
+    if (activeSessionId) {
+      try {
+        await stopSessionApi({ sessionId: activeSessionId, aiAssisted }).unwrap();
+        const finalScore = Math.round(qualityData[qualityData.length - 1].quality);
+        await logProductivityApi({ metric: "focus_quality", value: finalScore }).unwrap();
+        toast.success("Focus block complete — Auto-logged.");
+      } catch (err) {
+        console.error("Auto-log failed", err);
+      }
+    }
+
+    // 3. Reset timer for next session
+    setSeconds(25 * 60);
+    sessionStorage.setItem('focus_seconds', String(25 * 60));
+    setActiveSessionId(null);
   };
 
   return (

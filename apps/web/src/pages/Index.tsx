@@ -1,4 +1,7 @@
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { supabase } from "@/lib/supabase";
+import { api } from "@/store/api";
 import SidebarNavigation from "@/components/SidebarNavigation";
 import TopHeader from "@/components/TopHeader";
 import ActivityTable from "@/components/ActivityTable";
@@ -49,6 +52,40 @@ const Index = () => {
   const latestBurnout = burnoutData.at(-1)?.burnoutRisk ?? 0;
   const inFocusNow = teamStatus.filter((ts) => ts.status === "In Focus").length;
 
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // 1. Subscribe to Focus Session changes (Insert/Update/Delete)
+    const focusChannel = supabase
+      .channel('dashboard-focus-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'focus_sessions' },
+        () => {
+          // Trigger a re-fetch of all focus-related data
+          dispatch(api.util.invalidateTags(['FocusSession']));
+        }
+      )
+      .subscribe();
+
+    // 2. Subscribe to Task changes (for "Tasks Done" stat)
+    const taskChannel = supabase
+      .channel('dashboard-task-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          dispatch(api.util.invalidateTags(['Task']));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(focusChannel);
+      supabase.removeChannel(taskChannel);
+    };
+  }, [dispatch]);
+
   return (
     <div className="flex h-screen bg-background p-3 gap-3">
       <SidebarNavigation />
@@ -71,7 +108,7 @@ const Index = () => {
 
           {/* Quick Stats Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <MiniStatCard icon={Zap} label="Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
+            <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
             <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} color="#10b981" />
             <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} color="#f59e0b" />
             <MiniStatCard icon={Zap} label="In Focus Now" value={`${inFocusNow} members`} color="#8b5cf6" />
