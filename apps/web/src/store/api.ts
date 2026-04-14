@@ -25,6 +25,9 @@ export const api = createApi({
         }),
         getTasks: builder.query<{ success: boolean; data: TaskNode[] }, string | void>({
             queryFn: async (projectId) => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { error: { status: 401, data: 'Unauthorized' } };
+
                 let q = supabase.from('tasks').select('*, profiles(full_name, avatar_url)');
                 if (projectId && projectId !== "fallback-id") q = q.eq('project_id', projectId);
                 const { data, error } = await q.order('created_at', { ascending: false });
@@ -44,15 +47,36 @@ export const api = createApi({
                     'done': 'done'
                 };
 
-                return { data: { success: true, data: (data || []).map(t => ({
-                    id: t.id, title: t.title, description: t.description, 
-                    status: statusToUiStatus[t.status] || 'pending',
-                    phase: statusToPhase[t.status] || 'allocation', 
-                    effort: t.effort, focusCount: t.focus_count,
-                    dueDate: t.due_date, projectId: t.project_id, assigneeId: t.assignee_id,
-                    blockerRisk: t.blocker_risk, createdAt: t.created_at, updatedAt: t.updated_at,
-                    isStarred: false, assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
-                })) as any } };
+                // Fetch stars for this user
+                const { data: starredData } = await supabase
+                    .from('starred_tasks')
+                    .select('task_id')
+                    .eq('user_id', user.id);
+                
+                const starredIds = new Set(starredData?.map(s => s.task_id) || []);
+
+                return { 
+                    data: { 
+                        success: true, 
+                        data: (data || []).map(t => ({
+                            id: t.id, 
+                            title: t.title, 
+                            description: t.description, 
+                            status: statusToUiStatus[t.status] || 'pending',
+                            phase: statusToPhase[t.status] || 'allocation', 
+                            effort: t.effort, 
+                            focusCount: t.focus_count,
+                            dueDate: t.due_date, 
+                            projectId: t.project_id, 
+                            assigneeId: t.assignee_id,
+                            blockerRisk: t.blocker_risk, 
+                            createdAt: t.created_at, 
+                            updatedAt: t.updated_at,
+                            isStarred: starredIds.has(t.id), 
+                            assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
+                        })) as any 
+                    } 
+                };
             },
             providesTags: ['Task'],
         }),
@@ -102,10 +126,18 @@ export const api = createApi({
             },
             invalidatesTags: ['Task'],
         }),
-        toggleTaskStar: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; isStarred: boolean }>({
-            queryFn: async () => {
-                // Star feature not in Supabase schema — no-op for showcase
-                return { data: { success: true, data: {} as any } };
+        toggleTaskStar: builder.mutation<{ success: boolean; data: any }, { id: string; isStarred: boolean }>({
+            queryFn: async ({ id, isStarred }) => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { error: { status: 401, data: 'Unauthorized' } };
+
+                if (isStarred) {
+                    await supabase.from('starred_tasks').insert({ task_id: id, user_id: user.id });
+                } else {
+                    await supabase.from('starred_tasks').delete().match({ task_id: id, user_id: user.id });
+                }
+                
+                return { data: { success: true, data: {} } };
             },
             invalidatesTags: ['Task'],
         }),
@@ -368,11 +400,29 @@ export const api = createApi({
         }),
         stopFocusSession: builder.mutation<{ success: boolean; data: any }, { sessionId: string; aiAssisted?: boolean }>({
             queryFn: async ({ sessionId }) => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+
                 const now = new Date().toISOString();
-                const { data: session } = await supabase.from('focus_sessions').select('started_at').eq('id', sessionId).single();
-                const durationSecs = session ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000) : 0;
-                const { data, error } = await supabase.from('focus_sessions').update({ ended_at: now, duration_secs: durationSecs }).eq('id', sessionId).select().single();
+                const { data: session, error: getErr } = await supabase
+                    .from('focus_sessions')
+                    .select('started_at')
+                    .match({ id: sessionId, user_id: user.id })
+                    .single();
+
+                if (getErr || !session) return { error: { status: 404, data: 'Session not found or unauthorized' } };
+
+                const durationSecs = Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000);
+                
+                const { data, error } = await supabase
+                    .from('focus_sessions')
+                    .update({ ended_at: now, duration_secs: durationSecs })
+                    .match({ id: sessionId, user_id: user.id })
+                    .select()
+                    .single();
+
                 if (error) return { error: { status: 400, data: error.message } };
+                
                 return { data: { success: true, data } };
             },
             invalidatesTags: ['FocusSession', 'Task'],

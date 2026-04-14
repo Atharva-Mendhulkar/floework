@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { resetStore } from "@/store";
 
 interface User {
     id: string;
@@ -42,11 +43,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
         // Listen for auth state changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (session?.user) {
                 setUser(mapSupabaseUser(session.user));
             } else {
                 setUser(null);
+                if (event === 'SIGNED_OUT') {
+                    resetStore();
+                }
             }
         });
 
@@ -60,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         await supabase.auth.signOut();
+        resetStore(); // Explicit reset
         setUser(null);
     };
 
