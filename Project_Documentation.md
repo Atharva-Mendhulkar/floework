@@ -15,11 +15,11 @@ Modern software development teams rely on fractured toolchains (separate apps fo
 - Deliver context-rich, plain-English execution analytics.
 
 **Key Features:**
-- **FlowBoard:** A Kanban-style interface featuring real-time collaborative updates and task locking.
-- **Focus Session Engine:** An integrated, task-linked timer that logs work history natively to each task, replacing traditional manual time tracking.
-- **Execution Intelligence Analytics:** Uses mathematical models on user behavior data to track bottlenecks, focus stability, and burnout risk.
-- **Deep Work & Integrations:** Syncs smoothly with GitHub (PR wait-time detection) and Google Calendar (Deep Focus Blocks).
-- **AI Displacement Tracking:** Assesses manual engineering hours versus AI-assisted hours to understand productivity velocity changes.
+- **FlowBoard:** A Kanban-style interface featuring real-time collaborative updates powered by Supabase Realtime.
+- **Autonomous Focus Engine:** An integrated, task-linked lifecycle timer that auto-transitions task states (Focus → In Progress) and logs effort with audio success chimes and automated data persistence.
+- **AI Executive Narrative:** Powered by Google Gemini AI, this engine synthesizes raw workspace focus data into professional, plain-English effort narratives for team-wide insights.
+- **Deep Analytics & Burnout Hardening:** Predictive models tracking team health trends, workflow bottlenecks, and calculation of estimation accuracy (Expected vs. Actual).
+- **Team Pulse:** Real-time visibility of teammate activity across the workspace using Row-Level Security (RLS) to ensure privacy and collaborative transparency.
 
 ---
 
@@ -31,55 +31,47 @@ The platform leverages a Layered, Event-Driven Client-Server Architecture. The c
 ```mermaid
 graph TD
     Client["User Client (React/Vite)"]
-    subgraph "API Layer (Node.js/Express)"
-        Middleware["Middleware (Auth/Zod)"]
-        Controllers["Controllers & Logic"]
-        Sockets["Socket.io Server"]
+    subgraph "Serverless Layer (Vercel)"
+        AI_Engine["AI Narrative Engine (Node.js/Gemini)"]
+        API_Routes["Vercel Functions (api/*)"]
     end
-    subgraph "Background & Data Layer"
-        Redis["Redis Cache/PubSub"]
-        BullMQ["BullMQ Workers"]
-        Prisma["Prisma ORM"]
-        DB[("SQL Database")]
+    subgraph "Supabase Cloud"
+        Realtime["Supabase Realtime (Presence)"]
+        PostgREST["PostgREST API"]
+        RLS["RLS Security Layer"]
+        DB[("PostgreSQL Database")]
     end
     
-    Client -->|REST API HTTPS| Middleware
-    Client <-->|WebSocket| Sockets
-    Middleware --> Controllers
-    Controllers --> Prisma
-    Sockets --> Redis
-    Controllers --> Redis
-    Redis -->|Queued Jobs| BullMQ
-    BullMQ --> Prisma
-    Prisma --> DB
+    Client -->|REST & AI Queries| API_Routes
+    API_Routes -->|GenAI SDK| AI_Engine
+    Client <-->|WebSocket/Presence| Realtime
+    API_Routes -->|Service Role| DB
+    Client -->|Direct SQL Queries| PostgREST
+    PostgREST --> RLS
+    RLS --> DB
 ```
 
 **Component Interaction Flow:**
-1. **User Client (Browser):** Built using React, handles user interaction, state caching (Redux), and WebSocket bidirectional communication.
-2. **Middleware/Validation Layer:** Intercepts requests for JWT authentication verification, Role-Based Access Control (RBAC), API rate-limiting, and payload sanitization via Zod validations.
-3. **Backend API Layer (Node.js/Express):** Acts as the orchestrator. For synchronous data tasks, it queries the database through the Prisma ORM. For asynchronous data tasks, it emits events over WebSockets.
-4. **Asynchronous Worker Layer (BullMQ):** Independent queue processes that handle schedule-heavy or compute-heavy jobs, like the `FocusWindowsRoller` and `PRStatusChecker`.
-5. **Data Layer:** Centralized SQL-based RDBMS acts as the source of truth, supported by an in-memory Redis cluster for WebSockets, active session presence, and message queues.
+1. **User Client (Browser):** Built using React, handles user interaction, real-time presence sync, and state management via Redux Toolkit.
+2. **Serverless Layer (Vercel):** Hosts the AI Narrative Engine and specialized API routes for complex data aggregation, utilizing Google Gemini for executive reporting.
+3. **Supabase Realtime:** Powers the "In Focus Now" pulse, broadcasting teammate status changes across the workspace without a custom backend socket server.
+4. **Supabase PostgREST:** Provides instant, reliable data access with built-in Row-Level Security (RLS) to manage team visibility and data privacy.
+5. **Data Layer (PostgreSQL):** Centralized source of truth for all projects, tasks, focus sessions, and analytics.
 
 ---
 
 ## 3. Technology Stack
 
 **Frontend:**
-- **React.js & Vite:** Enables component-driven development with incredibly fast hot-module-reloading and optimized production builds. 
-- **Redux Toolkit & React Query:** Handles localized UI state and server-state caching respectively.
-- **Tailwind CSS & shadcn-ui:** Allows for rapid, aesthetically consistent, and highly accessible UI composition.
+- **React.js & Vite:** Enables component-driven development with high-performance HMR and production builds. 
+- **Redux Toolkit (RTK):** Centralized state for UI synchronization and cached server responses (RTK Query).
+- **Tailwind CSS:** Comprehensive styling framework for premium, responsive layouts.
 
-**Backend:**
-- **Node.js & Express.js:** A non-blocking, event-driven runtime ideal for concurrent API requests and WebSockets.
-- **Socket.io:** Powers real-time collaborative features, including task board updates and team presence (In-Focus status).
-- **Prisma ORM:** Typesafe database schema definition and querying, reducing friction between TypeScript backends and relational data.
-- **BullMQ:** Industry-standard job queuing for offloading non-critical tasks to prevent event loop blocking in Express.
-
-**Databases & External APIs:**
-- **SQL RDBMS (SQLite/PostgreSQL):** Stores persistent application state, relational metadata, and metrics.
-- **Redis:** Manages real-time cache and queue status functionality.
-- **Stripe / GitHub / Google APIs:** Handles billing, code ecosystem connectivity, and calendar management respectfully.
+**Backend & Infrastructure:**
+- **Supabase (Backend-as-a-Service):** Handles Authentication, PostgreSQL Database, and Realtime state broadcasting.
+- **Vercel Functions:** Executes serverless logic for complex analytics and AI generation.
+- **Google Gemini AI:** Powers the Executive Narrative engine for data-driven executive reporting.
+- **PostgreSQL / PostgREST:** Highly scalable relational storage with built-in API accessibility.
 
 ---
 
@@ -127,8 +119,8 @@ The system uses `FocusSession` as a primary entity. When a user begins working o
 
 ## 5. Database Design
 
-**Type:** Relational SQL Database (managed via Prisma ORM). 
-*Note: Currently instantiated as SQLite for rapid development environments, configured for seamless transition to PostgreSQL in production environments.*
+**Type:** Cloud-Native PostgreSQL (managed via Supabase).
+*Note: The database leverages Row-Level Security (RLS) to enforce workspace isolation, ensuring that teammates can only see data within their authorized teams.*
 
 **Entity-Relationship (ER) Diagram:**
 ```mermaid
@@ -140,7 +132,6 @@ erDiagram
     USER ||--o{ TASK : "assigned to"
     TASK ||--o{ FOCUS_SESSION : "tracked via"
     USER ||--o{ FOCUS_SESSION : "logs"
-    TASK ||--o{ EXECUTION_SIGNAL : "generates"
     
     USER {
         string id PK
@@ -206,20 +197,19 @@ This demonstrates the real-time functionality when a user interacts with the pro
 ```mermaid
 sequenceDiagram
     participant U as User (React)
-    participant API as Express API
-    participant WS as Socket.io
-    participant Redis as Redis Cache
-    participant DB as Prisma (SQL)
+    participant SB as Supabase (PostgREST)
+    participant RT as Supabase (Realtime)
+    participant DB as PostgreSQL
 
-    U->>API: POST /api/focus/start {taskId}
-    API->>API: Validate Auth Token
-    API->>DB: Verify Task Exists
-    DB-->>API: Task Context
-    API->>Redis: Create Active Session Map
-    API->>DB: Log ExecutionEvent (FOCUS_START)
-    API-->>U: 200 OK (Session ID)
-    API->>WS: Broadcast {userId, state: "In Focus"}
-    WS-->>U: Update Team Avatars (Pulsing Blue Indicator)
+    U->>SB: UPDATE tasks {status: 'In Focus'}
+    SB->>RLS: Validate Workspace Permission
+    RLS->>DB: Apply Change
+    DB-->>RT: New Task State
+    RT-->>U: Broadcast {taskId, status: 'In Focus'}
+    
+    U->>SB: INSERT focus_sessions {startTime: now}
+    SB->>DB: Log Start Event
+    DB-->>U: 201 Created (Session Tracking Active)
 ```
 
 **Step-by-Step Data Flow:**
@@ -294,11 +284,10 @@ The API operates strictly on a REST framework built on Node.js/Express.js.
 
 ### 11.2 Database Storage & Configuration Paths
 
-The system utilizes the Prisma ORM to connect seamlessly to a relational SQL database.
-- **Relational Schema:** `backend/prisma/schema.prisma` rigorously defines all models (`Task`, `FocusSession`, `User`, etc.) and enforces referential integrity between tables.
-- **Live Database File:** For the immediate sandbox/development environment, the active database lives explicitly as an SQLite file sitting locally at `backend/prisma/dev.db`.
-- **Database Client Orchestrator:** `backend/src/utils/prisma.ts` exports a singleton Prisma client instance that all express controllers concurrently import to perform SQL operations safely.
-- **Seeding Logic:** `backend/prisma/seed.ts` functionally combined with `backend/src/services/seedSampleWorkspace.ts` triggers the initial mock database population routines for new users.
+The system utilizes Supabase for relational storage and Vercel for serverless logic.
+- **Relational Schema:** [001_schema.sql](file:///Users/atharvamendhulkar/Downloads/floework/supabase/migrations/001_schema.sql) rigorously defines all models (`profiles`, `tasks`, `focus_sessions`).
+- **Workspace Security:** [013_workspace_visibility.sql](file:///Users/atharvamendhulkar/Downloads/floework/supabase/migrations/013_workspace_visibility.sql) implements the Row-Level Security (RLS) policies that enable peer-to-peer workspace visibility.
+- **API Store Orchestrator:** [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) acts as the central hub for all project, task, and analytics queries.
 
 ### 11.3 Authentication & Security Implementation
 
@@ -311,14 +300,13 @@ Authentication is managed robustly via custom JSON Web Tokens (JWT) reinforced b
 
 Every major system pipeline maps directly from a specific React UI Component (Frontend) strictly into a specialized Express Controller (Backend).
 
-| Feature Name | Primary Frontend React Path | Primary Backend Controller Path | Internal Description |
+| Feature Name | Frontend Logic | Backend Logic (AI/API) | Internal Description |
 | :--- | :--- | :--- | :--- |
-| **FlowBoard (Kanban)** | `src/pages/BoardsPage.tsx` | `backend/src/controllers/taskController.ts` | The core matrix rendering the drag-and-drop task board. Syncs live `STATUS_CHANGE` movements across WebSockets organically. |
-| **Focus Session Engine** | `src/pages/FocusPage.tsx` | `backend/src/controllers/focusController.ts` | Houses the visual Pomodoro timer logic driving the UI and posts the final session duration chronologically to Prisma. |
-| **Execution Analytics** | `src/pages/AnalyticsPage.tsx` | `backend/src/controllers/analyticsController.ts` | Feeds the intense computation metric arrays serving the Focus Stability HEX-grid and Burnout line charts. |
-| **Plain-English Narratives** | `src/pages/NarrativePage.tsx` | `backend/src/controllers/narrativeController.ts` | Supplies the AI-driven weekly text prose evaluating a user's context-switching patterns. |
-| **Billing & Stripe** | `src/pages/BillingPage.tsx` | `backend/src/controllers/billingController.ts` | Orchestrates external Stripe checkout initialization flows acting concurrently as the async webhook sink. |
-| **Alerts & Live Feeds** | `src/pages/AlertsPage.tsx` | `backend/src/controllers/alertController.ts` | Parses the historic arrays of actionable insights populated autonomously by the BullMQ background workers overnight. |
+| **FlowBoard (Kanban)** | [BoardsPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/BoardsPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Real-time collaborative task board synced via Supabase. |
+| **Autonomous Focus** | [FocusPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/FocusPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Automated lifecycle management (Chimes, Auto-Log, Status Sync). |
+| **AI Narrative Engine** | [NarrativePage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/NarrativePage.tsx) | [narrative.ts](file:///Users/atharvamendhulkar/Downloads/floework/api/analytics/narrative.ts) | Synthesis of workspace effort using Google Gemini AI models. |
+| **Executive Analytics** | [AnalyticsPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/AnalyticsPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Multi-teammate burnout risk, bottleneck maps, and accuracy metrics. |
+| **Team Pulse** | [Index.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/Index.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Real-time deduplicated presence tracking of unique teammates. |
 
 ---
 

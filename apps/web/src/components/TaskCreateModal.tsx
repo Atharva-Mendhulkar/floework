@@ -25,6 +25,10 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
     const [dueDate, setDueDate] = useState("");
     const [dismissHint, setDismissHint] = useState(false);
 
+    // Get today's date in YYYY-MM-DD format for date input minimum
+    const today = new Date();
+    const minDate = today.toISOString().split('T')[0];
+
     const STOP_WORDS = new Set(['a','an','the','and','or','to','of','for','in','on','with','add','fix','update','create','implement']);
     const keywords = title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
     
@@ -37,6 +41,17 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
         if (!title.trim()) {
             toast.error("Task title is required");
             return;
+        }
+
+        if (dueDate) {
+            const selectedDate = new Date(dueDate);
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < todayStart) {
+                toast.error("Due date cannot be in the past");
+                return;
+            }
         }
 
         try {
@@ -126,7 +141,7 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
 
                     <div className="grid gap-2">
                         <label htmlFor="dueDate" className="text-sm font-medium">Due Date</label>
-                        <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                        <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} min={minDate} />
                     </div>
                 </div>
                 <DialogFooter>
