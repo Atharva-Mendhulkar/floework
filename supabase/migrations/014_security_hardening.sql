@@ -15,20 +15,46 @@ CREATE TABLE IF NOT EXISTS public.focus_stability_slots (
     PRIMARY KEY (user_id, day_of_week, hour_of_day)
 );
 
--- 2. Enable RLS on primary workspace tables
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+-- 2. Secure Workspace Tables safely
+DO $$ 
+BEGIN 
+  -- Primary core tables
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'tasks') THEN
+    ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'profiles') THEN
+    ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'projects') THEN
+    ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'teams') THEN
+    ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'team_members') THEN
+    ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+  END IF;
 
--- 3. Enable RLS on focus & analytics tables
-ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.focus_stability_slots ENABLE ROW LEVEL SECURITY;
+  -- Focus & Analytics
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'focus_sessions') THEN
+    ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'focus_stability_slots') THEN
+    ALTER TABLE public.focus_stability_slots ENABLE ROW LEVEL SECURITY;
+  END IF;
 
--- 4. Enable RLS on communication tables
-ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+  -- Communication (Only enable if they exist)
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'messages') THEN
+    ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  -- removed 'chats' as it is legacy/unused
+END $$;
 
 -- Note: Policies for these tables were already defined in migration 002, 007, 009, and 013.
 -- This command simply "activates" them for PostgREST.
