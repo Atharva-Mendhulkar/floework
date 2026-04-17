@@ -85,12 +85,20 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     };
   }, [socket, isConnected, dispatch]);
 
-  /* Re-group tasks into phase columns */
+  /* Re-group tasks into phase columns + filter by searchQuery */
   const phases = useMemo(() => {
-    console.log("Floework Board v1.2 Active - Scoped:", activeProjectId);
     const structuredPhases = (initialPhases || []).map((phase) => ({ ...phase, tasks: [] as TaskNode[] }));
     if (response?.data) {
-      response.data.forEach((task: TaskNode) => {
+      let filteredData = response.data;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filteredData = filteredData.filter((t: any) => 
+          t.title.toLowerCase().includes(query) || 
+          (t.description || "").toLowerCase().includes(query)
+        );
+      }
+
+      filteredData.forEach((task: TaskNode) => {
         const target = structuredPhases.find((p) => p.id === task.phase) || structuredPhases[0];
         if (target && target.tasks) {
           target.tasks.push(task);
@@ -98,7 +106,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
       });
     }
     return structuredPhases;
-  }, [response]);
+  }, [response, searchQuery]);
 
   const totalTasks = phases.reduce((sum, p) => sum + p.tasks.length, 0);
   const doneTasks = phases.find((p) => p.id === "outcome")?.tasks.length ?? 0;

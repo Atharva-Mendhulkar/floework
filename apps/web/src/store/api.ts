@@ -610,11 +610,42 @@ export const api = createApi({
             invalidatesTags: ['User'],
         }),
         getAlerts: builder.query<{ success: boolean; data: any[] }, void>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
+            queryFn: async () => {
+                const { data, error } = await supabase
+                    .from('alerts')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: data || [] } };
+            },
             providesTags: ['Alert'],
         }),
-        markAlertRead: builder.mutation<any, string>({ queryFn: async () => ({ data: { success: true, data: {} } }), invalidatesTags: ['Alert'] }),
-        markAllAlertsRead: builder.mutation<any, void>({ queryFn: async () => ({ data: { success: true, message: 'ok' } }), invalidatesTags: ['Alert'] }),
+        markAlertRead: builder.mutation<any, string>({ 
+            queryFn: async (id) => {
+                const { error } = await supabase
+                    .from('alerts')
+                    .update({ is_read: true })
+                    .eq('id', id);
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true } };
+            },
+            invalidatesTags: ['Alert'] 
+        }),
+        markAllAlertsRead: builder.mutation<any, void>({ 
+            queryFn: async () => {
+                const user = (await supabase.auth.getUser()).data.user;
+                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                const { error } = await supabase
+                    .from('alerts')
+                    .update({ is_read: true })
+                    .eq('user_id', user.id);
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true } };
+            }, 
+            invalidatesTags: ['Alert'] 
+        }),
         getTaskSignals: builder.query<{ success: boolean; data: any | null }, string>({
             queryFn: async (taskId) => {
                 const { data } = await supabase.from('execution_signals').select('*').eq('task_id', taskId).single();

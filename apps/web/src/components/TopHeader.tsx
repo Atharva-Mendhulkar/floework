@@ -22,8 +22,23 @@ const TopHeader = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
+  const { data: alertsRes } = useAuth() ? require("@/store/api").useGetAlertsQuery() : { data: null }; // Safe access
+  const alerts = alertsRes?.data || [];
+  const unreadCount = alerts.filter((a: any) => !a.is_read).length;
+
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+
+  // Helper for time ago
+  const getTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return date.toLocaleDateString();
+  };
 
   const handleLogout = () => {
     logout();
@@ -54,7 +69,7 @@ const TopHeader = () => {
       </div>
 
       {/* Center — search */}
-      <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 w-56 focus-within:ring-2 focus-within:ring-[#007dff]/20 focus-within:bg-white transition-all border border-transparent focus-within:border-[#007dff]/30">
+      <div className="flex-1 max-w-lg flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-[#007dff]/20 focus-within:bg-white transition-all border border-transparent focus-within:border-[#007dff]/30">
         <Search size={14} className="text-slate-400 shrink-0" />
         <input
           type="text"
@@ -72,23 +87,28 @@ const TopHeader = () => {
           <DropdownMenuTrigger asChild>
             <button className="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-slate-100 transition-colors text-slate-500 focus:outline-none">
               <Bell size={17} />
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-[300px] overflow-y-auto">
-              <div className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors">
-                <p className="text-sm font-medium text-slate-900">Sprint Planning Meeting</p>
-                <p className="text-xs text-slate-500 mt-1">Starting in 15 minutes. Join via link.</p>
-                <p className="text-[10px] text-slate-400 mt-2">Just now</p>
-              </div>
-              <div className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors">
-                <p className="text-sm font-medium text-slate-900">New Task Assigned</p>
-                <p className="text-xs text-slate-500 mt-1">Alex assigned you to "Update authentication flow".</p>
-                <p className="text-[10px] text-slate-400 mt-2">2 hours ago</p>
-              </div>
+              {alerts.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-slate-400 text-xs">No notifications yet</p>
+                </div>
+              ) : (
+                alerts.map((alert: any) => (
+                  <div key={alert.id} className={`px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors ${!alert.is_read ? "bg-blue-50/30" : ""}`}>
+                    <p className="text-sm font-medium text-slate-900">{alert.title}</p>
+                    <p className="text-xs text-slate-500 mt-1">{alert.description}</p>
+                    <p className="text-[10px] text-slate-400 mt-2">{getTimeAgo(alert.created_at)}</p>
+                  </div>
+                ))
+              )}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="w-full text-center text-xs text-[#007dff] cursor-pointer" onClick={() => navigate("/alerts")}>
