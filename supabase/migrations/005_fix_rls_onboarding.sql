@@ -28,10 +28,11 @@ create policy "admins can manage team members" on public.team_members
 -- Ensure projects can be created by team members
 create policy "team members can create projects" on public.projects
   for insert with check (
+    auth.uid() is not null and
     exists (
       select 1 from public.team_members
-      where team_id = public.projects.team_id
-      and user_id = auth.uid()
+      where public.team_members.team_id = public.projects.team_id
+      and public.team_members.user_id = auth.uid()
     )
   );
 

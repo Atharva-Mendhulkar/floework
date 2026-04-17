@@ -111,7 +111,7 @@ create trigger on_focus_session_insert
 
 -- Trigger: auto-create profile on signup
 create or replace function handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, full_name, avatar_url)
   values (

@@ -65,7 +65,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. Attach Triggers
 DROP TRIGGER IF EXISTS tr_task_completion_alert ON public.tasks;
