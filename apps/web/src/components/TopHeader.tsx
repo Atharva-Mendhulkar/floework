@@ -16,13 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useGetAlertsQuery } from "@/store/api";
 
 const TopHeader = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
-  const { data: alertsRes } = useAuth() ? require("@/store/api").useGetAlertsQuery() : { data: null }; // Safe access
+  const { data: alertsRes } = useGetAlertsQuery(undefined, { skip: !user });
   const alerts = alertsRes?.data || [];
   const unreadCount = alerts.filter((a: any) => !a.is_read).length;
 
