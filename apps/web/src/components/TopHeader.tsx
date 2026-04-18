@@ -8,6 +8,7 @@ import { ProjectSelector } from "./ProjectSelector";
 import { SprintSelector } from "./SprintSelector";
 import { ManageWorkspaceModal } from "./ManageWorkspaceModal";
 import { JoinWorkspaceModal } from "./JoinWorkspaceModal";
+import { UserAvatar } from "./UserAvatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +17,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useGetAlertsQuery } from "@/store/api";
+import { useGetAlertsQuery, api } from "@/store/api";
 
 const TopHeader = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
+  const { data: profileRes } = api.endpoints.getProfile.useQueryState();
+  const profile = profileRes?.data || user;
   const { data: alertsRes } = useGetAlertsQuery(undefined, { skip: !user });
   const alerts = alertsRes?.data || [];
   const unreadCount = alerts.filter((a: any) => !a.is_read).length;
@@ -45,10 +48,6 @@ const TopHeader = () => {
     logout();
     navigate("/login");
   };
-
-  const initials = (user?.name || "")
-    ? (user?.name || "").split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
-    : "US";
 
   return (
     <header className="flex items-center justify-between h-14 px-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
@@ -125,11 +124,9 @@ const TopHeader = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#007dff]/20">
-              <div className="w-6 h-6 rounded-lg bg-[#007dff] flex items-center justify-center text-white text-[10px] font-bold">
-                {initials}
-              </div>
+              <UserAvatar name={profile?.name} avatarUrl={profile?.avatarUrl} size="sm" />
               <span className="text-[13px] font-medium text-slate-700 max-w-[100px] truncate">
-                {user?.name ?? "User"}
+                {profile?.name ?? "User"}
               </span>
               <ChevronDown size={12} className="text-slate-400" />
             </div>

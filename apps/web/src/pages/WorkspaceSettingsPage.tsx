@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { User, Shield, UserPlus, Trash2, LogOut, Settings, MoreVertical, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -218,13 +219,11 @@ const WorkspaceSettingsPage = () => {
                         {membersRes?.data?.map((member) => (
                             <div key={member.user_id} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xs font-bold border border-slate-200 overflow-hidden">
-                                        {member.profiles?.avatar_url ? (
-                                            <img src={member.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            member.profiles?.full_name?.charAt(0) || "U"
-                                        )}
-                                    </div>
+                                    <UserAvatar
+                                        name={member.profiles?.full_name || "New User"}
+                                        avatarUrl={member.profiles?.avatar_url}
+                                        size="md"
+                                    />
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">
                                             {member.profiles?.full_name || "New User"}

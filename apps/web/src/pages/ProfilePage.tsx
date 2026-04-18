@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGetProfileQuery, useUpdateProfileMutation, useDisconnectGitHubMutation, useGetGoogleCalendarStatusQuery, useDisconnectGoogleCalendarMutation } from "@/store/api";
 import { toast } from "sonner";
-import { User as UserIcon, Lock, Mail, Save, Github, CheckCircle2, Calendar, Bell } from "lucide-react";
+import { User as UserIcon, Lock, Mail, Save, Github, CheckCircle2, Calendar, Bell, Camera, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export default function ProfilePage() {
     const { data: profileRes, isLoading: isLoadingProfile, refetch } = useGetProfileQuery();
@@ -16,6 +17,8 @@ export default function ProfilePage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [weeklyReport, setWeeklyReport] = useState(true);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (profileRes?.data) {
@@ -35,6 +38,34 @@ export default function ProfilePage() {
             setPassword("");
         } catch (error) {
             toast.error("Failed to update profile");
+        }
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Please upload a JPEG, PNG, or WebP image.');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Image must be smaller than 2MB.');
+            return;
+        }
+
+        setIsUploadingAvatar(true);
+        try {
+            await updateProfile({ avatarFile: file } as any).unwrap();
+            toast.success('Profile picture updated!');
+            refetch();
+        } catch {
+            toast.error('Failed to upload avatar.');
+        } finally {
+            setIsUploadingAvatar(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -95,12 +126,35 @@ export default function ProfilePage() {
             <div className="bg-surface rounded-2xl shadow-card border border-border p-6">
                 <form onSubmit={handleUpdateProfile} className="flex flex-col gap-5">
                     <div className="flex items-center gap-4 pb-4 border-b border-border">
-                        <div className="w-16 h-16 rounded-2xl bg-focus/10 text-focus flex items-center justify-center text-xl font-bold border-2 border-focus/20">
-                            {name ? name.substring(0, 2).toUpperCase() : <UserIcon size={32} />}
+                        <div
+                            className="relative group cursor-pointer"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <UserAvatar
+                                name={name || profile?.name}
+                                avatarUrl={profile?.avatarUrl}
+                                size="lg"
+                            />
+                            {/* Camera overlay */}
+                            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                {isUploadingAvatar ? (
+                                    <Loader2 size={20} className="text-white animate-spin" />
+                                ) : (
+                                    <Camera size={20} className="text-white" />
+                                )}
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleAvatarChange}
+                                className="hidden"
+                            />
                         </div>
                         <div>
                             <h3 className="font-semibold text-foreground text-lg">{profile?.name || "User"}</h3>
                             <p className="text-sm text-text-muted">{profile?.role || "Member"}</p>
+                            <p className="text-xs text-text-muted mt-0.5">Click avatar to change</p>
                         </div>
                     </div>
 

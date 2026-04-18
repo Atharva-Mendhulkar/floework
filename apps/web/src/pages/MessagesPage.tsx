@@ -7,18 +7,14 @@ import { Send, ChevronDown, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const MessageBubble = ({ msg }: { msg: any }) => {
     const { user } = useAuth();
     const isMe = msg.author?.id === user?.id;
-    const initials = msg.author?.name ? msg.author.name.substring(0, 2).toUpperCase() : "?";
-
     return (
         <div className={`flex items-start gap-3 group ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-[11px] shrink-0 shadow-sm
-                ${isMe ? "bg-white border border-slate-100 text-[#007dff]" : "bg-[#007dff]/10 text-[#007dff]"}`}>
-                {msg.author?.avatarUrl ? <img src={msg.author.avatarUrl} className="w-full h-full object-cover rounded-xl" /> : initials}
-            </div>
+            <UserAvatar name={msg.author?.name || "Unknown"} avatarUrl={msg.author?.avatarUrl} size="md" className="shrink-0" />
             <div className={`flex flex-col gap-0.5 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
                 <div className={`flex items-center gap-2 mb-0.5 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
                     <span className="text-[11px] font-bold text-slate-900">{isMe ? "You" : (msg.author?.name || "Unknown")}</span>

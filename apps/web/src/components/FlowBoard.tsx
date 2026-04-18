@@ -1,6 +1,7 @@
 import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
+import { UserAvatar } from "./UserAvatar";
 import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
 import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, api } from "@/store/api";
 import { toast } from "sonner";
@@ -220,23 +221,15 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           {/* Team avatars with presence indicators */}
           <div className="flex -space-x-1.5 px-2">
             {(team || []).slice(0, 4).map((member, idx) => {
-              // Mock presence: 1st is in focus, 2nd available, 3rd/4th away
-              const status = idx === 0 ? "focus" : idx === 1 ? "available" : "offline";
+              const status: "focus" | "available" | "offline" = idx === 0 ? "focus" : idx === 1 ? "available" : "offline";
               return (
-                <div key={member.id} className="relative group">
-                  <div
-                    className={`w-7 h-7 rounded-full ${member.color} flex items-center justify-center text-[10px] font-bold text-slate-700 border-2 border-white shadow-sm ring-offset-1 
-                      ${status === "focus" ? "ring-2 ring-[#007dff] animate-pulse-soft" : ""}
-                    `}
-                    title={`${member.name} (${status === "focus" ? "In Focus" : status === "available" ? "Available" : "Offline"})`}
-                  >
-                    {member.initials}
-                  </div>
-                  {/* Presence dot */}
-                  <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white
-                    ${status === "focus" ? "bg-[#007dff]" : status === "available" ? "bg-emerald-500" : "bg-slate-300"}
-                  `} />
-                </div>
+                <UserAvatar
+                  key={member.id}
+                  name={member.name}
+                  avatarUrl={member.avatarUrl}
+                  size="sm"
+                  status={status}
+                />
               );
             })}
           </div>

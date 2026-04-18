@@ -5,6 +5,7 @@ export interface User {
   role: string;
   initials?: string;
   color?: string;
+  avatarUrl?: string | null;
   weeklyReportEnabled?: boolean;
   gitHubConnection?: { githubLogin: string } | null;
   googleCalendarConnection?: { googleEmail: string; lastSynced?: string | null } | null;
@@ -23,6 +24,7 @@ export interface TeamMember {
   role: string;
   initials: string;
   color: string;
+  avatarUrl?: string | null;
 }
 
 export interface TaskNode {

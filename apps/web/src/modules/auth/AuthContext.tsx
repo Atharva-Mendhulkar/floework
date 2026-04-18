@@ -8,6 +8,7 @@ interface User {
     email: string;
     name: string;
     role: "admin" | "member";
+    avatarUrl?: string;
 }
 
 interface AuthContextType {
@@ -26,6 +27,7 @@ function mapSupabaseUser(su: SupabaseUser): User {
         email: su.email || "",
         name: su.user_metadata?.full_name || su.email?.split("@")[0] || "User",
         role: "admin",
+        avatarUrl: su.user_metadata?.avatar_url,
     };
 }
 
