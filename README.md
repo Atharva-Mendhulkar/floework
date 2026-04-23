@@ -4,20 +4,20 @@ A human-aware SaaS productivity and team collaboration platform. floework aligns
 
 ![floework Hero Page](./assets/hero_page.png)
 
-## 🚀 Key Features
+## Key Features
 
 - **FlowBoard**: Kanban and calendar task management with real-time state sync.
 - **Focus Engine**: Task-anchored focus sessions that track effort and cognitive load.
 - **Execution Intelligence**: Bottleneck detection, burnout risk tracking, and focus stability maps.
 - **Real-Time Collaboration**: WebSocket-based presence ("in-focus" indicators) and instant task updates.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Frontend**: React (Vite), Redux Toolkit, Tailwind CSS, shadcn/ui.
 - **Backend**: Node.js, Vercel Serverless Functions (`/api`), Socket.IO.
 - **Database & Auth**: PostgreSQL via Supabase, Redis (for real-time caching).
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 floework/
@@ -28,7 +28,7 @@ floework/
 └── docs/           # Detailed project documentation
 ```
 
-## ⚙️ Local Development
+## Local Development
 
 ### Prerequisites
 - Node.js (v18+)
@@ -59,7 +59,7 @@ floework/
    ```
    The web app will be available at `http://localhost:5173`.
 
-## 🚀 Deployment
+## Deployment
 
 The repository is configured for deployment on Vercel.
 
