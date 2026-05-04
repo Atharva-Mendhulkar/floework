@@ -92,15 +92,18 @@ const AboutPage = () => {
                                     <p className="text-lg text-slate-600 leading-relaxed font-medium mb-6">
                                         I am solo developer who make and break things.
                                     </p>
-                                    <div className="flex items-center justify-center md:justify-start gap-6">
-                                        <a href="https://github.com/Atharva-Mendhulkar" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
-                                            <Github size={20} />
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-4">
+                                        <a href="https://github.com/Atharva-Mendhulkar" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-[#007dff] transition-colors group">
+                                            <Github size={18} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-sm font-bold">Github</span>
                                         </a>
-                                        <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
-                                            <Twitter size={20} />
+                                        <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-[#007dff] transition-colors group">
+                                            <Twitter size={18} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-sm font-bold">X</span>
                                         </a>
-                                        <a href="https://mendhu.tech" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
-                                            <Globe size={20} />
+                                        <a href="https://mendhu.tech" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-[#007dff] transition-colors group">
+                                            <Globe size={18} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-sm font-bold">Portfolio</span>
                                         </a>
                                     </div>
                                 </div>
