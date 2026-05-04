@@ -31,8 +31,11 @@ import PricingPage from "./pages/PricingPage";
 import FeaturesPage from "./pages/FeaturesPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import NotFound from "./pages/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ScrollToTop />
               <Routes>
                 {/* Public landing page */}
                 <Route path="/" element={<LandingPage />} />
@@ -53,6 +57,8 @@ const App = () => (
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
 
                 {/* Auth */}

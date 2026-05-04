@@ -43,24 +43,23 @@ const ContactPage = () => {
                         <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center text-center">
                             <Mail className="text-[#007dff] mb-4" size={24} />
                             <h3 className="text-[15px] font-bold mb-1">Email</h3>
-                            <p className="text-xs text-slate-500 mb-4 font-medium">support@floework.com</p>
-                            <Button variant="link" className="text-[#007dff] h-auto p-0 font-bold text-xs uppercase tracking-wider">Send Email</Button>
+                            <p className="text-xs text-slate-500 mb-4 font-medium">mendhu36@outlook.com</p>
+                            <a href="mailto:mendhu36@outlook.com" className="text-[#007dff] font-bold text-xs uppercase tracking-wider hover:underline">Send Email</a>
                         </div>
                     </Reveal>
                     <Reveal delay={200}>
                         <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center text-center">
                             <Twitter className="text-[#007dff] mb-4" size={24} />
-                            <h3 className="text-[15px] font-bold mb-1">Twitter</h3>
-                            <p className="text-xs text-slate-500 mb-4 font-medium">@floeworkapp</p>
-                            <Button variant="link" className="text-[#007dff] h-auto p-0 font-bold text-xs uppercase tracking-wider">Follow Us</Button>
+                            <h3 className="text-[15px] font-bold mb-1">X.com</h3>
+                            <p className="text-xs text-slate-500 mb-4 font-medium">@atharvarta</p>
+                            <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="text-[#007dff] font-bold text-xs uppercase tracking-wider hover:underline">Follow Us</a>
                         </div>
                     </Reveal>
                     <Reveal delay={300}>
                         <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center text-center">
                             <MessageSquare className="text-[#007dff] mb-4" size={24} />
-                            <h3 className="text-[15px] font-bold mb-1">Community</h3>
-                            <p className="text-xs text-slate-500 mb-4 font-medium">Discord Server</p>
-                            <Button variant="link" className="text-[#007dff] h-auto p-0 font-bold text-xs uppercase tracking-wider">Join Discord</Button>
+                            <h3 className="text-[15px] font-bold mb-1">Discord</h3>
+                            <p className="text-xs text-slate-500 mb-4 font-medium italic">Coming soon</p>
                         </div>
                     </Reveal>
                 </div>
@@ -68,31 +67,37 @@ const ContactPage = () => {
                 <Reveal delay={400}>
                     <div className="bg-white border border-slate-100 shadow-xl shadow-slate-100/50 rounded-[32px] p-10">
                         <h2 className="text-2xl font-semibold mb-8 tracking-tight">Send a message</h2>
-                        <form className="space-y-6">
+                        <form 
+                            className="space-y-6"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const name = formData.get('name');
+                                const email = formData.get('email');
+                                const subject = formData.get('subject');
+                                const message = formData.get('message');
+                                window.location.href = `mailto:mendhu36@outlook.com?subject=${encodeURIComponent(String(subject))}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
+                            }}
+                        >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Name</label>
-                                    <input type="text" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="Your name" />
+                                    <input name="name" type="text" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="Your name" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Email</label>
-                                    <input type="email" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="your@email.com" />
+                                    <input name="email" type="email" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="your@email.com" />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Subject</label>
-                                <select className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px] appearance-none">
-                                    <option>General Inquiry</option>
-                                    <option>Feature Request</option>
-                                    <option>Billing Issue</option>
-                                    <option>Technical Support</option>
-                                </select>
+                                <input name="subject" type="text" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="Subject" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Message</label>
-                                <textarea rows={5} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="How can we help?"></textarea>
+                                <textarea name="message" rows={5} required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-[#007dff]/50 transition-all font-medium text-[15px]" placeholder="How can we help?"></textarea>
                             </div>
-                            <Button className="w-full h-14 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[16px] font-semibold">
+                            <Button type="submit" className="w-full h-14 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[16px] font-semibold">
                                 Send Message
                             </Button>
                         </form>

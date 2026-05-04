@@ -82,25 +82,30 @@ const AboutPage = () => {
 
                     <Reveal delay={200}>
                         <section>
-                            <h2 className="text-2xl font-semibold mb-4 tracking-tight">The Team</h2>
-                            <p className="text-lg text-slate-600 leading-relaxed font-medium mb-8">
-                                We are a small team of engineers and designers distributed across the world, obsessed with building the tools we always wished we had.
-                            </p>
-                            <div className="flex -space-x-4">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                    <img 
-                                        key={i} 
-                                        src={`https://i.pravatar.cc/150?img=${i + 10}`} 
-                                        className="w-12 h-12 rounded-full border-4 border-white shadow-sm" 
-                                        alt="Team Member" 
-                                    />
-                                ))}
-                                <div className="w-12 h-12 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                                    +3
+                            <h2 className="text-2xl font-semibold mb-6 tracking-tight">The Developer</h2>
+                            <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50 p-8 rounded-[32px] border border-slate-100">
+                                <div className="w-24 h-24 rounded-full bg-[#007dff] flex items-center justify-center text-white text-3xl font-bold">
+                                    A
+                                </div>
+                                <div className="flex-1 text-center md:text-left">
+                                    <p className="text-xl text-slate-900 font-semibold mb-2">Atharva</p>
+                                    <p className="text-lg text-slate-600 leading-relaxed font-medium mb-4">
+                                        I am a solo developer Atharva.
+                                    </p>
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                                        <a href="https://github.com/Atharva-Mendhulkar" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#007dff] hover:underline">GitHub</a>
+                                        <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#007dff] hover:underline">X.com</a>
+                                        <a href="https://mendhu.tech" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#007dff] hover:underline">mendhu.tech</a>
+                                    </div>
                                 </div>
                             </div>
                         </section>
                     </Reveal>
+                </div>
+
+                {/* Bottom Right SVG */}
+                <div className="fixed bottom-8 right-8 w-24 h-24 opacity-20 pointer-events-none">
+                    <img src="/assets/porygon.svg" alt="Porygon" className="w-full h-full object-contain" />
                 </div>
             </main>
         </div>
