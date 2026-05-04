@@ -657,54 +657,86 @@ export const api = createApi({
         }),
         updateProfile: builder.mutation<{ success: boolean; data: User }, Partial<User> & { password?: string; avatarFile?: File }>({ 
             queryFn: async (profileData) => {
-                const user = (await supabase.auth.getUser()).data.user;
-                if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+                try {
+                    const user = (await supabase.auth.getUser()).data.user;
+                    if (!user) return { error: { status: 401, data: 'Not authenticated' } };
 
-                let updatedAvatarUrl = profileData.avatarUrl;
+                    let updatedAvatarUrl = profileData.avatarUrl;
 
-                // Handle avatar upload
-                if (profileData.avatarFile) {
-                    const file = profileData.avatarFile;
-                    const fileExt = file.name.split('.').pop();
-                    const filePath = `${user.id}/avatar.${fileExt}`;
+                    // 1. Handle avatar upload
+                    if (profileData.avatarFile) {
+                        const file = profileData.avatarFile;
+                        const fileExt = file.name.split('.').pop();
+                        const filePath = `${user.id}/avatar.${fileExt}`;
 
-                    // Upload to Supabase Storage
-                    const { error: uploadError } = await supabase.storage
-                        .from('avatars')
-                        .upload(filePath, file, { upsert: true });
+                        // Upload to Supabase Storage with explicit content type
+                        const { error: uploadError } = await supabase.storage
+                            .from('avatars')
+                            .upload(filePath, file, { 
+                                upsert: true,
+                                contentType: file.type,
+                                cacheControl: '3600'
+                            });
 
-                    if (uploadError) return { error: { status: 400, data: uploadError.message } };
+                        if (uploadError) {
+                            console.error('[Floework] Avatar Upload Error:', uploadError);
+                            return { error: { status: 400, data: uploadError.message } };
+                        }
 
-                    // Get public URL
-                    const { data: urlData } = supabase.storage
-                        .from('avatars')
-                        .getPublicUrl(filePath);
+                        // Get public URL
+                        const { data: urlData } = supabase.storage
+                            .from('avatars')
+                            .getPublicUrl(filePath);
 
-                    // Update profile with avatar URL (append cache-buster)
-                    updatedAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                    const { error: profileError } = await supabase.from('profiles').update({ avatar_url: updatedAvatarUrl }).eq('id', user.id);
-                    if (profileError) return { error: { status: 400, data: profileError.message } };
-                }
+                        // Update profile with avatar URL (append cache-buster)
+                        updatedAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+                        const { error: profileError } = await supabase.from('profiles').update({ avatar_url: updatedAvatarUrl }).eq('id', user.id);
+                        if (profileError) {
+                            console.error('[Floework] Profile Image Update Error:', profileError);
+                            return { error: { status: 400, data: profileError.message } };
+                        }
+                    }
 
-                if (profileData.name) {
-                    const { error: nameError } = await supabase.from('profiles').update({ full_name: profileData.name }).eq('id', user.id);
-                    if (nameError) return { error: { status: 400, data: nameError.message } };
-                }
+                    // 2. Update Name
+                    if (profileData.name) {
+                        const { error: nameError } = await supabase.from('profiles').update({ full_name: profileData.name }).eq('id', user.id);
+                        if (nameError) {
+                            console.error('[Floework] Profile Name Update Error:', nameError);
+                            return { error: { status: 400, data: nameError.message } };
+                        }
+                    }
 
-                if (profileData.password) {
-                    const { error: passError } = await supabase.auth.updateUser({ password: profileData.password });
-                    if (passError) return { error: { status: 400, data: passError.message } };
-                }
+                    // 3. Update Email (Auth)
+                    if (profileData.email && profileData.email !== user.email) {
+                        const { error: emailError } = await supabase.auth.updateUser({ email: profileData.email });
+                        if (emailError) {
+                            console.error('[Floework] Auth Email Update Error:', emailError);
+                            return { error: { status: 400, data: emailError.message } };
+                        }
+                    }
 
-                return { 
-                    data: { 
-                        success: true, 
+                    // 4. Update Password (Auth)
+                    if (profileData.password) {
+                        const { error: passError } = await supabase.auth.updateUser({ password: profileData.password });
+                        if (passError) {
+                            console.error('[Floework] Auth Password Update Error:', passError);
+                            return { error: { status: 400, data: passError.message } };
+                        }
+                    }
+
+                    return { 
                         data: { 
-                            ...profileData, 
-                            avatarUrl: updatedAvatarUrl 
-                        } as any 
-                    } 
-                };
+                            success: true, 
+                            data: { 
+                                ...profileData, 
+                                avatarUrl: updatedAvatarUrl 
+                            } as any 
+                        } 
+                    };
+                } catch (err: any) {
+                    console.error('[Floework] updateProfile Mutation Exception:', err);
+                    return { error: { status: 500, data: err.message || 'Internal error' } };
+                }
             },
             invalidatesTags: ['User'],
         }),
