@@ -27,6 +27,10 @@ import AlertsPage from "./pages/AlertsPage";
 import DashboardLayout from "./components/DashboardLayout";
 import BillingPage from "./pages/BillingPage";
 import PhilosophyPage from "./pages/PhilosophyPage";
+import PricingPage from "./pages/PricingPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +49,10 @@ const App = () => (
                 {/* Public landing page */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/philosophy" element={<PhilosophyPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contact" element={<ContactPage />} />
                 <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
 
                 {/* Auth */}

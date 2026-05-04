@@ -108,12 +108,12 @@ export default function LandingPage() {
 
                         <div className="hidden md:flex flex-1 justify-center items-center gap-8 text-[15px] font-medium text-text-secondary">
                             <button onClick={() => navigate("/philosophy")} className="hover:text-foreground transition-colors">Philosophy</button>
-                            <button onClick={() => document.getElementById("section-features")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Features</button>
-                            <button onClick={() => document.getElementById("section-pricing")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">Pricing</button>
+                            <button onClick={() => navigate("/features")} className="hover:text-foreground transition-colors">Features</button>
+                            <button onClick={() => navigate("/pricing")} className="hover:text-foreground transition-colors">Pricing</button>
                         </div>
 
                         <div className="flex flex-1 justify-end items-center gap-3">
-                            <Button variant="ghost" className="h-10 px-5 rounded-full text-foreground hover:bg-slate-100 font-medium" onClick={() => navigate("/login")}>
+                            <Button variant="ghost" className="h-10 px-5 rounded-full text-foreground hover:bg-slate-100 hover:text-foreground font-medium" onClick={() => navigate("/login")}>
                                 Log In
                             </Button>
                             <Button className="h-10 px-6 rounded-full bg-[#007dff] text-white hover:bg-[#007dff]/90 font-medium shadow-md shadow-[#007dff]/20" onClick={() => navigate("/register")}>
@@ -149,7 +149,7 @@ export default function LandingPage() {
                         <Button className="h-14 px-8 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[17px] font-medium w-full sm:w-auto shadow-xl shadow-[#007dff]/20" onClick={() => navigate("/register")}>
                             Start for Free
                         </Button>
-                        <Button variant="outline" className="h-14 px-8 rounded-2xl bg-background border-border text-foreground hover:bg-surface text-[17px] font-medium w-full sm:w-auto shadow-sm" onClick={() => navigate("/login")}>
+                        <Button variant="outline" className="h-14 px-8 rounded-2xl bg-background border-border text-foreground hover:bg-slate-50 hover:text-foreground text-[17px] font-medium w-full sm:w-auto shadow-sm" onClick={() => navigate("/login")}>
                             Get a Demo
                         </Button>
                     </div>
@@ -577,24 +577,32 @@ export default function LandingPage() {
                     <div className="flex gap-16 md:gap-24">
                         <div>
                             <ul className="space-y-4 text-[14px]">
-                                {["About Us", "Contact", "What's New"].map((item) => (
-                                    <li key={item}>
-                                        <a href="#" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
+                                {[
+                                    { name: "About Us", path: "/about" },
+                                    { name: "Contact", path: "/contact" },
+                                    { name: "Philosophy", path: "/philosophy" }
+                                ].map((item) => (
+                                    <li key={item.name}>
+                                        <button onClick={() => navigate(item.path)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
                                             <ArrowRight size={13} className="text-slate-400 group-hover:text-[#007dff] transition-colors shrink-0" />
-                                            {item}
-                                        </a>
+                                            {item.name}
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                         <div>
                             <ul className="space-y-4 text-[14px]">
-                                {["Product", "Solutions", "Integrations", "Pricing"].map((item) => (
-                                    <li key={item}>
-                                        <a href="#" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
+                                {[
+                                    { name: "Features", path: "/features" },
+                                    { name: "Pricing", path: "/pricing" },
+                                    { name: "Philosophy", path: "/philosophy" }
+                                ].map((item) => (
+                                    <li key={item.name}>
+                                        <button onClick={() => navigate(item.path)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
                                             <ArrowRight size={13} className="text-slate-400 group-hover:text-[#007dff] transition-colors shrink-0" />
-                                            {item}
-                                        </a>
+                                            {item.name}
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
