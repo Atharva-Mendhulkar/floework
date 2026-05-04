@@ -54,10 +54,17 @@ floework/
    ```
 
 4. **Run development server:**
+   
+   For frontend only:
    ```bash
    cd apps/web && npm run dev
    ```
-   The web app will be available at `http://localhost:5173`.
+   
+   For full stack (including AI features):
+   ```bash
+   vercel dev
+   ```
+   The web app will be available at `http://localhost:3000` (Vercel) or `http://localhost:8080` (Vite).
 
 ### Database & Storage Setup
 
