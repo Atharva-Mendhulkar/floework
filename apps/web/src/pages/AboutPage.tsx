@@ -1,4 +1,4 @@
-import { ArrowLeft, Zap, Heart, Shield, Sparkles, Github, Twitter } from "lucide-react";
+import { ArrowLeft, Zap, Heart, Shield, Sparkles, Github, Twitter, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Reveal from "@/components/Reveal";
 
@@ -84,23 +84,23 @@ const AboutPage = () => {
                         <section>
                             <h2 className="text-2xl font-semibold mb-6 tracking-tight">The Developer</h2>
                             <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50 p-8 rounded-[32px] border border-slate-100">
-                                <div className="w-24 h-24 rounded-full overflow-hidden bg-white flex items-center justify-center border-2 border-slate-100 p-2">
-                                    <img src="/assets/porygon.svg" alt="Atharva" className="w-full h-full object-contain" />
+                                <div className="w-24 h-24 rounded-full overflow-hidden bg-white border-2 border-slate-100 flex items-center justify-center p-2">
+                                    <img src="/assets/porygon.svg" alt="Porygon" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
                                     <p className="text-xl text-slate-900 font-semibold mb-2">Atharva</p>
-                                    <p className="text-lg text-slate-600 leading-relaxed font-medium mb-4">
-                                        I like making and breaking things.
+                                    <p className="text-lg text-slate-600 leading-relaxed font-medium mb-6">
+                                        I am solo developer who make and break things.
                                     </p>
-                                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-6">
-                                        <a href="https://github.com/Atharva-Mendhulkar" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 transition-colors">
+                                    <div className="flex items-center justify-center md:justify-start gap-6">
+                                        <a href="https://github.com/Atharva-Mendhulkar" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
                                             <Github size={20} />
                                         </a>
-                                        <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 transition-colors">
+                                        <a href="https://x.com/atharvarta" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
                                             <Twitter size={20} />
                                         </a>
-                                        <a href="https://mendhu.tech" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#007dff] hover:underline">
-                                            my website
+                                        <a href="https://mendhu.tech" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#007dff] transition-colors">
+                                            <Globe size={20} />
                                         </a>
                                     </div>
                                 </div>
