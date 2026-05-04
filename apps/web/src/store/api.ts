@@ -624,8 +624,34 @@ export const api = createApi({
             queryFn: async () => {
                 const user = (await supabase.auth.getUser()).data.user;
                 if (!user) return { error: { status: 401, data: 'Not authenticated' } };
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-                return { data: { success: true, data: { id: user.id, email: user.email || '', name: profile?.full_name || user.user_metadata?.full_name || 'User', role: 'admin', avatarUrl: profile?.avatar_url } as any } };
+                
+                let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+                
+                // Repair: if profile missing, create it
+                if (error && error.code === 'PGRST116') {
+                    const { data: newProfile, error: createError } = await supabase.from('profiles').insert({
+                        id: user.id,
+                        full_name: user.user_metadata?.full_name || 'User',
+                    }).select().single();
+                    
+                    if (createError) return { error: { status: 500, data: createError.message } };
+                    profile = newProfile;
+                } else if (error) {
+                    return { error: { status: 500, data: error.message } };
+                }
+
+                return { 
+                    data: { 
+                        success: true, 
+                        data: { 
+                            id: user.id, 
+                            email: user.email || '', 
+                            name: profile?.full_name || 'User', 
+                            role: 'admin', 
+                            avatarUrl: profile?.avatar_url 
+                        } as any 
+                    } 
+                };
             },
             providesTags: ['User'],
         }),
@@ -633,6 +659,8 @@ export const api = createApi({
             queryFn: async (profileData) => {
                 const user = (await supabase.auth.getUser()).data.user;
                 if (!user) return { error: { status: 401, data: 'Not authenticated' } };
+
+                let updatedAvatarUrl = profileData.avatarUrl;
 
                 // Handle avatar upload
                 if (profileData.avatarFile) {
@@ -653,13 +681,30 @@ export const api = createApi({
                         .getPublicUrl(filePath);
 
                     // Update profile with avatar URL (append cache-buster)
-                    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                    await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+                    updatedAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+                    const { error: profileError } = await supabase.from('profiles').update({ avatar_url: updatedAvatarUrl }).eq('id', user.id);
+                    if (profileError) return { error: { status: 400, data: profileError.message } };
                 }
 
-                if (profileData.name) await supabase.from('profiles').update({ full_name: profileData.name }).eq('id', user.id);
-                if (profileData.password) await supabase.auth.updateUser({ password: profileData.password });
-                return { data: { success: true, data: profileData as any } };
+                if (profileData.name) {
+                    const { error: nameError } = await supabase.from('profiles').update({ full_name: profileData.name }).eq('id', user.id);
+                    if (nameError) return { error: { status: 400, data: nameError.message } };
+                }
+
+                if (profileData.password) {
+                    const { error: passError } = await supabase.auth.updateUser({ password: profileData.password });
+                    if (passError) return { error: { status: 400, data: passError.message } };
+                }
+
+                return { 
+                    data: { 
+                        success: true, 
+                        data: { 
+                            ...profileData, 
+                            avatarUrl: updatedAvatarUrl 
+                        } as any 
+                    } 
+                };
             },
             invalidatesTags: ['User'],
         }),

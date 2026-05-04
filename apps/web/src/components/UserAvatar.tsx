@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface UserAvatarProps {
   name?: string;
@@ -55,6 +55,12 @@ const SIZE_MAP = {
 
 export function UserAvatar({ name = "User", avatarUrl, size = "sm", status, className = "" }: UserAvatarProps) {
   const [imgError, setImgError] = useState(false);
+  
+  // Reset error state if URL changes
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
   const s = SIZE_MAP[size];
   const initials = getInitials(name);
   const color = getColor(name);
