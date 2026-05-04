@@ -679,6 +679,9 @@ export const api = createApi({
                             });
 
                         if (uploadError) {
+                            if (uploadError.message.includes('Bucket not found')) {
+                                console.error('[Floework] STORAGE ERROR: The "avatars" bucket does not exist. Please create it in your Supabase project (Storage -> Buckets -> Create "avatars" and set it to Public).');
+                            }
                             console.error('[Floework] Avatar Upload Error:', uploadError);
                             return { error: { status: 400, data: uploadError.message } };
                         }
@@ -719,8 +722,13 @@ export const api = createApi({
                     if (profileData.password) {
                         const { error: passError } = await supabase.auth.updateUser({ password: profileData.password });
                         if (passError) {
-                            console.error('[Floework] Auth Password Update Error:', passError);
-                            return { error: { status: 400, data: passError.message } };
+                            // Ignore "new password same as old" error
+                            if (passError.message.includes('should be different from the old password')) {
+                                console.warn('[Floework] Ignoring same-password update attempt.');
+                            } else {
+                                console.error('[Floework] Auth Password Update Error:', passError);
+                                return { error: { status: 400, data: passError.message } };
+                            }
                         }
                     }
 
