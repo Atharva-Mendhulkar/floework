@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar } from "lucide-react";
+import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCausalityStrip";
 
@@ -39,6 +39,7 @@ function FloatingAvatar({ img, delay, top, left, right, bottom, anim, rotate, co
 // ─── Main Landing Page
 export default function LandingPage() {
     const navigate = useNavigate();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     // Active node for ExecutionCausalityStrip — controls section scrolling
     const [activeNode, setActiveNode] = useState<NodeId>("focus");
 
@@ -113,15 +114,40 @@ export default function LandingPage() {
                         </div>
 
                         <div className="flex flex-1 justify-end items-center gap-3">
-                            <Button variant="ghost" className="h-10 px-5 rounded-full text-foreground hover:bg-slate-100 hover:text-foreground font-medium" onClick={() => navigate("/login")}>
-                                Log In
-                            </Button>
-                            <Button className="h-10 px-6 rounded-full bg-[#007dff] text-white hover:bg-[#007dff]/90 font-medium shadow-md shadow-[#007dff]/20" onClick={() => navigate("/register")}>
+                            <div className="hidden md:flex items-center gap-3">
+                                <Button variant="ghost" className="h-10 px-5 rounded-full text-foreground hover:bg-slate-100 hover:text-foreground font-medium" onClick={() => navigate("/login")}>
+                                    Log In
+                                </Button>
+                                <Button className="h-10 px-6 rounded-full bg-[#007dff] text-white hover:bg-[#007dff]/90 font-medium shadow-md shadow-[#007dff]/20" onClick={() => navigate("/register")}>
+                                    Start Now
+                                </Button>
+                            </div>
+                            <button 
+                                className="md:hidden p-2 text-slate-600 hover:text-slate-900 transition-colors"
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            >
+                                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                            </button>
+                        </div>
+                    </div>
+                    {/* Mobile Menu Overlay */}
+                {mobileMenuOpen && (
+                    <div className="fixed inset-0 z-40 bg-white md:hidden pt-24 px-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex flex-col gap-6">
+                            <button onClick={() => { navigate("/philosophy"); setMobileMenuOpen(false); }} className="text-2xl font-semibold text-slate-900 text-left">Philosophy</button>
+                            <button onClick={() => { navigate("/features"); setMobileMenuOpen(false); }} className="text-2xl font-semibold text-slate-900 text-left">Features</button>
+                            <button onClick={() => { navigate("/pricing"); setMobileMenuOpen(false); }} className="text-2xl font-semibold text-slate-900 text-left">Pricing</button>
+                            <div className="h-px bg-slate-100 my-4" />
+                            <Button className="h-14 rounded-2xl bg-[#007dff] text-white font-semibold text-lg" onClick={() => navigate("/register")}>
                                 Start Now
+                            </Button>
+                            <Button variant="outline" className="h-14 rounded-2xl border-slate-200 text-slate-900 font-semibold text-lg" onClick={() => navigate("/login")}>
+                                Log In
                             </Button>
                         </div>
                     </div>
-                </nav>
+                )}
+            </nav>
 
                 {/* ─── Hero Content */}
                 <div className="relative z-20 max-w-[800px] mx-auto text-center mt-24 px-6">

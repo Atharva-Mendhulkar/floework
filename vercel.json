@@ -8,6 +8,7 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "handle": "filesystem" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ],
   "headers": [
