@@ -59,6 +59,13 @@ floework/
    ```
    The web app will be available at `http://localhost:5173`.
 
+### Database & Storage Setup
+
+Ensure your Supabase instance is correctly configured:
+
+1. **Apply Migrations**: `supabase db push` (or run scripts in `supabase/migrations` manually).
+2. **Storage Bucket**: Create a public bucket named `avatars` in the Supabase Storage dashboard to enable profile picture uploads.
+
 ## Deployment
 
 The repository is configured for deployment on Vercel.
