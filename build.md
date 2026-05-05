@@ -1951,8 +1951,9 @@ We introduced the `concurrency_conflicts` system to provide deep visibility into
 
 ### 6. Build & Deployment Hardening
 - **Cross-Platform Build Fixes**: Resolved critical Vercel build failures for both Rollup (`Error: Cannot find module @rollup/rollup-linux-x64-gnu`) and esbuild (`Error: The package "@esbuild/linux-x64" could not be found`) by adding explicit Linux-target binaries to `optionalDependencies` in the root `package.json`.
-- **Messaging Access Fix**: Resolved an issue where messages were "not going" or showing "Unknown" authors. This was caused by overly restrictive RLS policies on the `profiles` table that prevented team members from seeing each other's metadata. Expanded visibility to allow cross-team profile reads.
-- **SQL Verification**: Confirmed that all 31 migrations (000–030) are successfully applied to the database.
+- **Security & Visibility Refinement**: Upgraded RLS for `profiles` and `messages` from simple subqueries to performance-optimized joins. Team members can now securely see each other's metadata (names/avatars) while maintaining strict project isolation.
+- **Performance Hardening**: Added critical indexes on `team_members(user_id, team_id)` to prevent latency spikes during high-concurrency membership checks.
+- **SQL Verification**: Confirmed that all 32 migrations (000–031) are successfully applied to the database.
 
 ### 7. Certification
 The platform is now certified as **Hardened for Concurrent Production Workloads**. It maintains absolute state integrity while delivering a low-latency, optimistic user experience.
