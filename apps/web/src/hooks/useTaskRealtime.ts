@@ -17,6 +17,9 @@ export function useTaskRealtime(projectId?: string) {
   useEffect(() => {
     if (!projectId) return;
 
+    // 3.0 Lifecycle Control: Reset dedupe map on project change
+    lastSeenVersionsRef.current = {};
+
     // 8.1 Prevent leaks by cleaning up existing channel before creating new one
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);

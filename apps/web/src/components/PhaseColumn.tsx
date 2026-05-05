@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { Phase } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import TaskNodeCard from "./TaskNodeCard";
@@ -15,6 +16,7 @@ interface PhaseColumnProps {
 const PhaseColumn = ({ phase, isLast, onTaskClick }: PhaseColumnProps) => {
   const [updateTask] = useUpdateTaskMutation();
   const dispatch = useAppDispatch();
+  const lastActionTimeRef = useRef<Record<string, number>>({});
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); // allow drop
@@ -34,6 +36,10 @@ const PhaseColumn = ({ phase, isLast, onTaskClick }: PhaseColumnProps) => {
       if (phase.id === "allocation") newStatus = "pending";
 
       // 1. Persist to DB
+      // Record the time of this specific user intent
+      const intentTime = Date.now();
+      lastActionTimeRef.current[taskId] = intentTime;
+
       try {
         const task = phase.tasks.find(t => t.id === taskId);
         await updateTask({ 
@@ -48,18 +54,31 @@ const PhaseColumn = ({ phase, isLast, onTaskClick }: PhaseColumnProps) => {
         const isStale = err?.status === 409 || err?.data?.error === 'STALE_UPDATE';
         
         if (isStale) {
+          // 4.0 Intent-Aware Retry Guard:
+          // If the user has performed a NEWER action on this task, abandon this retry.
+          if (lastActionTimeRef.current[taskId] > intentTime) {
+            console.log("Abandoning stale retry; newer action detected.");
+            return;
+          }
+
           toast.loading("Resolving conflict...", { duration: 1000 });
+          
           try {
-            // 6.0 Automatic Retry with Fresh Version
+            // 1.1 Jitter to prevent retry storms (50ms - 200ms)
+            await new Promise(r => setTimeout(r, 50 + Math.random() * 150));
+
             // Fetch fresh state directly
             const { data: freshTask } = await (dispatch as any)(api.endpoints.getTask.initiate(taskId, { forceRefetch: true }));
             
+            // Re-check intent relevancy after fetch
+            if (lastActionTimeRef.current[taskId] > intentTime) return;
+
             if (freshTask) {
               await updateTask({ 
                 id: taskId, 
                 phase: phase.id, 
                 status: newStatus,
-                version: freshTask.version, // Use fresh version
+                version: freshTask.version,
                 projectId
               }).unwrap();
               toast.success("Conflict resolved automatically.");

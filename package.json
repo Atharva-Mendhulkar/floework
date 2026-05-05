@@ -17,5 +17,9 @@
   "scripts": {
     "build": "cd apps/web && npm run build",
     "vercel-build": "cd apps/web && npm run build"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-linux-x64-musl": "*"
   }
 }
