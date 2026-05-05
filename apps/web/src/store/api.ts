@@ -119,6 +119,7 @@ export const api = createApi({
                             blockerRisk: t.blocker_risk, 
                             createdAt: t.created_at, 
                             updatedAt: t.updated_at,
+                            version: t.version,
                             isStarred: starredIds.has(t.id), 
                             assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
                         })) as any 
@@ -127,11 +128,43 @@ export const api = createApi({
             },
             providesTags: ['Task'],
         }),
-        updateTask: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; status?: string; phase?: string; title?: string; description?: string; dueDate?: string; priority?: string; assigneeId?: string }>({
+        getTask: builder.query<TaskNode, string>({
+            queryFn: async (id) => {
+                const { data, error } = await supabase.from('tasks').select('*, profiles(full_name, avatar_url)').eq('id', id).single();
+                if (error) return { error: { status: 400, data: error.message } };
+                const { data: starred } = await supabase.from('starred_tasks').select('task_id').eq('task_id', id);
+                const isStarred = (starred?.length || 0) > 0;
+                return { data: {
+                    id: data.id,
+                    title: data.title,
+                    description: data.description,
+                    status: data.status,
+                    phase: data.status === 'backlog' ? 'allocation' : data.status === 'in_progress' ? 'focus' : data.status === 'review' ? 'resolution' : 'outcome',
+                    effort: data.effort,
+                    focusCount: 0,
+                    projectId: data.project_id,
+                    createdAt: data.created_at,
+                    updatedAt: data.updated_at,
+                    version: data.version,
+                    isStarred,
+                    assignee: data.profiles ? { name: data.profiles.full_name, avatarUrl: data.profiles.avatar_url } : null,
+                } as any };
+            },
+            providesTags: (result, error, id) => [{ type: 'Task', id }],
+        }),
+        updateTask: builder.mutation<{ success: boolean; data: TaskNode }, { id: string; status?: string; phase?: string; title?: string; description?: string; dueDate?: string; priority?: string; assigneeId?: string; version?: number; projectId?: string; sprintId?: string | null }>({
             queryFn: async ({ id, phase, ...patch }) => {
+                // --- SIMULATION MODE ---
+                const simDelay = localStorage.getItem('sim_delay');
+                const simFail = localStorage.getItem('sim_fail');
+                if (simDelay) await new Promise(r => setTimeout(r, parseInt(simDelay)));
+                if (simFail === 'true' && Math.random() < 0.2) {
+                    return { error: { status: 500, data: 'Simulated Client-Side Failure' } };
+                }
+                // ------------------------
+
                 const updateData: any = {};
                 
-                // v1.2 Fix: Map UI phases back to database status values
                 const phaseToStatus: Record<string, string> = {
                     'allocation': 'backlog',
                     'focus': 'in_progress',
@@ -155,6 +188,60 @@ export const api = createApi({
                 if (error) return { error: { status: 400, data: error.message } };
                 return { data: { success: true, data: data as any } };
             },
+            async onQueryStarted({ id, phase, ...patch }, { dispatch, getState, queryFulfilled }) {
+                // 5.1 Optimistic Update with "Provisional" flag
+                const state = getState() as any;
+                const patches = api.util.selectInvalidatedBy(state, [{ type: 'Task' as const }]);
+                
+                const patchResults = patches.map((p) => {
+                  if (p.endpointName !== 'getTasks') return null;
+                  return dispatch(
+                    api.util.updateQueryData('getTasks', p.originalArgs as any, (draft) => {
+                      const task = draft.data.find((t) => t.id === id);
+                      if (task) {
+                        // 5.1 Optimistic Update: Ignore if strictly older
+                        if (patch.version !== undefined && task.version !== undefined && patch.version < task.version) {
+                          return;
+                        }
+                        
+                        // Apply changes optimistically but MARK as provisional
+                        // We do NOT increment version; we wait for server confirmation
+                        if (phase) task.phase = phase;
+                        if (patch.status) task.status = patch.status;
+                        Object.assign(task, { ...patch, __isOptimistic: true });
+                      }
+                    })
+                  );
+                }).filter(Boolean);
+
+                try {
+                    const { data: serverResponse } = await queryFulfilled;
+                    // 2.0 Server-Authoritative Replace (Universal Rule)
+                    patches.forEach((p) => {
+                      if (p.endpointName !== 'getTasks') return;
+                      dispatch(
+                        api.util.updateQueryData('getTasks', p.originalArgs as any, (draft) => {
+                          const task = draft.data.find((t) => t.id === id);
+                          // Always trust server response regardless of optimistic flag
+                          if (task && serverResponse.data.version >= (task.version || 0)) {
+                            Object.assign(task, serverResponse.data);
+                            delete (task as any).__isOptimistic;
+                          }
+                        })
+                      );
+                    });
+                } catch (err: any) {
+                    // 1.0 Automatic Retry on Conflict (409)
+                    if (err?.status === 409) {
+                      console.warn("OCC Conflict detected. Retrying with fresh state...");
+                      // Re-fetch then retry could be implemented here, 
+                      // but for now we invalidate to ensure UI is fresh.
+                      dispatch(api.util.invalidateTags(['Task']));
+                    } else {
+                      dispatch(api.util.invalidateTags(['Task']));
+                    }
+                }
+            },
             invalidatesTags: ['Task'],
         }),
         createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string; sprintId?: string | null }>({
@@ -176,16 +263,34 @@ export const api = createApi({
         }),
         toggleTaskStar: builder.mutation<{ success: boolean; data: any }, { id: string; isStarred: boolean }>({
             queryFn: async ({ id, isStarred }) => {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return { error: { status: 401, data: 'Unauthorized' } };
+                // 3.2 Use RPC for atomic toggling
+                const { data, error } = await supabase.rpc('toggle_task_star', { p_task_id: id });
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: data as any } };
+            },
+            async onQueryStarted({ id, isStarred }, { dispatch, getState, queryFulfilled }) {
+                const state = getState() as any;
+                const patches = api.util.selectInvalidatedBy(state, [{ type: 'Task' as const }]);
 
-                if (isStarred) {
-                    await supabase.from('starred_tasks').insert({ task_id: id, user_id: user.id });
-                } else {
-                    await supabase.from('starred_tasks').delete().match({ task_id: id, user_id: user.id });
+                const patchResults = patches.map((p) => {
+                  if (p.endpointName !== 'getTasks') return null;
+                  return dispatch(
+                    api.util.updateQueryData('getTasks', p.originalArgs as any, (draft) => {
+                      const task = draft.data.find((t) => t.id === id);
+                      if (task) {
+                        // Version check for toggles (though RPC is atomic, UI might be racing)
+                        task.isStarred = isStarred;
+                        if (task.version !== undefined) task.version += 1;
+                      }
+                    })
+                  );
+                }).filter(Boolean);
+
+                try {
+                    await queryFulfilled;
+                } catch {
+                    dispatch(api.util.invalidateTags(['Task']));
                 }
-                
-                return { data: { success: true, data: {} } };
             },
             invalidatesTags: ['Task'],
         }),

@@ -2,8 +2,9 @@ import type { Phase } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import TaskNodeCard from "./TaskNodeCard";
 import { Plus } from "lucide-react";
-import { useUpdateTaskMutation } from "@/store/api";
-import { useSocket } from "@/modules/socket/SocketContext";
+import { useUpdateTaskMutation, api } from "@/store/api";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
 
 interface PhaseColumnProps {
   phase: Phase;
@@ -13,7 +14,7 @@ interface PhaseColumnProps {
 
 const PhaseColumn = ({ phase, isLast, onTaskClick }: PhaseColumnProps) => {
   const [updateTask] = useUpdateTaskMutation();
-  const { socket } = useSocket();
+  const dispatch = useAppDispatch();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); // allow drop
@@ -33,11 +34,43 @@ const PhaseColumn = ({ phase, isLast, onTaskClick }: PhaseColumnProps) => {
       if (phase.id === "allocation") newStatus = "pending";
 
       // 1. Persist to DB
-      await updateTask({ id: taskId, phase: phase.id, status: newStatus });
-
-      // 2. Broadcast to other WebSocket clients
-      if (socket) {
-        socket.emit("task_moved", { taskId, projectId, phase: phase.id });
+      try {
+        const task = phase.tasks.find(t => t.id === taskId);
+        await updateTask({ 
+          id: taskId, 
+          phase: phase.id, 
+          status: newStatus,
+          version: task?.version,
+          projectId
+        }).unwrap();
+      } catch (err: any) {
+        console.warn("Update failed, checking for conflict:", err);
+        const isStale = err?.status === 409 || err?.data?.error === 'STALE_UPDATE';
+        
+        if (isStale) {
+          toast.loading("Resolving conflict...", { duration: 1000 });
+          try {
+            // 6.0 Automatic Retry with Fresh Version
+            // Fetch fresh state directly
+            const { data: freshTask } = await (dispatch as any)(api.endpoints.getTask.initiate(taskId, { forceRefetch: true }));
+            
+            if (freshTask) {
+              await updateTask({ 
+                id: taskId, 
+                phase: phase.id, 
+                status: newStatus,
+                version: freshTask.version, // Use fresh version
+                projectId
+              }).unwrap();
+              toast.success("Conflict resolved automatically.");
+            }
+          } catch (retryErr) {
+            console.error("Retry failed:", retryErr);
+            toast.error("Multiple people are editing this. Please refresh.");
+          }
+        } else {
+          toast.error("Failed to move task. Please try again.");
+        }
       }
     }
   };

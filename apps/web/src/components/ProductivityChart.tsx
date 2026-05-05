@@ -35,15 +35,18 @@ const ProductivityChart = () => {
     if (chartData.length === 0) return toast.error("No data to export");
     const headers = ["Category", "Count"].join(",");
     const rows = chartData.map(d => `"${d.name}",${d.value}`).join("\n");
-    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const blob = new Blob([headers + "\n" + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     const workspaceName = activeProject?.name?.replace(/\s+/g, '_') || "Workspace";
     const sprintName = activeSprint?.name?.replace(/\s+/g, '_') || (activeSprintId === null ? "Backlog" : "Sprint");
-    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("href", url);
     link.setAttribute("download", `${workspaceName}_${sprintName}_Focus_Distribution_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
-    toast.success("Focus distribution exported");
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Focus data exported to CSV");
   };
 
   const handleCalendarSync = () => {

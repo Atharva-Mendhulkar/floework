@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { rateLimit } from '../lib/rateLimit'
 import { validateQuery, ProjectIdQuerySchema } from '../lib/validate'
+import { requireMember } from '../lib/auth'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 0. Rate Limiting
@@ -20,12 +21,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 2. Auth Check
-  const authHeader = req.headers.authorization
-  if (!authHeader) return res.status(401).json({ error: 'No authorization header' })
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
-  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' })
+  // 2. Auth & Membership Check
+  // First, find the team_id for this project to check membership
+  const { data: project } = await supabase
+    .from('projects')
+    .select('team_id')
+    .eq('id', projectId as string)
+    .single()
+
+  if (!project) return res.status(404).json({ error: 'Project not found' })
+
+  const user = await requireMember(req, res, project.team_id)
+  if (!user) return
 
   try {
     // 3. Check Cache (1 hour TTL)

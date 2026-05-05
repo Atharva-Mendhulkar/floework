@@ -1,53 +1,34 @@
-import React from 'react';
-
 export function PageSkeleton() {
   return (
-    <div className="p-8 space-y-8 animate-pulse max-w-[1400px] mx-auto">
+    <div className="p-8 space-y-8 animate-in fade-in duration-500">
       {/* Header Skeleton */}
-      <div className="space-y-3">
-        <div className="h-8 w-64 bg-gray-200 rounded-lg" />
-        <div className="h-4 w-96 bg-gray-100 rounded-lg" />
+      <div className="flex justify-between items-center">
+        <div className="space-y-3">
+          <div className="h-8 w-64 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-4 w-32 bg-gray-50 rounded-lg animate-pulse" />
+        </div>
+        <div className="h-10 w-32 bg-gray-100 rounded-lg animate-pulse" />
       </div>
 
-      {/* Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="space-y-4 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
-            <div className="flex justify-between items-center">
-              <div className="h-4 w-24 bg-gray-200 rounded" />
-              <div className="h-6 w-6 bg-gray-100 rounded-full" />
-            </div>
+      {/* Content Grid Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-72 bg-gray-50/50 border border-gray-100 rounded-2xl p-6 space-y-4">
+            <div className="h-6 w-1/2 bg-gray-100 rounded-md animate-pulse" />
             <div className="space-y-2">
-              <div className="h-4 w-full bg-gray-100 rounded" />
-              <div className="h-4 w-2/3 bg-gray-50 rounded" />
+              <div className="h-4 w-full bg-gray-50 rounded animate-pulse" />
+              <div className="h-4 w-5/6 bg-gray-50 rounded animate-pulse" />
             </div>
-            <div className="flex items-center gap-2 pt-2">
-              <div className="h-6 w-6 bg-gray-200 rounded-full" />
-              <div className="h-3 w-32 bg-gray-100 rounded" />
+            <div className="mt-auto pt-12 flex gap-2">
+              <div className="h-8 w-8 bg-gray-100 rounded-full animate-pulse" />
+              <div className="h-8 w-8 bg-gray-100 rounded-full animate-pulse" />
             </div>
           </div>
         ))}
       </div>
-    </div>
-  );
-}
 
-export function BoardSkeleton() {
-  return (
-    <div className="flex gap-6 p-8 overflow-hidden animate-pulse min-h-[calc(100vh-80px)]">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-80 space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <div className="h-5 w-32 bg-gray-200 rounded" />
-            <div className="h-5 w-8 bg-gray-100 rounded-full" />
-          </div>
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, j) => (
-              <div key={j} className="h-32 bg-white border border-gray-100 rounded-xl shadow-sm" />
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* Large Block Skeleton */}
+      <div className="h-96 bg-gray-50/30 border border-gray-100 rounded-2xl animate-pulse" />
     </div>
   );
 }

@@ -43,6 +43,10 @@ export interface TaskNode {
   isStarred?: boolean;
   projectId: string;
   isSample?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
+  __isOptimistic?: boolean;
 }
 
 export interface Phase {

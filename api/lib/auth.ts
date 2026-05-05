@@ -3,7 +3,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  }
 )
 
 export async function getUser(req: VercelRequest): Promise<User | null> {

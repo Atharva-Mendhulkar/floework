@@ -13,6 +13,8 @@ import type { AppDispatch } from "@/store";
 import { lockTask, unlockTask } from "@/store/slices/projectSlice";
 import { TaskCreateModal } from "./TaskCreateModal";
 import { TaskCalendarView } from "./TaskCalendarView";
+import { useTaskRealtime } from "@/hooks/useTaskRealtime";
+import { RealtimeBanner } from "./RealtimeBanner";
 
 interface FlowBoardProps {
   onTaskClick?: (task: TaskNode | null) => void;
@@ -28,7 +30,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     projectId: activeProjectId || undefined, 
     sprintId: activeSprintId 
   });
-  const { socket, isConnected } = useSocket();
+  
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
@@ -39,55 +41,16 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
   const { data: sprintsRes } = api.endpoints.getProjectSprints.useQueryState(activeProjectId!, { skip: !activeProjectId });
-  console.log("[Floework] Stabilization v1.3 - Defensive Mapping Active");
   const activeSprint = sprintsRes?.data?.find((s: any) => s.id === activeSprintId);
-
-  // Refetch tasks if sprint changes (backend mapping via sprintId would ideally be passed to getTasks query param)
-  // For now, if activeSprintId is null, it's Backlog. We should probably pass activeSprintId to useGetTasksQuery!
 
   const { data: projectsRes } = useGetProjectsQuery();
   const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
 
+  // Use Realtime synchronization
+  const { status: realtimeStatus } = useTaskRealtime(effectiveProjectId);
+
   const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId, { skip: !activeProjectId });
   const prediction = predictionRes?.data;
-
-  /* WebSocket subscription */
-  useEffect(() => {
-    if (!socket || !isConnected || !effectiveProjectId || effectiveProjectId === "fallback-id") return;
-    socket.emit("join_project", effectiveProjectId);
-
-    socket.on("task_updated", (data: { taskId: string; phase: string; projectId: string }) => {
-      // v1.2 Fix: Use activeProjectId (or undefined) as context to match the query cache key
-      dispatch(
-        api.util.updateQueryData("getTasks", { projectId: activeProjectId || undefined, sprintId: activeSprintId }, (draft) => {
-          if (!draft || !draft.data) return;
-          const task = draft.data.find((t: any) => t.id === data.taskId);
-          if (task) {
-            task.phase = data.phase;
-            let newStatus = "in-progress";
-            if (data.phase === "outcome") newStatus = "done";
-            if (data.phase === "allocation") newStatus = "pending";
-            task.status = newStatus as typeof task.status;
-          }
-        })
-      );
-    });
-
-    socket.on("task_locked", (data: { taskId: string; lockedBy: string }) => {
-      dispatch(lockTask(data));
-    });
-
-    socket.on("task_unlocked", (data: { taskId: string }) => {
-      dispatch(unlockTask(data.taskId));
-    });
-
-    return () => {
-      socket.emit("leave_project", effectiveProjectId);
-      socket.off("task_updated");
-      socket.off("task_locked");
-      socket.off("task_unlocked");
-    };
-  }, [socket, isConnected, dispatch]);
 
   /* Re-group tasks into phase columns + filter by searchQuery */
   const phases = useMemo(() => {
@@ -118,6 +81,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-5 relative">
+      <RealtimeBanner status={realtimeStatus} />
       {/* Onboarding Tooltip Overlay */}
       {showOnboardingTooltip && totalTasks > 0 && (
         <div className="absolute top-1/3 left-1/3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-500">

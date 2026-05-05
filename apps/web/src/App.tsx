@@ -82,32 +82,10 @@ const App = () => (
                       <Route path="/onboarding" element={<OnboardingPage />} />
 
                       <Route path="/dashboard" element={<Index />} />
-                      <Route path="/boards" element={
-                        <ErrorBoundary name="Boards Board">
-                          <BoardsPage />
-                        </ErrorBoundary>
-                      } />
-                      <Route path="/focus" element={
-                        <DashboardLayout>
-                          <ErrorBoundary name="Focus Engine">
-                            <FocusPage />
-                          </ErrorBoundary>
-                        </DashboardLayout>
-                      } />
-                      <Route path="/narrative" element={
-                        <DashboardLayout>
-                          <ErrorBoundary name="AI Narrative Engine">
-                            <NarrativePage />
-                          </ErrorBoundary>
-                        </DashboardLayout>
-                      } />
-                      <Route path="/analytics" element={
-                        <DashboardLayout>
-                          <ErrorBoundary name="Analytics Dashboard">
-                            <AnalyticsPage />
-                          </ErrorBoundary>
-                        </DashboardLayout>
-                      } />
+                      <Route path="/boards" element={<BoardsPage />} />
+                      <Route path="/focus" element={<DashboardLayout><FocusPage /></DashboardLayout>} />
+                      <Route path="/narrative" element={<DashboardLayout><NarrativePage /></DashboardLayout>} />
+                      <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
                       <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
                       <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />
                       <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
