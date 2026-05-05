@@ -5,8 +5,10 @@
     "apps/*"
   ],
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.45.4",
-    "@google/generative-ai": "^0.21.0"
+    "lru-cache": "^11.3.6",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vercel/node": "^3.0.0",

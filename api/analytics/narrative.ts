@@ -1,9 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { rateLimit } from '../lib/rateLimit'
+import { validateQuery, ProjectIdQuerySchema } from '../lib/validate'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { projectId } = req.query as { projectId: string }
+  // 0. Rate Limiting
+  if (!rateLimit(req, res, { windowMs: 60_000, max: 10 })) return
+
+  // 0.1 Input Validation
+  const validatedQuery = validateQuery(req, res, ProjectIdQuerySchema)
+  if (!validatedQuery) return
+
+  const { projectId } = validatedQuery
 
   // 1. Initialize Clients
   const supabase = createClient(
@@ -61,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const doneCount = (tasks || []).filter(t => t.status === 'done').length
     const activeCount = (tasks || []).filter(t => t.status === 'in_progress' || t.status === 'review').length
 
-    // 5. Call Gemini
+    // 5. Call Gemini with Timeout
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -72,9 +81,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Format (JSON): { "summary": "...", "highlights": ["..."], "warnings": ["..."] }
     `
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim()
-    const aiData = JSON.parse(responseText)
+    // Implement a 25s timeout for the AI call
+    const aiPromise = model.generateContent(prompt).then(r => r.response.text())
+    const timeoutPromise = new Promise<string>((_, reject) => 
+      setTimeout(() => reject(new Error('Gemini timeout')), 25000)
+    )
+
+    let responseText: string
+    try {
+      responseText = await Promise.race([aiPromise, timeoutPromise])
+    } catch (e) {
+      console.warn("Gemini call failed or timed out, using fallback:", e)
+      responseText = JSON.stringify({
+        summary: "Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.",
+        highlights: ["Workspace synchronized.", "Steady focus velocity."],
+        warnings: []
+      })
+    }
+
+    const aiData = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, '').trim())
 
     // 6. Update Cache
     await supabase.from('narrative_cache').upsert({

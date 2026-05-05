@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
+import { validateBody, TaskCreateSchema } from '../lib/validate'
+import { requireMember } from '../lib/auth'
+
 function getSupabase(req: VercelRequest) {
   const supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -12,6 +15,10 @@ function getSupabase(req: VercelRequest) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { projectId } = req.query
+    if (!projectId) return res.status(400).json({ error: 'Project ID required' })
+    
+    if (!await requireMember(req, res, projectId as string)) return
+
     const supabase = getSupabase(req)
     const { data, error } = await supabase
       .from('tasks')
@@ -24,10 +31,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
+    const validatedBody = validateBody(req, res, TaskCreateSchema)
+    if (!validatedBody) return // validateBody already sent response
+
+    if (!await requireMember(req, res, validatedBody.project_id)) return
+
     const supabase = getSupabase(req)
     const { data, error } = await supabase
       .from('tasks')
-      .insert(req.body)
+      .insert(validatedBody)
       .select()
       .single()
 

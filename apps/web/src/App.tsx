@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "./store";
 import { AuthProvider } from "./modules/auth/AuthContext";
@@ -12,88 +12,121 @@ import { RegisterPage } from "./modules/auth/views/RegisterPage";
 import { ForgotPasswordPage } from "./modules/auth/views/ForgotPasswordPage";
 import { ResetPasswordPage } from "./modules/auth/views/ResetPasswordPage";
 import { SocketProvider } from "./modules/socket/SocketContext";
-import Index from "./pages/Index";
-import BoardsPage from "./pages/BoardsPage";
-import FocusPage from "./pages/FocusPage";
-import NarrativePage from "@/pages/NarrativePage";
-import SharedNarrativePage from "@/pages/SharedNarrativePage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import LandingPage from "./pages/LandingPage";
-import StarredPage from "./pages/StarredPage";
-import MessagesPage from "./pages/MessagesPage";
-import ProfilePage from "./pages/ProfilePage";
-import AlertsPage from "./pages/AlertsPage";
-import DashboardLayout from "./components/DashboardLayout";
-import BillingPage from "./pages/BillingPage";
-import PhilosophyPage from "./pages/PhilosophyPage";
-import PricingPage from "./pages/PricingPage";
-import FeaturesPage from "./pages/FeaturesPage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
-import NotFound from "./pages/NotFound";
+import { lazy, Suspense } from "react";
+import { PageSkeleton } from "./components/PageSkeleton";
 import ScrollToTop from "./components/ScrollToTop";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import DashboardLayout from "./components/DashboardLayout";
 
 const queryClient = new QueryClient();
 
+// Public Pages (Lazy)
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const PhilosophyPage = lazy(() => import("./pages/PhilosophyPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
+const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Protected Pages (Lazy)
+const Index = lazy(() => import("./pages/Index"));
+const BoardsPage = lazy(() => import("./pages/BoardsPage"));
+const FocusPage = lazy(() => import("./pages/FocusPage"));
+const NarrativePage = lazy(() => import("@/pages/NarrativePage"));
+const SharedNarrativePage = lazy(() => import("@/pages/SharedNarrativePage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const StarredPage = lazy(() => import("./pages/StarredPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const AlertsPage = lazy(() => import("./pages/AlertsPage"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const WorkspaceSettingsPage = lazy(() => import("./pages/WorkspaceSettingsPage"));
+
 const App = () => (
-  <ReduxProvider store={store}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SocketProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                {/* Public landing page */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/philosophy" element={<PhilosophyPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
+  <ErrorBoundary>
+    <ReduxProvider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SocketProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ScrollToTop />
+                <Suspense fallback={<PageSkeleton />}>
+                  <Routes>
+                    {/* Public landing page */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/philosophy" element={<PhilosophyPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/features" element={<FeaturesPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
 
-                {/* Auth */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                    {/* Auth */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-                {/* Protected Routes */}
-                <Route element={<ProtectedRoute />}>
-                  {/* Onboarding Flow */}
-                  <Route path="/onboarding" element={<OnboardingPage />} />
+                    {/* Protected Routes */}
+                    <Route element={<ProtectedRoute />}>
+                      {/* Onboarding Flow */}
+                      <Route path="/onboarding" element={<OnboardingPage />} />
 
-                  <Route path="/dashboard" element={<Index />} />
-                  <Route path="/boards" element={<BoardsPage />} />
-                  <Route path="/focus" element={<DashboardLayout><FocusPage /></DashboardLayout>} />
-                  <Route path="/narrative" element={<DashboardLayout><NarrativePage /></DashboardLayout>} />
-                  <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
-                  <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
-                  <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />
-                  <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
-                  <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
-                  <Route path="/billing" element={<DashboardLayout><BillingPage /></DashboardLayout>} />
-                  <Route path="/workspace/settings" element={<DashboardLayout><WorkspaceSettingsPage /></DashboardLayout>} />
-                </Route>
+                      <Route path="/dashboard" element={<Index />} />
+                      <Route path="/boards" element={
+                        <ErrorBoundary name="Boards Board">
+                          <BoardsPage />
+                        </ErrorBoundary>
+                      } />
+                      <Route path="/focus" element={
+                        <DashboardLayout>
+                          <ErrorBoundary name="Focus Engine">
+                            <FocusPage />
+                          </ErrorBoundary>
+                        </DashboardLayout>
+                      } />
+                      <Route path="/narrative" element={
+                        <DashboardLayout>
+                          <ErrorBoundary name="AI Narrative Engine">
+                            <NarrativePage />
+                          </ErrorBoundary>
+                        </DashboardLayout>
+                      } />
+                      <Route path="/analytics" element={
+                        <DashboardLayout>
+                          <ErrorBoundary name="Analytics Dashboard">
+                            <AnalyticsPage />
+                          </ErrorBoundary>
+                        </DashboardLayout>
+                      } />
+                      <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
+                      <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />
+                      <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
+                      <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
+                      <Route path="/billing" element={<DashboardLayout><BillingPage /></DashboardLayout>} />
+                      <Route path="/workspace/settings" element={<DashboardLayout><WorkspaceSettingsPage /></DashboardLayout>} />
+                    </Route>
 
-                {/* Fallback */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </SocketProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ReduxProvider>
+                    {/* Fallback */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </SocketProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ReduxProvider>
+  </ErrorBoundary>
 );
 
 export default App;
