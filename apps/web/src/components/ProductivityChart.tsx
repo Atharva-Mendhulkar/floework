@@ -1,6 +1,10 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useGetTasksQuery } from "@/store/api";
+import { useGetTasksQuery, useGetProjectsQuery } from "@/store/api";
+import { useAppSelector } from "@/store/hooks";
 import { Plus, Upload, Calendar } from "lucide-react";
+import { useState } from "react";
+import { TaskCreateModal } from "./TaskCreateModal";
+import { toast } from "sonner";
 
 const ProductivityChart = () => {
   const { data: tasksRes } = useGetTasksQuery();
@@ -21,18 +25,64 @@ const ProductivityChart = () => {
 
   const total = chartData.reduce((sum, d) => sum + d.value, 0);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { data: projectsRes } = useGetProjectsQuery();
+  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
+
+  const handleExport = () => {
+    if (chartData.length === 0) return toast.error("No data to export");
+    const headers = ["Category", "Count"].join(",");
+    const rows = chartData.map(d => `"${d.name}",${d.value}`).join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `floework_focus_distribution_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    toast.success("Focus distribution exported");
+  };
+
+  const handleCalendarSync = () => {
+    // Generate a single event summarizing today's distribution
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Floework//NONSGML v1.0//EN\n";
+    const start = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + "Z";
+    const summary = chartData.map(d => `${d.name}: ${d.value}`).join(", ");
+    icsContent += `BEGIN:VEVENT\nSUMMARY:Daily Focus Distribution: ${total} sessions\nDESCRIPTION:${summary}\nDTSTART:${start}\nDTEND:${start}\nEND:VEVENT\n`;
+    icsContent += "END:VCALENDAR";
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', 'focus_summary.ics');
+    document.body.appendChild(link);
+    link.click();
+    toast.success("Focus summary added to calendar");
+  };
+
   return (
     <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4 flex-1 min-w-[280px]">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Focus Distribution</h3>
         <div className="flex items-center gap-1">
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Add Task"
+          >
             <Plus size={14} />
           </button>
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={handleExport}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Export Distribution"
+          >
             <Upload size={14} />
           </button>
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={handleCalendarSync}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Sync Summary"
+          >
             <Calendar size={14} />
           </button>
         </div>
@@ -79,6 +129,14 @@ const ProductivityChart = () => {
           ))}
         </div>
       </div>
+
+      {effectiveProjectId && (
+        <TaskCreateModal 
+          isOpen={isCreateModalOpen} 
+          onClose={() => setIsCreateModalOpen(false)} 
+          projectId={effectiveProjectId} 
+        />
+      )}
     </div>
   );
 };

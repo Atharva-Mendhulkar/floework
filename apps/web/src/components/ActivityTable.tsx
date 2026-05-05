@@ -1,6 +1,9 @@
-import { useGetRecentActivityQuery } from "@/store/api";
+import { useGetRecentActivityQuery, useGetProjectsQuery } from "@/store/api";
 import { Plus, Upload, Calendar, Star } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import { useState } from "react";
+import { TaskCreateModal } from "./TaskCreateModal";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   Executed: "bg-emerald-100 text-emerald-700",
@@ -21,18 +24,68 @@ const ActivityTable = () => {
     a.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { data: projectsRes } = useGetProjectsQuery();
+  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
+
+  const handleExport = () => {
+    if (filteredActivities.length === 0) return toast.error("No data to export");
+    const headers = ["Subject", "Status", "Start", "End", "Assigned"].join(",");
+    const rows = filteredActivities.map(a => 
+      `"${a.subject}","${a.status}","${a.startDate}","${a.endDate}","${a.assignedUser}"`
+    ).join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `floework_activity_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    toast.success("Activity exported to CSV");
+  };
+
+  const handleCalendarExport = () => {
+    if (filteredActivities.length === 0) return toast.error("No activities to sync");
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Floework//NONSGML v1.0//EN\n";
+    filteredActivities.forEach(a => {
+      const start = new Date(a.startDate).toISOString().replace(/[-:]/g, '').split('.')[0] + "Z";
+      const end = new Date(a.endDate || a.startDate).toISOString().replace(/[-:]/g, '').split('.')[0] + "Z";
+      icsContent += `BEGIN:VEVENT\nSUMMARY:${a.subject}\nDTSTART:${start}\nDTEND:${end}\nEND:VEVENT\n`;
+    });
+    icsContent += "END:VCALENDAR";
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', 'floework_schedule.ics');
+    document.body.appendChild(link);
+    link.click();
+    toast.success("Calendar sync file generated");
+  };
+
   return (
     <div className="bg-surface rounded-2xl shadow-card p-5 flex flex-col gap-4 flex-1 min-w-0">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Recent Activity</h3>
         <div className="flex items-center gap-1">
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Add Activity"
+          >
             <Plus size={14} />
           </button>
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={handleExport}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Export Excel (CSV)"
+          >
             <Upload size={14} />
           </button>
-          <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted">
+          <button 
+            onClick={handleCalendarExport}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
+            title="Sync to Calendar"
+          >
             <Calendar size={14} />
           </button>
         </div>
@@ -82,6 +135,14 @@ const ActivityTable = () => {
           </tbody>
         </table>
       </div>
+
+      {effectiveProjectId && (
+        <TaskCreateModal 
+          isOpen={isCreateModalOpen} 
+          onClose={() => setIsCreateModalOpen(false)} 
+          projectId={effectiveProjectId} 
+        />
+      )}
     </div>
   );
 };
