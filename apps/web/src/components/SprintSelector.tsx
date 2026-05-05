@@ -11,13 +11,26 @@ import {
     DropdownMenuSeparator,
     DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const SprintSelector = () => {
     const dispatch = useAppDispatch();
     const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
     const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
-    const [createSprint] = useCreateSprintMutation();
+    const [createSprint, { isLoading: isCreating }] = useCreateSprintMutation();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newSprintName, setNewSprintName] = useState("");
 
     const { data: response, isLoading } = useGetProjectSprintsQuery(activeProjectId!, {
         skip: !activeProjectId,
@@ -37,7 +50,9 @@ export const SprintSelector = () => {
 
     const handleCreateSprint = async () => {
         if (!activeProjectId) return;
-        const name = `Sprint ${sprints.length + 1}`;
+        
+        const defaultName = `Sprint ${sprints.length + 1}`;
+        const name = newSprintName.trim() || defaultName;
         const startDate = new Date().toISOString();
         const endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(); // +14 days
 
@@ -45,6 +60,8 @@ export const SprintSelector = () => {
             const res = await createSprint({ projectId: activeProjectId, name, startDate, endDate }).unwrap();
             dispatch(setActiveSprint(res.data.id));
             toast.success(`${name} created!`);
+            setIsCreateModalOpen(false);
+            setNewSprintName("");
         } catch (err) {
             toast.error('Failed to create sprint');
         }
@@ -57,6 +74,7 @@ export const SprintSelector = () => {
     }
 
     return (
+        <>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-1.5 cursor-pointer group hover:bg-slate-50 border border-transparent hover:border-slate-200 px-2 py-1 -ml-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#007dff]/20 outline-none">
@@ -70,7 +88,11 @@ export const SprintSelector = () => {
                 <DropdownMenuLabel className="font-semibold text-slate-900 text-xs flex justify-between items-center">
                     <span>Active Sprints</span>
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleCreateSprint(); }}
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setNewSprintName(`Sprint ${sprints.length + 1}`);
+                            setIsCreateModalOpen(true); 
+                        }}
                         className="text-[10px] text-[#007dff] hover:bg-[#007dff]/10 p-1 rounded transition-colors"
                     >
                         <Plus size={12} />
@@ -98,5 +120,37 @@ export const SprintSelector = () => {
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
+
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Create New Sprint</DialogTitle>
+                    <DialogDescription>
+                        Set the name for your next execution cycle.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="sprint-name">Sprint Name</Label>
+                        <Input
+                            id="sprint-name"
+                            placeholder={`e.g. Sprint ${sprints.length + 1}`}
+                            value={newSprintName}
+                            onChange={(e) => setNewSprintName(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleCreateSprint} disabled={isCreating} className="bg-slate-900 text-white">
+                        {isCreating ? "Creating..." : "Create Sprint"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 };
