@@ -12,6 +12,7 @@ import { Zap, TrendingUp, AlertTriangle, CheckCircle2, Info, ArrowRight, Rocket 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CreateWorkspaceModal, CreateProjectModal } from "@/components/CreateWorkspaceModal";
+import { Reveal } from "@/components/Reveal";
 
 const MiniStatCard = ({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) => (
   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
@@ -102,44 +103,57 @@ const Index = () => {
               <p className="text-slate-500 font-medium mt-0.5">Here's what's happening in your workspace today.</p>
             </div>
             <div className="flex items-center gap-2">
-              <CreateWorkspaceModal />
+              <Reveal delay={100} from="right">
+                <CreateWorkspaceModal />
+              </Reveal>
             </div>
           </div>
 
           {/* Quick Stats Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
-            <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} color="#10b981" />
-            <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} color="#f59e0b" />
+            <Reveal delay={200}>
+              <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
+            </Reveal>
+            <Reveal delay={300}>
+              <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} color="#10b981" />
+            </Reveal>
+            <Reveal delay={400}>
+              <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} color="#f59e0b" />
+            </Reveal>
           </div>
 
           {/* Weekly Focus Report banner */}
           {focusReportRes?.data && (
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1">
-                  Weekly Focus Report — {focusReportRes.data.weekLabel}
-                  {focusReportRes.data.isLastWeek && " (last week)"}
-                </p>
-                <p className="text-[13px] font-semibold text-slate-800">{focusReportRes.data.summaryText}</p>
+            <Reveal delay={500}>
+              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1">
+                    Weekly Focus Report — {focusReportRes.data.weekLabel}
+                    {focusReportRes.data.isLastWeek && " (last week)"}
+                  </p>
+                  <p className="text-[13px] font-semibold text-slate-800">{focusReportRes.data.summaryText}</p>
+                </div>
+                <button
+                  onClick={() => navigate('/analytics')}
+                  className="shrink-0 flex items-center gap-1 text-[12px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-0.5"
+                >
+                  Full report <ArrowRight size={13} />
+                </button>
               </div>
-              <button
-                onClick={() => navigate('/analytics')}
-                className="shrink-0 flex items-center gap-1 text-[12px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-0.5"
-              >
-                Full report <ArrowRight size={13} />
-              </button>
-            </div>
+            </Reveal>
           )}
 
           {/* Main content grid */}
           <div className="flex gap-4 flex-col lg:flex-row items-start">
             {/* Left: Activity */}
             <div className="flex-1 w-full relative z-0 flex flex-col gap-4">
-              <ActivityTable />
+              <Reveal delay={600} from="left">
+                <ActivityTable />
+              </Reveal>
 
               {/* Execution Summary from narrative engine */}
               {narrativeRes?.data && (
+                <Reveal delay={700} from="left">
                 <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -177,43 +191,48 @@ const Index = () => {
                       ))}
                     </div>
                   </div>
-                </div>
+                  </div>
+                </Reveal>
               )}
             </div>
 
             {/* Right: Productivity + Team Status */}
             <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col gap-4">
-              <ProductivityChart />
+              <Reveal delay={800} from="right">
+                <ProductivityChart />
+              </Reveal>
 
               {/* Team Status — moved from Analytics */}
               {teamStatus.length > 0 && (
-                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[13px] font-semibold text-slate-900">Team Status</h3>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Live</span>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {teamStatus.map((ts: any) => (
-                      <div
-                        key={ts.member.id}
-                        className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 transition-all bg-slate-50/50"
-                      >
-                        <div className={`w-8 h-8 rounded-lg ${ts.member.color} flex items-center justify-center text-[10px] font-bold text-slate-700 shrink-0`}>
-                          {ts.member.initials}
+                <Reveal delay={900} from="right">
+                  <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[13px] font-semibold text-slate-900">Team Status</h3>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Live</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {teamStatus.map((ts: any) => (
+                        <div
+                          key={ts.member.id}
+                          className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 transition-all bg-slate-50/50"
+                        >
+                          <div className={`w-8 h-8 rounded-lg ${ts.member.color} flex items-center justify-center text-[10px] font-bold text-slate-700 shrink-0`}>
+                            {ts.member.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-semibold text-slate-800 truncate">{ts.member.name}</p>
+                            {ts.task && <p className="text-[10px] text-slate-400 truncate">{ts.task}</p>}
+                          </div>
+                          <span className={`shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-lg
+                            ${ts.status === "In Focus" ? "bg-[#007dff]/10 text-[#007dff]" : "bg-slate-100 text-slate-500"}`}>
+                            {ts.status === "In Focus" && <span className="w-1.5 h-1.5 rounded-full bg-[#007dff] animate-pulse" />}
+                            {ts.status}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-slate-800 truncate">{ts.member.name}</p>
-                          {ts.task && <p className="text-[10px] text-slate-400 truncate">{ts.task}</p>}
-                        </div>
-                        <span className={`shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-lg
-                          ${ts.status === "In Focus" ? "bg-[#007dff]/10 text-[#007dff]" : "bg-slate-100 text-slate-500"}`}>
-                          {ts.status === "In Focus" && <span className="w-1.5 h-1.5 rounded-full bg-[#007dff] animate-pulse" />}
-                          {ts.status}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </Reveal>
               )}
             </div>
           </div>
