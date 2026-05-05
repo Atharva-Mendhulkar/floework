@@ -1,9 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useGetTasksQuery, useGetProjectsQuery } from "@/store/api";
+import { useGetTasksQuery, useGetProjectsQuery, useGetProjectSprintsQuery } from "@/store/api";
 import { useAppSelector } from "@/store/hooks";
-import { Plus, Upload, Calendar } from "lucide-react";
-import { useState } from "react";
-import { TaskCreateModal } from "./TaskCreateModal";
+import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
 const ProductivityChart = () => {
@@ -25,10 +23,13 @@ const ProductivityChart = () => {
 
   const total = chartData.reduce((sum, d) => sum + d.value, 0);
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { data: projectsRes } = useGetProjectsQuery();
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
-  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
+  const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+  const { data: sprintsRes } = useGetProjectSprintsQuery(activeProjectId!, { skip: !activeProjectId });
+  
+  const activeProject = projectsRes?.data?.find(p => p.id === (activeProjectId || projectsRes?.data?.[0]?.id));
+  const activeSprint = sprintsRes?.data?.find(s => s.id === activeSprintId);
 
   const handleExport = () => {
     if (chartData.length === 0) return toast.error("No data to export");
@@ -36,8 +37,10 @@ const ProductivityChart = () => {
     const rows = chartData.map(d => `"${d.name}",${d.value}`).join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
     const link = document.createElement("a");
+    const workspaceName = activeProject?.name?.replace(/\s+/g, '_') || "Workspace";
+    const sprintName = activeSprint?.name?.replace(/\s+/g, '_') || (activeSprintId === null ? "Backlog" : "Sprint");
     link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `floework_focus_distribution_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `${workspaceName}_${sprintName}_Focus_Distribution_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     toast.success("Focus distribution exported");
@@ -65,25 +68,11 @@ const ProductivityChart = () => {
         <h3 className="text-sm font-semibold text-foreground">Focus Distribution</h3>
         <div className="flex items-center gap-1">
           <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
-            title="Add Task"
-          >
-            <Plus size={14} />
-          </button>
-          <button 
             onClick={handleExport}
             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
             title="Export Distribution"
           >
             <Upload size={14} />
-          </button>
-          <button 
-            onClick={handleCalendarSync}
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-text-muted"
-            title="Sync Summary"
-          >
-            <Calendar size={14} />
           </button>
         </div>
       </div>
@@ -130,13 +119,6 @@ const ProductivityChart = () => {
         </div>
       </div>
 
-      {effectiveProjectId && (
-        <TaskCreateModal 
-          isOpen={isCreateModalOpen} 
-          onClose={() => setIsCreateModalOpen(false)} 
-          projectId={effectiveProjectId} 
-        />
-      )}
     </div>
   );
 };

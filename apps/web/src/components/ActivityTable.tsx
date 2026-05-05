@@ -1,4 +1,4 @@
-import { useGetRecentActivityQuery, useGetProjectsQuery } from "@/store/api";
+import { useGetRecentActivityQuery, useGetProjectsQuery, useGetProjectSprintsQuery } from "@/store/api";
 import { Plus, Upload, Calendar, Star } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { useState } from "react";
@@ -27,6 +27,11 @@ const ActivityTable = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { data: projectsRes } = useGetProjectsQuery();
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
+  const { data: sprintsRes } = useGetProjectSprintsQuery(activeProjectId!, { skip: !activeProjectId });
+  
+  const activeProject = projectsRes?.data?.find(p => p.id === (activeProjectId || projectsRes?.data?.[0]?.id));
+  const activeSprint = sprintsRes?.data?.find(s => s.id === activeSprintId);
   const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
 
   const handleExport = () => {
@@ -37,8 +42,10 @@ const ActivityTable = () => {
     ).join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
     const link = document.createElement("a");
+    const workspaceName = activeProject?.name?.replace(/\s+/g, '_') || "Workspace";
+    const sprintName = activeSprint?.name?.replace(/\s+/g, '_') || (activeSprintId === null ? "Backlog" : "Sprint");
     link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `floework_activity_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `${workspaceName}_${sprintName}_Activity_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     toast.success("Activity exported to CSV");
