@@ -127,7 +127,7 @@ export default function LandingPage() {
                 <div className="relative z-20 max-w-[800px] mx-auto text-center mt-24 px-6">
 
                     <div className="anim-up-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border shadow-sm mb-8">
-                        <Zap size={14} className="text-[#007dff]" />
+                        <img src="/favicon.svg" alt="floework" className="w-4 h-4 rounded-sm" />
                         <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">Task-anchored focus</span>
                     </div>
 
@@ -509,7 +509,7 @@ export default function LandingPage() {
                     <div className="text-center mb-16">
                         <Reveal>
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-white mb-8">
-                                <Zap size={14} className="text-[#007dff]" />
+                                <img src="/favicon.svg" alt="floework" className="w-4 h-4 rounded-sm" />
                                 <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">PRICING</span>
                             </div>
                             <h2 className="text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5">

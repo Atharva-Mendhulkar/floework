@@ -55,7 +55,7 @@ const TopHeader = () => {
       {/* Left — brand + breadcrumb */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <Zap size={15} className="text-[#007dff]" fill="#007dff" />
+          <img src="/favicon.svg" alt="floework" className="w-5 h-5 rounded-md" />
           <span className="font-bold text-[15px] tracking-tight text-slate-900">
             floework<span className="text-[#007dff]">.</span>
           </span>

@@ -194,8 +194,8 @@ const FocusPage = () => {
       {showPostSession && (
         <div className="absolute inset-0 z-50 bg-white/95 flex items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
           <div className="max-w-sm w-full">
-            <div className="w-16 h-16 rounded-3xl bg-[#007dff]/10 flex items-center justify-center mx-auto mb-6">
-              <Zap size={28} className="text-[#007dff]" fill="currentColor" />
+            <div className="w-16 h-16 rounded-3xl overflow-hidden flex items-center justify-center mx-auto mb-6">
+              <img src="/favicon.svg" alt="Focus Complete" className="w-full h-full" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Focus Complete</h2>
             <p className="text-slate-400 text-[14px] mb-8">Great work. Take a moment to offload your mental stack.</p>
@@ -249,8 +249,8 @@ const FocusPage = () => {
 
       {/* Active task chip */}
       <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm">
-        <div className="w-6 h-6 rounded-lg bg-[#007dff] flex items-center justify-center">
-          <Zap size={12} className="text-white" fill="white" />
+        <div className="w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center">
+          <img src="/favicon.svg" alt="Focus" className="w-full h-full" />
         </div>
         <div>
           <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Anchored task</p>

@@ -28,8 +28,8 @@ const SidebarNavigation = () => {
 
       {/* Brand mark */}
       <div className="flex flex-col items-center gap-4 w-full">
-        <div className="w-8 h-8 rounded-xl bg-[#007dff] flex items-center justify-center mb-1 shrink-0">
-          <Zap size={15} className="text-white" fill="white" />
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-1 shrink-0">
+          <img src="/favicon.svg" alt="Logo" className="w-full h-full rounded-xl" />
         </div>
 
         {/* Nav items */}

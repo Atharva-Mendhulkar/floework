@@ -16,7 +16,7 @@ const TermsOfService = () => {
                         <ArrowLeft size={16} /> Back
                     </button>
                     <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => navigate("/")}>
-                        <Zap size={14} className="text-[#007dff]" fill="#007dff" />
+                        <img src="/favicon.svg" alt="floework" className="w-4 h-4 rounded-sm" />
                         <span className="font-bold text-[15px] tracking-tight">
                             floework<span className="text-[#007dff]">.</span>
                         </span>
