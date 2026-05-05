@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { useAppSelector } from "@/store/hooks";
 import { supabase } from "@/lib/supabase";
 import { api } from "@/store/api";
 import SidebarNavigation from "@/components/SidebarNavigation";
@@ -38,9 +39,12 @@ const Index = () => {
     }
   }, [projectsRes, projectsLoading, navigate]);
 
+  const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
+
   const { data: dashboardRes } = useGetAnalyticsDashboardQuery();
   const { data: teamStatusRes } = useGetTeamStatusQuery();
-  const { data: narrativeRes } = useGetExecutionNarrativeQuery();
+  const { data: narrativeRes } = useGetExecutionNarrativeQuery(effectiveProjectId!, { skip: !effectiveProjectId });
   const { data: burnoutRes } = useGetBurnoutTrendQuery();
   const { data: focusReportRes } = useGetCurrentFocusReportQuery();
 

@@ -833,10 +833,15 @@ export const api = createApi({
             },
             providesTags: ['Signal'],
         }),
-        getExecutionNarrative: builder.query<{ success: boolean; data: { summary: string; highlights: string[]; warnings: string[] } }, void>({
-            queryFn: async () => {
+        getExecutionNarrative: builder.query<{ success: boolean; data: { summary: string; highlights: string[]; warnings: string[] } }, string>({
+            queryFn: async (projectId) => {
                 try {
-                    const response = await fetch('/api/analytics/narrative');
+                    const session = (await supabase.auth.getSession()).data.session;
+                    const response = await fetch(`/api/analytics/narrative?projectId=${projectId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${session?.access_token}`
+                        }
+                    });
                     const json = await response.json();
                     if (!response.ok) throw new Error(json.error || 'Failed to fetch narrative');
                     return { data: json };
