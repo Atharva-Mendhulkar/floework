@@ -73,10 +73,6 @@ const SidebarNavigation = () => {
           </button>
         ))}
 
-        {/* User avatar placeholder */}
-        <div className="w-8 h-8 rounded-full bg-[#007dff]/10 border-2 border-[#007dff]/20 flex items-center justify-center text-[11px] font-bold text-[#007dff] mt-1">
-          U
-        </div>
       </div>
     </aside>
   );
