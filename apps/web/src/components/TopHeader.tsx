@@ -24,7 +24,7 @@ const TopHeader = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
-  const { data: profileRes } = api.endpoints.getProfile.useQueryState();
+  const { data: profileRes } = api.useGetProfileQuery(undefined, { skip: !user });
   const profile = profileRes?.data || user;
   const { data: alertsRes } = useGetAlertsQuery(undefined, { skip: !user });
   const alerts = alertsRes?.data || [];
@@ -55,7 +55,6 @@ const TopHeader = () => {
       {/* Left — brand + breadcrumb */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <img src="/favicon.svg" alt="floework" className="w-5 h-5 rounded-md" />
           <span className="font-bold text-[15px] tracking-tight text-slate-900">
             floework<span className="text-[#007dff]">.</span>
           </span>
