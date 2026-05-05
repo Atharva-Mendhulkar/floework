@@ -704,7 +704,7 @@ export const api = createApi({
             queryFn: async (projectId) => {
                 const { data, error } = await supabase
                     .from('messages')
-                    .select('*, author:profiles(full_name, avatar_url)')
+                    .select('*, profiles(full_name, avatar_url)')
                     .eq('project_id', projectId)
                     .order('created_at', { ascending: true });
                 
@@ -717,9 +717,9 @@ export const api = createApi({
                         content: m.content,
                         createdAt: m.created_at,
                         author: {
-                            id: m.author_id,
-                            name: m.author?.full_name || 'Unknown',
-                            avatarUrl: m.author?.avatar_url
+                            id: m.user_id,
+                            name: m.profiles?.full_name || 'Unknown',
+                            avatarUrl: m.profiles?.avatar_url
                         }
                     }))
                 } };
@@ -734,8 +734,8 @@ export const api = createApi({
                 // 1. Insert the message
                 const { data, error } = await supabase
                     .from('messages')
-                    .insert({ project_id: projectId, content, author_id: user.id })
-                    .select('*, author:profiles(full_name, avatar_url)')
+                    .insert({ project_id: projectId, content }) // user_id is handled by DB default
+                    .select('*, profiles(full_name, avatar_url)')
                     .single();
                 
                 if (error) {
@@ -750,9 +750,9 @@ export const api = createApi({
                         content: data.content,
                         createdAt: data.created_at,
                         author: {
-                            id: data.author_id,
-                            name: data.author?.full_name || 'Me',
-                            avatarUrl: data.author?.avatar_url
+                            id: data.user_id,
+                            name: data.profiles?.full_name || 'Me',
+                            avatarUrl: data.profiles?.avatar_url
                         }
                     }
                 } };

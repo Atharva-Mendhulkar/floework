@@ -81,7 +81,7 @@ export default function MessagesPage() {
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('full_name, avatar_url')
-                        .eq('id', payload.new.author_id)
+                        .eq('id', payload.new.user_id)
                         .single();
 
                     const enrichedMessage = {
@@ -89,7 +89,7 @@ export default function MessagesPage() {
                         content: payload.new.content,
                         createdAt: payload.new.created_at,
                         author: {
-                            id: payload.new.author_id,
+                            id: payload.new.user_id,
                             name: profile?.full_name || 'Unknown',
                             avatarUrl: profile?.avatar_url
                         }
