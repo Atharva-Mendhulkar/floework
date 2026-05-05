@@ -6,16 +6,21 @@ A human-aware SaaS productivity and team collaboration platform. floework aligns
 
 ## Key Features
 
-- **FlowBoard**: Kanban and calendar task management with real-time state sync.
-- **Focus Engine**: Task-anchored focus sessions that track effort and cognitive load.
-- **Execution Intelligence**: Bottleneck detection, burnout risk tracking, and focus stability maps.
-- **Real-Time Collaboration**: WebSocket-based presence ("in-focus" indicators) and instant task updates.
+- **FlowBoard**: Advanced Kanban board with `dnd-kit` drag-and-drop support and real-time state synchronization via Supabase.
+- **Sprint Management**: Robust project scoping with automated sprint naming, custom name overrides, and backlog integration.
+- **AI Execution Narrative**: Intelligent executive summaries powered by **Gemini 1.5 Flash**, with a specialized caching layer for high-performance dashboard insights.
+- **Focus Engine**: Deep focus session tracking with effort analysis and real-time "In Focus" team presence indicators.
+- **Analytics & Export**: 
+  - **Focus Distribution**: Visual breakdown of task statuses using Recharts.
+  - **Data Portability**: Integrated Excel (CSV) export and Calendar (ICS) sync for all activities and analytics.
+- **Premium UX**: Modern glassmorphism design with orchestrated reveal animations and a deterministic avatar system.
 
 ## Tech Stack
 
-- **Frontend**: React (Vite), Redux Toolkit, Tailwind CSS, shadcn/ui.
-- **Backend**: Node.js, Vercel Serverless Functions (`/api`), Socket.IO.
-- **Database & Auth**: PostgreSQL via Supabase, Redis (for real-time caching).
+- **Frontend**: React (Vite), Redux Toolkit (RTK Query), Tailwind CSS, Framer-inspired Reveal system.
+- **Backend**: Vercel Serverless Functions (Node.js/TypeScript), Google Gemini AI API.
+- **Database & Auth**: PostgreSQL (Supabase) with Row Level Security (RLS) and Realtime subscriptions.
+- **Storage**: Supabase Storage for secure profile asset management.
 
 ## Project Structure
 
