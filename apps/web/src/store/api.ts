@@ -731,11 +731,12 @@ export const api = createApi({
                 const user = (await supabase.auth.getUser()).data.user;
                 if (!user) return { error: { status: 401, data: 'Not authenticated' } };
 
-                // 1. Insert the message
+                // 1. Insert the message (user_id handled by DB default)
+                // We use .select('*') to avoid PostgREST join resolution errors during INSERT
                 const { data, error } = await supabase
                     .from('messages')
-                    .insert({ project_id: projectId, content }) // user_id is handled by DB default
-                    .select('*, profiles(full_name, avatar_url)')
+                    .insert({ project_id: projectId, content })
+                    .select('*')
                     .single();
                 
                 if (error) {
@@ -751,8 +752,8 @@ export const api = createApi({
                         createdAt: data.created_at,
                         author: {
                             id: data.user_id,
-                            name: data.profiles?.full_name || 'Me',
-                            avatarUrl: data.profiles?.avatar_url
+                            name: 'Me', // Fallback as profile isn't joined on INSERT
+                            avatarUrl: null
                         }
                     }
                 } };
