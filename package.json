@@ -20,6 +20,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "*",
-    "@rollup/rollup-linux-x64-musl": "*"
+    "@rollup/rollup-linux-x64-musl": "*",
+    "@esbuild/linux-x64": "*",
+    "@esbuild/linux-arm64": "*"
   }
 }

@@ -1950,7 +1950,8 @@ We introduced the `concurrency_conflicts` system to provide deep visibility into
 - **Conflict Enriched Logs**: Every rejected update logs the client-vs-server version gap, user context, and endpoint metadata.
 
 ### 6. Build & Deployment Hardening
-- **Cross-Platform Rollup Fix**: Resolved a critical Vercel build failure (`Error: Cannot find module @rollup/rollup-linux-x64-gnu`) by adding explicit Linux-target binaries to `optionalDependencies` in the root `package.json`. This ensures the deployment environment has the necessary native Rollup binaries despite being developed on a different OS (macOS).
+- **Cross-Platform Build Fixes**: Resolved critical Vercel build failures for both Rollup (`Error: Cannot find module @rollup/rollup-linux-x64-gnu`) and esbuild (`Error: The package "@esbuild/linux-x64" could not be found`) by adding explicit Linux-target binaries to `optionalDependencies` in the root `package.json`.
+- **SQL Verification**: Confirmed that all 30 migrations (000–029) are successfully applied to the database, establishing the necessary schema for version-based OCC and conflict observability.
 
 ### 7. Certification
 The platform is now certified as **Hardened for Concurrent Production Workloads**. It maintains absolute state integrity while delivering a low-latency, optimistic user experience.
