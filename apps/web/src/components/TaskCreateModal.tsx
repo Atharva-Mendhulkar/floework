@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTaskMutation, useGetEstimationHintQuery, useGetUsersQuery } from "@/store/api";
+import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 
 interface TaskCreateModalProps {
@@ -14,6 +15,7 @@ interface TaskCreateModalProps {
 }
 
 export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalProps) {
+    const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
     const [createTask, { isLoading }] = useCreateTaskMutation();
     const { data: usersRes } = useGetUsersQuery();
     const team = usersRes?.data || [];
@@ -56,6 +58,7 @@ export function TaskCreateModal({ isOpen, onClose, projectId }: TaskCreateModalP
                 assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
                 priority,
                 dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+                sprintId: activeSprintId,
             }).unwrap();
 
             toast.success("Task created successfully");

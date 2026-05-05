@@ -53,13 +53,30 @@ export const api = createApi({
             },
             providesTags: ['Project'],
         }),
-        getTasks: builder.query<{ success: boolean; data: TaskNode[] }, string | void>({
-            queryFn: async (projectId) => {
+        getTasks: builder.query<{ success: boolean; data: TaskNode[] }, { projectId?: string; sprintId?: string | null } | void>({
+            queryFn: async (args) => {
+                const projectId = typeof args === 'object' ? args?.projectId : undefined;
+                const sprintId = typeof args === 'object' ? args?.sprintId : undefined;
+
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return { error: { status: 401, data: 'Unauthorized' } };
 
                 let q = supabase.from('tasks').select('*, profiles(full_name, avatar_url)');
-                if (projectId && projectId !== "fallback-id") q = q.eq('project_id', projectId);
+                
+                if (projectId && projectId !== "fallback-id") {
+                    q = q.eq('project_id', projectId);
+                }
+
+                // Sprint filtering: if sprintId is provided, filter by it. 
+                // If it's explicitly null, it means "Backlog" (no sprint).
+                if (sprintId !== undefined) {
+                    if (sprintId === null) {
+                        q = q.is('sprint_id', null);
+                    } else {
+                        q = q.eq('sprint_id', sprintId);
+                    }
+                }
+
                 const { data, error } = await q.order('created_at', { ascending: false });
                 if (error) return { error: { status: 500, data: error.message } };
 
@@ -140,7 +157,7 @@ export const api = createApi({
             },
             invalidatesTags: ['Task'],
         }),
-        createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string }>({
+        createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string; sprintId?: string | null }>({
             queryFn: async (newTask) => {
                 const user = (await supabase.auth.getUser()).data.user;
                 const { data, error } = await supabase.from('tasks').insert({
@@ -148,6 +165,7 @@ export const api = createApi({
                     description: newTask.description || null,
                     project_id: newTask.projectId,
                     assignee_id: newTask.assigneeId || user?.id || null,
+                    sprint_id: newTask.sprintId || null,
                     due_date: newTask.dueDate || null,
                     effort: newTask.priority === 'high' ? 'L' : newTask.priority === 'low' ? 'S' : 'M',
                 }).select().single();
@@ -388,7 +406,14 @@ export const api = createApi({
             invalidatesTags: ['User', 'Project', 'Task'],
         }),
         getProjectSprints: builder.query<{ success: boolean; data: any[] }, string>({
-            queryFn: async () => ({ data: { success: true, data: [] } }),
+            queryFn: async (projectId) => {
+                const { data, error } = await supabase.from('sprints')
+                    .select('*')
+                    .eq('project_id', projectId)
+                    .order('created_at', { ascending: false });
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data: data || [] } };
+            },
             providesTags: ['Task'],
         }),
         createProject: builder.mutation<{ success: boolean; data: Project }, { teamId: string; name: string; sprintName?: string }>({
@@ -400,11 +425,20 @@ export const api = createApi({
             },
             invalidatesTags: ['Project'],
         }),
-        createSprint: builder.mutation<{ success: boolean; message: string }, { projectId: string; sprintName: string }>({
-            queryFn: async ({ projectId, sprintName }) => {
-                const { error } = await supabase.from('projects').update({ sprint_name: sprintName }).eq('id', projectId);
+        createSprint: builder.mutation<{ success: boolean; data: any }, { projectId: string; name: string; startDate: string; endDate: string }>({
+            queryFn: async ({ projectId, name, startDate, endDate }) => {
+                const { data, error } = await supabase.from('sprints')
+                    .insert({ 
+                        project_id: projectId, 
+                        name, 
+                        start_date: startDate, 
+                        end_date: endDate,
+                        status: 'ACTIVE'
+                    })
+                    .select()
+                    .single();
                 if (error) return { error: { status: 400, data: error.message } };
-                return { data: { success: true, message: 'Sprint updated' } };
+                return { data: { success: true, data } };
             },
             invalidatesTags: ['Project', 'Task'],
         }),

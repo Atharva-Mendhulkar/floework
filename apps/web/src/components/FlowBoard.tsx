@@ -24,7 +24,10 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const { data: usersRes } = useGetUsersQuery();
   const team = usersRes?.data || [];
   
-  const { data: response, isLoading, error } = useGetTasksQuery(activeProjectId || undefined);
+  const { data: response, isLoading, error } = useGetTasksQuery({ 
+    projectId: activeProjectId || undefined, 
+    sprintId: activeSprintId 
+  });
   const { socket, isConnected } = useSocket();
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -56,7 +59,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     socket.on("task_updated", (data: { taskId: string; phase: string; projectId: string }) => {
       // v1.2 Fix: Use activeProjectId (or undefined) as context to match the query cache key
       dispatch(
-        api.util.updateQueryData("getTasks", activeProjectId || undefined, (draft) => {
+        api.util.updateQueryData("getTasks", { projectId: activeProjectId || undefined, sprintId: activeSprintId }, (draft) => {
           if (!draft || !draft.data) return;
           const task = draft.data.find((t: any) => t.id === data.taskId);
           if (task) {
