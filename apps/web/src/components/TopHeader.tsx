@@ -50,7 +50,7 @@ const TopHeader = () => {
   };
 
   return (
-    <header className="flex items-center justify-between h-14 px-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+    <header className="flex items-center justify-between h-14 px-5 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-sm sticky top-0 z-50">
 
       {/* Left — brand + breadcrumb */}
       <div className="flex items-center gap-3">

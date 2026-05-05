@@ -24,7 +24,7 @@ const SidebarNavigation = () => {
   const unreadAlerts = alertsRes?.data?.filter((a: any) => !a.isRead).length || 0;
 
   return (
-    <aside className="flex flex-col items-center justify-between w-[60px] py-5 bg-white border border-slate-200/80 rounded-2xl h-full gap-2 shadow-sm">
+    <aside className="flex flex-col items-center justify-between w-[60px] py-5 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl h-full gap-2 shadow-sm">
 
       {/* Brand mark */}
       <div className="flex flex-col items-center gap-4 w-full">
