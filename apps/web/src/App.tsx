@@ -17,6 +17,7 @@ import { PageSkeleton } from "./components/PageSkeleton";
 import ScrollToTop from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import DashboardLayout from "./components/DashboardLayout";
+import { Analytics } from "@vercel/analytics/react";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <Analytics />
               <BrowserRouter>
                 <ScrollToTop />
                 <Suspense fallback={<PageSkeleton />}>

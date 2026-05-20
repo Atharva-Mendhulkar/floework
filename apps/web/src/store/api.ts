@@ -735,7 +735,7 @@ export const api = createApi({
                 // We use .select('*') to avoid PostgREST join resolution errors during INSERT
                 const { data, error } = await supabase
                     .from('messages')
-                    .insert({ project_id: projectId, content })
+                    .insert({ project_id: projectId, content, user_id: user.id })
                     .select('*')
                     .single();
                 
