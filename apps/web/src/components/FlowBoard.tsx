@@ -1,6 +1,7 @@
 import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
+import { ExecutionGraph } from "./ExecutionGraph";
 import { UserAvatar } from "./UserAvatar";
 import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
 import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, api } from "@/store/api";
@@ -259,16 +260,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           </button>
         </div>
       ) : viewMode === "kanban" ? (
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {(phases || []).map((phase, i) => (
-            <PhaseColumn
-              key={phase.id}
-              phase={phase}
-              isLast={i === (phases?.length || 0) - 1}
-              onTaskClick={onTaskClick}
-            />
-          ))}
-        </div>
+        <ExecutionGraph tasks={response?.data || []} onTaskClick={onTaskClick} />
       ) : (
         <TaskCalendarView tasks={response?.data || []} onTaskClick={onTaskClick} />
       )}

@@ -106,11 +106,16 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        dash: {
+          from: { strokeDashoffset: "20" },
+          to: { strokeDashoffset: "0" },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
+        "dash": "dash 1s linear infinite",
       },
     },
   },
