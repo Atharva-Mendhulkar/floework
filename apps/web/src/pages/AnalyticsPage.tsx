@@ -2,7 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-import { useGetAnalyticsDashboardQuery, useGetBurnoutTrendQuery } from "@/store/api";
+import { useGetAnalyticsDashboardQuery, useGetBurnoutTrendQuery, useGetTasksQuery } from "@/store/api";
 import { useState } from "react";
 import FocusStabilityMap from "@/components/FocusStabilityMap";
 import BottleneckPanel from "@/components/BottleneckPanel";

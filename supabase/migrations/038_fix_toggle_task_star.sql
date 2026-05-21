@@ -1,5 +1,5 @@
 -- supabase/migrations/038_fix_toggle_task_star.sql
-`
+
 -- Drop the broken function (which incorrectly expected is_starred on tasks table)
 DROP FUNCTION IF EXISTS public.toggle_task_star(UUID);
 

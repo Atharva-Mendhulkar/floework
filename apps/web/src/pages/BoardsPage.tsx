@@ -5,9 +5,10 @@ import TaskDetailPanel from "@/components/TaskDetailPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectTask } from "@/store/slices/projectSlice";
 import type { TaskNode } from "@/data/mockData";
-import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation } from "@/store/api";
+import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation, useGetTasksQuery } from "@/store/api";
 import { useState } from "react";
 import { X, Sparkles } from "lucide-react";
+import { ExecutionGraph } from "@/components/ExecutionGraph";
 
 const BoardsPage = () => {
     const dispatch = useAppDispatch();
@@ -15,6 +16,9 @@ const BoardsPage = () => {
     const { data: hasRealTasksRes } = useGetHasRealTasksQuery();
     const [deleteSamples] = useDeleteSampleTasksMutation();
     const [bannerDismissed, setBannerDismissed] = useState(false);
+
+    const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+    const { data: tasksRes } = useGetTasksQuery({ projectId: activeProjectId || undefined });
 
     const hasRealTasks = hasRealTasksRes?.data?.hasRealTasks ?? true;
     const showBanner = !hasRealTasks && !bannerDismissed;
@@ -67,6 +71,15 @@ const BoardsPage = () => {
                         </div>
                     )}
                     <FlowBoard onTaskClick={handleTaskClick} />
+                    
+                    {/* Execution Graph Layer inserted below Kanban */}
+                    <div className="mt-4 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+                        <div>
+                            <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
+                            <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
+                        </div>
+                        <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
+                    </div>
                 </main>
             </div>
             <TaskDetailPanel task={selectedTask} onClose={() => handleTaskClick(null)} />
