@@ -52,20 +52,44 @@ const TaskCustomNode = ({ data, selected }: NodeProps) => {
   const showPRBadge = activePR && activePR.state === 'open' && openHours(activePR.openedAt) >= 24;
   const prWaitTime = showPRBadge ? openHours(activePR.openedAt) : 0;
 
-  // Signal visuals
-  const isBlocked = !!(task as any).blockerRisk && (task as any).blockerRisk > 0.8;
-  const signalRing = isBlocked 
-      ? 'ring-4 ring-red-500/30' 
-      : task.hasFocus 
-        ? 'ring-4 ring-[#007dff]/30' 
-        : selected 
-          ? 'ring-2 ring-slate-400' 
-          : '';
+  // Signal visuals and Intelligence Overlays
+  const graphMode = data.graphMode as string;
+  const intel = data.intelligence as any;
+  
+  let signalRing = '';
+  let customStyle = {};
+
+  if (graphMode === 'critical_path' && intel?.isCritical) {
+    signalRing = 'ring-4 ring-rose-500/30 border-rose-500 bg-rose-50';
+  } else if (graphMode === 'heatmap' && intel?.heatmapScore !== undefined) {
+    // heatmapScore is 0-1 based on focus Count
+    const intensity = intel.heatmapScore;
+    if (intensity > 0.5) signalRing = 'border-orange-500 bg-orange-50';
+    else if (intensity > 0.1) signalRing = 'border-amber-400 bg-amber-50';
+  } else if (graphMode === 'density' && intel?.degreeTotal > 0) {
+    if (intel.degreeTotal >= 3) signalRing = 'border-[3px] border-indigo-600 bg-indigo-50';
+    else if (intel.degreeTotal === 2) signalRing = 'border-[2px] border-indigo-400';
+  } else if (graphMode === 'blocker' && intel?.nodeBlocked) {
+    signalRing = 'ring-4 ring-red-500/40 border-red-500 animate-pulse';
+  } else {
+    // Default Signals
+    const isBlocked = !!(task as any).blockerRisk && (task as any).blockerRisk > 0.8;
+    signalRing = isBlocked 
+        ? 'ring-4 ring-red-500/30' 
+        : task.hasFocus 
+          ? 'ring-4 ring-[#007dff]/30' 
+          : selected 
+            ? 'ring-2 ring-slate-400' 
+            : '';
+  }
+
+  // Preserve status background if no intelligence override
+  const baseBg = signalRing.includes('bg-') ? '' : statusStyles[task.status as keyof typeof statusStyles];
 
   return (
     <div
       onClick={() => onTaskClick?.(task)}
-      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl border ${statusStyles[task.status as keyof typeof statusStyles]} shadow-card transition-all ${isLocked ? 'opacity-60 cursor-not-allowed border-warning/50' : 'hover:shadow-hover group cursor-grab active:cursor-grabbing'} ${signalRing} bg-white min-w-[280px]`}
+      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl border shadow-card transition-all ${isLocked ? 'opacity-60 cursor-not-allowed border-warning/50' : 'hover:shadow-hover group cursor-grab active:cursor-grabbing'} ${baseBg} ${signalRing} min-w-[280px] bg-white`}
     >
       {/* React Flow Handles for Execution Flow */}
       <Handle type="target" position={Position.Left} className="w-2 h-2 !bg-slate-400" />

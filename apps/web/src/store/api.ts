@@ -128,6 +128,30 @@ export const api = createApi({
             },
             providesTags: ['Task'],
         }),
+        getTaskDependencies: builder.query<{ success: boolean; data: any[] }, string>({
+            queryFn: async (projectId) => {
+                // Fetch dependencies where source task is in this project
+                const { data, error } = await supabase
+                    .from('task_dependencies')
+                    .select('*, source_task:tasks!source_task_id(project_id)')
+                    .eq('source_task.project_id', projectId);
+                if (error) return { error: { status: 500, data: error.message } };
+                return { data: { success: true, data: data || [] } };
+            },
+            providesTags: ['Task'],
+        }),
+        addDependency: builder.mutation<{ success: boolean; data: any }, { sourceId: string; targetId: string; type?: string }>({
+            queryFn: async ({ sourceId, targetId, type = 'depends_on' }) => {
+                const { data, error } = await supabase
+                    .from('task_dependencies')
+                    .insert({ source_task_id: sourceId, target_task_id: targetId, relationship_type: type })
+                    .select()
+                    .single();
+                if (error) return { error: { status: 400, data: error.message } };
+                return { data: { success: true, data } };
+            },
+            invalidatesTags: ['Task'],
+        }),
         getTask: builder.query<TaskNode, string>({
             queryFn: async (id) => {
                 const { data, error } = await supabase.from('tasks').select('*, profiles(full_name, avatar_url)').eq('id', id).single();
@@ -1201,6 +1225,8 @@ export const {
     useGetUsersQuery,
     useGetProjectsQuery,
     useGetTasksQuery,
+    useGetTaskDependenciesQuery,
+    useAddDependencyMutation,
     useUpdateTaskMutation,
     useCreateTaskMutation,
     useToggleTaskStarMutation,
