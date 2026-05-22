@@ -6,9 +6,10 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectTask } from "@/store/slices/projectSlice";
 import type { TaskNode } from "@/data/mockData";
 import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation, useGetTasksQuery } from "@/store/api";
-import { useState } from "react";
-import { X, Sparkles } from "lucide-react";
-import { ExecutionGraph } from "@/components/ExecutionGraph";
+import { useState, lazy, Suspense } from "react";
+import { X, Sparkles, Loader2 } from "lucide-react";
+
+const ExecutionGraph = lazy(() => import("@/components/ExecutionGraph").then(m => ({ default: m.ExecutionGraph })));
 
 const BoardsPage = () => {
     const dispatch = useAppDispatch();
@@ -78,7 +79,9 @@ const BoardsPage = () => {
                             <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
                             <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
                         </div>
-                        <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
+                        <Suspense fallback={<div className="h-[600px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80"><Loader2 className="animate-spin text-slate-400" /></div>}>
+                            <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
+                        </Suspense>
                     </div>
                 </main>
             </div>

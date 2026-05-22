@@ -73,4 +73,4 @@ const ExecutionCustomEdge = ({
   );
 };
 
-export default ExecutionCustomEdge;
+export default React.memo(ExecutionCustomEdge);

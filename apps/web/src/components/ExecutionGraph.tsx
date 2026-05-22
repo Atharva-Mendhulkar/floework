@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -41,46 +41,58 @@ const phaseXMap: Record<string, number> = {
 
 export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
   const [graphMode, setGraphMode] = useState<GraphMode>('default');
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  // Generate initial nodes from tasks
-  const initialNodes: Node[] = useMemo(() => {
-    const phaseCounters: Record<string, number> = {
-      'allocation': 0,
-      'focus': 0,
-      'resolution': 0,
-      'outcome': 0,
-    };
-
-    return tasks.map((task) => {
-      const phase = task.phase || 'allocation';
-      const x = phaseXMap[phase] || 100;
-      const y = (phaseCounters[phase] || 0) * 180 + 100;
-      phaseCounters[phase] = (phaseCounters[phase] || 0) + 1;
-
-      return {
-        id: task.id,
-        type: 'task',
-        position: { x, y },
-        data: { 
-          task, 
-          onTaskClick,
-          graphMode,
-          isHovered: hoveredNodeId === task.id,
-          // We can compute upstream/downstream highlights here based on edges if needed
-        },
-      };
-    });
-  }, [tasks, onTaskClick, graphMode, hoveredNodeId]);
-
-  // Generate initial dummy edges for demonstration if no real dependencies exist yet.
-  // In a real implementation, we would fetch task_dependencies from the API.
+  // Generate initial edges (dummy for now)
   const initialEdges: Edge[] = useMemo(() => {
     return [];
   }, []);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Sync incoming tasks to React Flow nodes, preserving positions of existing nodes
+  useEffect(() => {
+    setNodes((currentNodes) => {
+      const phaseCounters: Record<string, number> = {
+        'allocation': 0,
+        'focus': 0,
+        'resolution': 0,
+        'outcome': 0,
+      };
+
+      const existingNodesMap = new Map(currentNodes.map(n => [n.id, n]));
+
+      return tasks.map((task) => {
+        const phase = task.phase || 'allocation';
+        const existingNode = existingNodesMap.get(task.id);
+        
+        let x, y;
+        if (existingNode) {
+          x = existingNode.position.x;
+          y = existingNode.position.y;
+        } else {
+          x = phaseXMap[phase] || 100;
+          y = (phaseCounters[phase] || 0) * 180 + 100;
+        }
+        
+        // Only increment counters for new nodes so they layout correctly
+        if (!existingNode) {
+           phaseCounters[phase] = (phaseCounters[phase] || 0) + 1;
+        }
+
+        return {
+          id: task.id,
+          type: 'task',
+          position: { x, y },
+          data: { 
+            task, 
+            onTaskClick,
+            graphMode,
+          },
+        };
+      });
+    });
+  }, [tasks, onTaskClick, graphMode, setNodes]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge({ 
@@ -96,14 +108,6 @@ export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
     [setEdges],
   );
 
-  const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
-    setHoveredNodeId(node.id);
-  }, []);
-
-  const onNodeMouseLeave = useCallback(() => {
-    setHoveredNodeId(null);
-  }, []);
-
   return (
     <div className="w-full h-[600px] relative border border-slate-200/80 rounded-2xl overflow-hidden bg-slate-50/50">
       <GraphModes currentMode={graphMode} onModeChange={setGraphMode} />
@@ -113,8 +117,6 @@ export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeMouseEnter={onNodeMouseEnter}
-        onNodeMouseLeave={onNodeMouseLeave}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView

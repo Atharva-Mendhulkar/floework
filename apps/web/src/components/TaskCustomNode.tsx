@@ -158,4 +158,4 @@ const TaskCustomNode = ({ data, selected }: NodeProps) => {
   );
 };
 
-export default TaskCustomNode;
+export default React.memo(TaskCustomNode);
