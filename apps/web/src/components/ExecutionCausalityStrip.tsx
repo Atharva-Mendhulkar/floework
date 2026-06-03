@@ -109,29 +109,35 @@ export default function ExecutionCausalityStrip({
 
     return (
         <section
-            className="w-full bg-white border-b border-slate-100 py-20 px-6"
+            className="w-full bg-white border-b border-slate-100 py-10 px-4 sm:px-6 md:py-20"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
-            <div className="max-w-5xl mx-auto flex flex-col gap-16">
+            <div className="max-w-5xl mx-auto flex flex-col gap-8 md:gap-16">
 
                 {/* ── Node selector strip ──────────────────────────────── */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+                <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:flex md:items-center md:justify-between md:gap-0">
                     {NODES.map((node, idx) => {
                         const isActive = node.id === activeNode;
                         const isPast = idx < activeIdx;
 
                         return (
-                            <div key={node.id} className="flex items-center">
+                            <div key={node.id} className="flex min-w-0 items-center">
                                 {/* Node button */}
                                 <button
                                     onClick={() => handleNodeClick(node.id)}
-                                    className="flex flex-col items-center gap-1.5 group"
+                                    className={`group flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all md:w-auto md:flex-col md:gap-1.5 md:border-0 md:bg-transparent md:p-0 md:text-center md:shadow-none
+                      ${isActive
+                                            ? "border-[#007dff]/40 bg-[#007dff]/5 shadow-sm"
+                                            : isPast
+                                                ? "border-[#007dff]/20 bg-[#007dff]/5"
+                                                : "border-slate-200 bg-white"
+                                        }`}
                                     aria-pressed={isActive}
                                 >
                                     {/* Step number dot */}
                                     <div
-                                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[12px] font-bold transition-all duration-300
+                                        className={`w-7 h-7 shrink-0 rounded-full border-2 flex items-center justify-center text-[11px] font-bold transition-all duration-300 md:h-8 md:w-8 md:text-[12px]
                       ${isActive
                                                 ? "border-[#007dff] bg-[#007dff] text-white"
                                                 : isPast
@@ -143,7 +149,7 @@ export default function ExecutionCausalityStrip({
                                     </div>
                                     {/* Label */}
                                     <span
-                                        className={`text-[13px] tracking-wide font-medium transition-colors duration-200
+                                        className={`min-w-0 text-[12px] leading-tight tracking-wide font-medium transition-colors duration-200 sm:text-[13px] md:leading-normal
                       ${isActive ? "text-[#007dff]" : isPast ? "text-[#007dff]/60" : "text-slate-400"}`}
                                     >
                                         {node.label}
@@ -167,7 +173,7 @@ export default function ExecutionCausalityStrip({
 
                 {/* ── Full progress bar ─────────────────────────────────── */}
                 {/* Shows precisely how long until next node advances */}
-                <div className="w-full h-0.5 bg-slate-100 rounded-full overflow-hidden -mt-10">
+                <div className="w-full h-0.5 bg-slate-100 rounded-full overflow-hidden md:-mt-10">
                     <div
                         className="h-full bg-[#007dff]/50 transition-none"
                         style={{ width: `${((activeIdx + progressPct / 100) / NODES.length) * 100}%` }}
@@ -190,13 +196,13 @@ export default function ExecutionCausalityStrip({
             }
           `}</style>
 
-                    <div className="flex flex-col md:flex-row gap-12 items-start">
+                    <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
                         {/* Left: step counter + label */}
-                        <div className="shrink-0">
+                        <div className="w-full shrink-0 md:w-auto">
                             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">
                                 Step {activeIdx + 1} of {NODES.length}
                             </p>
-                            <h2 className="text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight mb-2">
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight mb-2">
                                 {active.label}
                             </h2>
                             {/* Accent underline */}
@@ -205,12 +211,12 @@ export default function ExecutionCausalityStrip({
 
                         {/* Right: secondary text + auto-timer indicator */}
                         <div className="flex-1">
-                            <p className="text-[17px] md:text-xl text-slate-500 font-normal leading-relaxed whitespace-pre-line max-w-lg mt-2">
+                            <p className="text-base md:text-xl text-slate-500 font-normal leading-relaxed whitespace-pre-line max-w-lg md:mt-2">
                                 {active.secondary}
                             </p>
 
                             {/* Pause/play hint */}
-                            <p className="text-[11px] text-slate-300 mt-8 font-medium tracking-wide">
+                            <p className="hidden md:block text-[11px] text-slate-300 mt-8 font-medium tracking-wide">
                                 {paused ? "▐▌ Paused — move cursor away to resume" : "▶ Auto-advancing · hover to pause"}
                             </p>
                         </div>
@@ -218,7 +224,7 @@ export default function ExecutionCausalityStrip({
                 </div>
 
                 {/* ── Caption ───────────────────────────────────────────── */}
-                <p className="text-[13px] text-slate-400 font-normal text-center leading-relaxed tracking-wide border-t border-slate-100 pt-8">
+                <p className="text-[13px] text-slate-400 font-normal text-center leading-relaxed tracking-wide border-t border-slate-100 pt-6 md:pt-8">
                     floework models productivity as a causal system — not a collection of tools.
                 </p>
             </div>

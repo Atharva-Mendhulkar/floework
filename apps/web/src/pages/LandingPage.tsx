@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Command, MessageSquare, Plus, Bell, Clock, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar } from "lucide-react";
+import { Zap, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCausalityStrip";
 
@@ -84,14 +84,14 @@ export default function LandingPage() {
 
             {/* ─── Hero Section with Neon Glow ─────────────────────────────────────────── */}
             {/* min-h-screen ensures the strip below is hidden on first load */}
-            <div className="relative w-full overflow-hidden bg-white min-h-screen pb-40 pt-10 flex flex-col">
+            <div className="relative w-full overflow-hidden bg-white min-h-[100svh] pb-20 pt-4 sm:pt-8 md:min-h-screen md:pb-40 md:pt-10 flex flex-col">
 
                 {/* Vibrant Glowing Ambient Background (Iru AI style) */}
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
-                    <div className="absolute top-[20%] left-[-10%] w-[600px] h-[600px] bg-purple-500/20 blur-[120px] rounded-full mix-blend-multiply opacity-70 animate-pulse"></div>
-                    <div className="absolute top-[10%] right-[-5%] w-[500px] h-[500px] bg-cyan-400/20 blur-[100px] rounded-full mix-blend-multiply opacity-60"></div>
-                    <div className="absolute bottom-[-10%] left-[20%] w-[700px] h-[500px] bg-orange-500/15 blur-[120px] rounded-full mix-blend-multiply opacity-60"></div>
-                    <div className="absolute top-[40%] right-[20%] w-[400px] h-[400px] bg-emerald-400/20 blur-[100px] rounded-full mix-blend-multiply opacity-50"></div>
+                    <div className="absolute top-[18%] left-[-40%] h-[340px] w-[340px] rounded-full bg-purple-500/20 blur-[90px] mix-blend-multiply opacity-70 animate-pulse sm:left-[-10%] sm:h-[600px] sm:w-[600px] sm:blur-[120px]"></div>
+                    <div className="absolute top-[8%] right-[-45%] h-[320px] w-[320px] rounded-full bg-cyan-400/20 blur-[80px] mix-blend-multiply opacity-60 sm:right-[-5%] sm:h-[500px] sm:w-[500px] sm:blur-[100px]"></div>
+                    <div className="absolute bottom-[-18%] left-[10%] h-[320px] w-[420px] rounded-full bg-orange-500/15 blur-[90px] mix-blend-multiply opacity-60 sm:bottom-[-10%] sm:left-[20%] sm:h-[500px] sm:w-[700px] sm:blur-[120px]"></div>
+                    <div className="absolute top-[44%] right-[4%] h-[260px] w-[260px] rounded-full bg-emerald-400/20 blur-[80px] mix-blend-multiply opacity-50 sm:right-[20%] sm:h-[400px] sm:w-[400px] sm:blur-[100px]"></div>
 
                     {/* Vertical light rays simulation */}
                     <div className="absolute top-1/2 left-1/4 w-[1px] h-[60vh] -translate-y-1/2 bg-gradient-to-b from-transparent via-purple-400/30 to-transparent blur-[2px] shadow-[0_0_20px_10px_rgba(168,85,247,0.2)]"></div>
@@ -100,10 +100,10 @@ export default function LandingPage() {
                 </div>
 
                 {/* ─── Navbar */}
-                <nav className="relative z-50 py-5">
-                    <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+                <nav className="relative z-50 py-4 md:py-5">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
                         <div className="flex-1">
-                            <span className="font-bold text-3xl tracking-tight text-foreground">floework<span className="text-[#007dff]">.</span></span>
+                            <span className="font-bold text-2xl tracking-tight text-foreground sm:text-3xl">floework<span className="text-[#007dff]">.</span></span>
                         </div>
 
                         <div className="hidden md:flex flex-1 justify-center items-center gap-8 text-[15px] font-medium text-text-secondary">
@@ -113,10 +113,10 @@ export default function LandingPage() {
                         </div>
 
                         <div className="flex flex-1 justify-end items-center gap-3">
-                            <Button variant="ghost" className="h-10 px-5 rounded-full text-foreground hover:bg-slate-100 hover:text-foreground font-medium" onClick={() => navigate("/login")}>
+                            <Button variant="ghost" className="h-9 px-3 rounded-full text-xs text-foreground hover:bg-slate-100 hover:text-foreground font-medium sm:h-10 sm:px-5 sm:text-sm" onClick={() => navigate("/login")}>
                                 Log In
                             </Button>
-                            <Button className="h-10 px-6 rounded-full bg-[#007dff] text-white hover:bg-[#007dff]/90 font-medium shadow-md shadow-[#007dff]/20" onClick={() => navigate("/register")}>
+                            <Button className="h-9 px-4 rounded-full bg-[#007dff] text-xs text-white hover:bg-[#007dff]/90 font-medium shadow-md shadow-[#007dff]/20 sm:h-10 sm:px-6 sm:text-sm" onClick={() => navigate("/register")}>
                                 Start Now
                             </Button>
                         </div>
@@ -124,14 +124,14 @@ export default function LandingPage() {
                 </nav>
 
                 {/* ─── Hero Content */}
-                <div className="relative z-20 max-w-[800px] mx-auto text-center mt-24 px-6">
+                <div className="relative z-20 max-w-[800px] mx-auto text-center mt-14 px-4 sm:mt-16 sm:px-6 md:mt-24">
 
-                    <div className="anim-up-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border shadow-sm mb-8">
+                    <div className="anim-up-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-border shadow-sm mb-6 sm:px-4 md:mb-8">
                         <img src="/favicon.svg" alt="floework" className="w-4 h-4 rounded-sm" />
-                        <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">Task-anchored focus</span>
+                        <span className="text-[10px] font-bold tracking-wider uppercase text-text-secondary sm:text-[11px]">Task-anchored focus</span>
                     </div>
 
-                    <h1 className="anim-up-2 text-[56px] leading-[1.05] md:text-[72px] font-semibold text-foreground tracking-tight mb-6">
+                    <h1 className="anim-up-2 text-[40px] leading-[1.05] sm:text-[52px] md:text-[72px] font-semibold text-foreground tracking-tight mb-5 md:mb-6">
                         Human-Aware <br />
                         <span className="relative inline-block text-[#007dff]">
                             Productivity.
@@ -141,15 +141,15 @@ export default function LandingPage() {
                         </span>
                     </h1>
 
-                    <p className="anim-up-3 text-lg md:text-xl text-text-secondary max-w-[680px] mx-auto leading-relaxed font-medium mb-10">
+                    <p className="anim-up-3 text-base sm:text-lg md:text-xl text-text-secondary max-w-[680px] mx-auto leading-relaxed font-medium mb-8 md:mb-10">
                         floework models work as a causal chain, not a list of static tickets. Replace context switching and process blindness with unified execution.
                     </p>
 
-                    <div className="anim-up-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Button className="h-14 px-8 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[17px] font-medium w-full sm:w-auto shadow-xl shadow-[#007dff]/20" onClick={() => navigate("/register")}>
+                    <div className="anim-up-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                        <Button className="h-12 px-6 rounded-2xl bg-[#007dff] text-white hover:bg-[#007dff]/90 text-[15px] font-medium w-full shadow-xl shadow-[#007dff]/20 sm:h-14 sm:w-auto sm:px-8 sm:text-[17px]" onClick={() => navigate("/register")}>
                             Start for Free
                         </Button>
-                        <Button variant="outline" className="h-14 px-8 rounded-2xl bg-background border-border text-foreground hover:bg-slate-50 hover:text-foreground text-[17px] font-medium w-full sm:w-auto shadow-sm" onClick={() => navigate("/login")}>
+                        <Button variant="outline" className="h-12 px-6 rounded-2xl bg-background border-border text-foreground hover:bg-slate-50 hover:text-foreground text-[15px] font-medium w-full shadow-sm sm:h-14 sm:w-auto sm:px-8 sm:text-[17px]" onClick={() => navigate("/login")}>
                             Get a Demo
                         </Button>
                     </div>
@@ -167,12 +167,12 @@ export default function LandingPage() {
             </div>
 
             {/* ExecutionCausalityStrip — title + systems-diagram strip */}
-            <div className="w-full bg-white py-16 px-6 text-center border-b border-slate-100">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Mental Model</p>
-                <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight leading-tight">
+            <div className="w-full bg-white py-10 px-4 text-center border-b border-slate-100 sm:px-6 sm:py-12 md:py-16">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 sm:text-[11px]">Mental Model</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight leading-tight">
                     The Causal Model of Work
                 </h2>
-                <p className="text-slate-400 mt-3 text-[15px] max-w-md mx-auto leading-relaxed">
+                <p className="text-slate-400 mt-3 text-sm sm:text-[15px] max-w-[320px] sm:max-w-md mx-auto leading-relaxed">
                     Every outcome is explained by what happened upstream.
                 </p>
             </div>
@@ -190,17 +190,17 @@ export default function LandingPage() {
 
 
             {/* ─── Features Section (Bento Grid Replica) ─────────────────────────────────────────── */}
-            <section id="section-features" className="py-24 px-6 bg-white pt-32">
-                <div className="max-w-[1100px] mx-auto text-center mb-16">
+            <section id="section-features" className="py-16 px-4 bg-white pt-20 sm:px-6 sm:py-20 md:py-24 md:pt-32">
+                <div className="max-w-[1100px] mx-auto text-center mb-10 md:mb-16">
                     <Reveal>
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-slate-50 mb-8">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-slate-50 mb-6 md:mb-8">
                             <CheckCircle size={14} className="text-[#007dff]" />
                             <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">THE SOLUTION</span>
                         </div>
-                        <h2 className="text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5 max-w-2xl mx-auto">
+                        <h2 className="text-3xl sm:text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5 max-w-2xl mx-auto">
                             The full causal chain. <br /> Focus to Outcome.
                         </h2>
-                        <p className="text-[17px] text-text-secondary max-w-2xl mx-auto leading-relaxed font-medium">
+                        <p className="text-base md:text-[17px] text-text-secondary max-w-2xl mx-auto leading-relaxed font-medium">
                             We model Focus → Effort → Task Progress → Team Outcome natively within the platform.
                         </p>
                     </Reveal>
@@ -210,7 +210,7 @@ export default function LandingPage() {
                 <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-5">
 
                     {/* Top Left: Deep work */}
-                    <div className="md:col-span-5 bg-slate-50 border border-slate-200 rounded-[2rem] p-10 flex flex-col justify-between shadow-sm">
+                    <div className="md:col-span-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] p-6 flex flex-col justify-between shadow-sm sm:p-8 md:rounded-[2rem] md:p-10">
                         <Reveal from="left">
                             <h3 className="text-2xl font-medium text-foreground mb-4">Deep work, isolated</h3>
                             <p className="text-text-secondary font-medium mb-10 leading-relaxed">
@@ -223,7 +223,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Top Right: Analytics Mockup */}
-                    <div className="md:col-span-7 bg-slate-50 border border-slate-200 rounded-[2rem] p-2 pt-10 px-10 flex justify-center items-end overflow-hidden shadow-sm">
+                    <div className="md:col-span-7 bg-slate-50 border border-slate-200 rounded-[1.5rem] p-2 pt-8 px-3 flex justify-center items-end overflow-hidden shadow-sm sm:px-6 md:rounded-[2rem] md:px-10 md:pt-10">
                         <Reveal from="right" delay={100}>
                             {/* Mockup Window */}
                             <div className="bg-white w-full max-w-[500px] rounded-t-xl shadow-lg border border-slate-200 border-b-0 p-6 pb-0">
@@ -253,7 +253,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Bottom Left: Presences/Smart Notifications Mockup */}
-                    <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-[2rem] p-10 pb-0 overflow-hidden flex flex-col shadow-sm">
+                    <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] p-6 pb-0 overflow-hidden flex flex-col shadow-sm sm:p-8 sm:pb-0 md:rounded-[2rem] md:p-10 md:pb-0">
                         <Reveal from="left" delay={150}>
                             <h3 className="text-2xl font-medium text-foreground mb-4">Non-invasive visibility</h3>
                             <p className="text-text-secondary font-medium mb-8 leading-relaxed max-w-sm">
@@ -270,8 +270,8 @@ export default function LandingPage() {
                                         { label: "Share exact timer duration", active: false },
                                         { label: "Publish session note on completion", active: true },
                                     ].map((row, i) => (
-                                        <div key={i} className={`flex justify-between items-center`}>
-                                            <span className="text-[13px] font-medium text-text-secondary">{row.label}</span>
+                                        <div key={i} className={`flex justify-between items-center gap-4`}>
+                                            <span className="text-[13px] font-medium text-text-secondary leading-snug">{row.label}</span>
                                             <div className={`w-9 h-5 rounded-full flex items-center p-0.5 ${row.active ? 'bg-[#007dff] justify-end' : 'bg-slate-200 justify-start'}`}>
                                                 <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
                                             </div>
@@ -283,7 +283,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Bottom Right: Task Management Mockup */}
-                    <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-[2rem] p-10 pb-0 overflow-hidden flex flex-col shadow-sm">
+                    <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] p-6 pb-0 overflow-hidden flex flex-col shadow-sm sm:p-8 sm:pb-0 md:rounded-[2rem] md:p-10 md:pb-0">
                         <Reveal from="right" delay={200}>
                             <h3 className="text-2xl font-medium text-foreground mb-4">Task linkage</h3>
                             <p className="text-text-secondary font-medium mb-8 leading-relaxed max-w-sm">
@@ -291,9 +291,9 @@ export default function LandingPage() {
                             </p>
 
                             <div className="bg-white w-full rounded-t-xl shadow-lg border border-slate-200 border-b-0">
-                                <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-                                    <span className="font-semibold text-[15px] text-foreground">Task: Implement OAuth</span>
-                                    <span className="text-[11px] font-bold px-3 py-1 bg-emerald-50 border border-emerald-100 rounded flex items-center gap-1 text-emerald-600">In Progress</span>
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-center gap-3">
+                                    <span className="font-semibold text-[15px] text-foreground truncate">Task: Implement OAuth</span>
+                                    <span className="text-[10px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 bg-emerald-50 border border-emerald-100 rounded flex items-center gap-1 text-emerald-600 shrink-0">In Progress</span>
                                 </div>
                                 <div className="p-5 space-y-6">
 
@@ -320,21 +320,21 @@ export default function LandingPage() {
             </section>
 
             {/* ─── Disruptive Features Section ─────────────────────────────────────────── */}
-            <section className="py-32 px-6 bg-slate-50 relative overflow-hidden border-t border-slate-200">
+            <section className="py-20 px-4 bg-slate-50 relative overflow-hidden border-t border-slate-200 sm:px-6 md:py-32">
 
                 {/* Soft background glow to match hero */}
                 <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-[#007dff]/5 to-transparent pointer-events-none"></div>
 
                 <div className="max-w-[1280px] mx-auto relative z-10">
                     <Reveal>
-                        <div className="text-center mb-24 max-w-3xl mx-auto">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border mb-6">
+                        <div className="text-center mb-12 max-w-3xl mx-auto md:mb-24">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border mb-5 md:mb-6">
                                 <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">EXECUTION INTELLIGENCE</span>
                             </div>
-                            <h2 className="text-4xl md:text-[52px] font-medium text-foreground tracking-tight leading-[1.1] mb-6">
+                            <h2 className="text-3xl sm:text-4xl md:text-[52px] font-medium text-foreground tracking-tight leading-[1.1] mb-5 md:mb-6">
                                 Not just another tracker.<br />An execution observatory.
                             </h2>
-                            <p className="text-[19px] text-text-secondary leading-relaxed font-medium">
+                            <p className="text-base md:text-[19px] text-text-secondary leading-relaxed font-medium">
                                 We moved past static spreadsheets and chat rooms. floework is built on a real-time Execution Graph.
                             </p>
                         </div>
@@ -344,9 +344,9 @@ export default function LandingPage() {
 
                         {/* ROW 1: EXECUTION GRAPH / TASK REPLAY */}
                         <Reveal from="bottom" delay={0}>
-                            <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[2rem] p-4 pr-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
+                            <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[1.5rem] p-4 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30 md:rounded-[2rem] md:pr-10">
                                 {/* Visual side */}
-                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
+                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-4 sm:p-6 flex items-center justify-center relative overflow-hidden h-[260px] sm:h-[300px]">
 
                                     {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
@@ -388,9 +388,9 @@ export default function LandingPage() {
 
                                 </div>
                                 {/* Text side */}
-                                <div className="w-full md:w-[55%] flex flex-col justify-center pl-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Task Execution Replay</h3>
-                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
+                                <div className="w-full md:w-[55%] flex flex-col justify-center px-1 py-8 md:pl-10 md:py-10">
+                                    <h3 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-4">Task Execution Replay</h3>
+                                    <p className="text-base md:text-[17px] text-text-secondary leading-relaxed font-medium">
                                         Tasks aren't just cards that move left to right. Every focus session, status change, and blocker is logged to our Execution Graph. Click any task to instantly replay its entire history chronologically, exactly as it happened.
                                     </p>
                                 </div>
@@ -399,9 +399,9 @@ export default function LandingPage() {
 
                         {/* ROW 2: COGNITIVE LOAD */}
                         <Reveal from="bottom" delay={100}>
-                            <div className="group flex flex-col md:flex-row-reverse bg-surface border border-border rounded-[2rem] p-4 pl-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
+                            <div className="group flex flex-col md:flex-row-reverse bg-surface border border-border rounded-[1.5rem] p-4 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30 md:rounded-[2rem] md:pl-10">
                                 {/* Visual side */}
-                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
+                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-4 sm:p-6 flex items-center justify-center relative overflow-hidden h-[260px] sm:h-[300px]">
 
                                     {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
@@ -437,12 +437,12 @@ export default function LandingPage() {
 
                                 </div>
                                 {/* Text side */}
-                                <div className="w-full md:w-[55%] flex flex-col justify-center pr-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Protecting the Human Element</h3>
-                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
+                                <div className="w-full md:w-[55%] flex flex-col justify-center px-1 py-8 md:pr-10 md:py-10">
+                                    <h3 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-4">Protecting the Human Element</h3>
+                                    <p className="text-base md:text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
                                         Our analytics go beyond basic time tracking to model actual cognitive burden. The system automatically detects burnout risks by penalizing fragmented micro-sessions and out-of-hours volume spikes.
                                     </p>
-                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
+                                    <p className="text-base md:text-[17px] text-text-secondary leading-relaxed font-medium">
                                         Using historic data, floework pinpoints your optimal peak Deep Work windows and safely locks them directly into your Google Calendar.
                                     </p>
                                 </div>
@@ -451,9 +451,9 @@ export default function LandingPage() {
 
                         {/* ROW 3: PREDICTIVE DELIVERY */}
                         <Reveal from="bottom" delay={200}>
-                            <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[2rem] p-4 pr-10 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30">
+                            <div className="group flex flex-col md:flex-row bg-surface border border-border rounded-[1.5rem] p-4 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-focus/30 md:rounded-[2rem] md:pr-10">
                                 {/* Visual side */}
-                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-6 flex items-center justify-center relative overflow-hidden h-[300px]">
+                                <div className="w-full md:w-[45%] bg-background rounded-2xl border border-border p-4 sm:p-6 flex items-center justify-center relative overflow-hidden h-[260px] sm:h-[300px]">
 
                                     {/* Default State */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 group-hover:opacity-0 bg-white">
@@ -486,12 +486,12 @@ export default function LandingPage() {
 
                                 </div>
                                 {/* Text side */}
-                                <div className="w-full md:w-[55%] flex flex-col justify-center pl-10 py-10">
-                                    <h3 className="text-3xl font-semibold text-foreground tracking-tight mb-4">Autonomous Calibration & Delivery</h3>
-                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
+                                <div className="w-full md:w-[55%] flex flex-col justify-center px-1 py-8 md:pl-10 md:py-10">
+                                    <h3 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-4">Autonomous Calibration & Delivery</h3>
+                                    <p className="text-base md:text-[17px] text-text-secondary leading-relaxed font-medium mb-3">
                                         Stop guessing your capacity. Our Auto-Calibrating Estimation Engine learns your personal effort biases (e.g., "frontend tasks typically take you 1.5x longer than estimated") and dynamically generates coaching hints at task creation.
                                     </p>
-                                    <p className="text-[17px] text-text-secondary leading-relaxed font-medium">
+                                    <p className="text-base md:text-[17px] text-text-secondary leading-relaxed font-medium">
                                         Meanwhile, the Predictive Delivery Engine flags systemic sprint risks caused by external forces like PR Wait-Times mapped natively from GitHub Webhooks.
                                     </p>
                                 </div>
@@ -504,18 +504,18 @@ export default function LandingPage() {
 
 
 
-            <section id="section-pricing" className="py-32 px-6 bg-slate-50">
+            <section id="section-pricing" className="py-20 px-4 bg-slate-50 sm:px-6 md:py-32">
                 <div className="max-w-[1100px] mx-auto">
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-10 md:mb-16">
                         <Reveal>
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-white mb-8">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-white mb-6 md:mb-8">
                                 <img src="/favicon.svg" alt="floework" className="w-4 h-4 rounded-sm" />
                                 <span className="text-[11px] font-bold tracking-wider uppercase text-text-secondary">PRICING</span>
                             </div>
-                            <h2 className="text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5">
+                            <h2 className="text-3xl sm:text-4xl md:text-[44px] font-medium text-foreground tracking-tight leading-tight mb-5">
                                 Simple, transparent pricing.
                             </h2>
-                            <p className="text-[17px] text-text-secondary max-w-2xl mx-auto leading-relaxed font-medium">
+                            <p className="text-base md:text-[17px] text-text-secondary max-w-2xl mx-auto leading-relaxed font-medium">
                                 Start solo or with your team. No hidden fees.
                             </p>
                         </Reveal>
@@ -523,7 +523,7 @@ export default function LandingPage() {
 
                     <div className="max-w-md mx-auto">
                         <Reveal>
-                            <div className="bg-white border-2 border-[#007dff] rounded-[32px] p-10 shadow-xl shadow-[#007dff]/5 relative overflow-hidden">
+                            <div className="bg-white border-2 border-[#007dff] rounded-[24px] p-6 shadow-xl shadow-[#007dff]/5 relative overflow-hidden sm:p-8 md:rounded-[32px] md:p-10">
                                 <div className="absolute top-0 right-0 bg-[#007dff] text-white px-4 py-1 rounded-bl-xl text-[10px] font-bold uppercase tracking-widest">
                                     Current Plan
                                 </div>
@@ -531,7 +531,7 @@ export default function LandingPage() {
                                 <p className="text-slate-500 font-medium mb-8">Upgrade for advanced team analytics.</p>
 
                                 <div className="flex items-baseline gap-1 mb-8">
-                                    <span className="text-5xl font-bold text-foreground">$0</span>
+                                    <span className="text-4xl md:text-5xl font-bold text-foreground">$0</span>
                                     <span className="text-slate-400 font-medium">/month</span>
                                 </div>
 
@@ -560,7 +560,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            <footer className="bg-[#f7f8fa] border-t border-slate-200 py-14 px-8">
+            <footer className="bg-[#f7f8fa] border-t border-slate-200 py-12 px-4 sm:px-8 md:py-14">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
 
                     {/* Left: Branding */}
@@ -574,7 +574,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Right: Two columns of arrow-links */}
-                    <div className="flex gap-16 md:gap-24">
+                    <div className="flex gap-10 sm:gap-16 md:gap-24">
                         <div>
                             <ul className="space-y-4 text-[14px]">
                                 {[
