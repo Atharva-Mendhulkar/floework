@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { trace } from '@opentelemetry/api'
+import { v4 as uuidv4 } from 'uuid'
+import { redis } from '../lib/redis'
 
 import { validateBody, TaskCreateSchema } from '../lib/validate'
 import { requireMember } from '../lib/auth'
@@ -35,13 +38,22 @@ function getSupabase() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const tracer = trace.getTracer('floework-api')
+  const requestId = uuidv4()
+  res.setHeader('X-Request-ID', requestId)
+
   if (await simulateLatencyAndFailure(req, res)) return
 
   if (req.method === 'GET') {
-    const { projectId } = req.query
-    if (!projectId) return res.status(400).json({ error: 'Project ID required' })
-    
-    if (!await requireMember(req, res, projectId as string)) return
+    return tracer.startActiveSpan('GET /api/tasks', async (span) => {
+      try {
+        const { projectId } = req.query
+        if (!projectId) {
+          res.status(400).json({ error: 'Project ID required', requestId })
+          return span.end()
+        }
+        
+        if (!await requireMember(req, res, projectId as string)) return span.end()
 
     const supabase = getSupabase()
     const { data, error } = await supabase
@@ -50,15 +62,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('project_id', projectId as string)
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ error: error.message })
-    return res.status(200).json(data)
+      if (error) {
+        res.status(500).json({ error: error.message, requestId })
+        return span.end()
+      }
+      res.status(200).json(data)
+      span.end()
+    } catch (e) {
+      span.recordException(e as Error)
+      span.end()
+      throw e
+    }
+    })
   }
 
   if (req.method === 'POST') {
-    const validatedBody = validateBody(req, res, TaskCreateSchema)
-    if (!validatedBody) return // validateBody already sent response
+    return tracer.startActiveSpan('POST /api/tasks', async (span) => {
+      try {
+        const validatedBody = validateBody(req, res, TaskCreateSchema)
+        if (!validatedBody) return span.end() // validateBody already sent response
 
     if (!await requireMember(req, res, validatedBody.project_id)) return
+
+    const idempotencyKey = req.headers['x-idempotency-key'] as string
+    if (idempotencyKey) {
+      const cachedResponse = await redis.get(`idempotency:task:${idempotencyKey}`)
+      if (cachedResponse) {
+        res.status(201).json(typeof cachedResponse === 'string' ? JSON.parse(cachedResponse) : cachedResponse)
+        return span.end()
+      }
+    }
 
     const supabase = getSupabase()
     const { data, error } = await supabase
@@ -67,15 +100,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select()
       .single()
 
-    if (error) return res.status(400).json({ error: error.message })
-    return res.status(201).json(data)
+      if (error) {
+        res.status(400).json({ error: error.message, requestId })
+        return span.end()
+      }
+
+      if (idempotencyKey) {
+        // Cache response for 24 hours
+        await redis.setex(`idempotency:task:${idempotencyKey}`, 86400, JSON.stringify(data))
+      }
+
+      res.status(201).json(data)
+      span.end()
+    } catch (e) {
+      span.recordException(e as Error)
+      span.end()
+      throw e
+    }
+    })
   }
 
   if (req.method === 'PATCH') {
-    const { id, version: clientVersion, ...updateData } = req.body
-    if (!id) return res.status(400).json({ error: 'Task ID required' })
+    return tracer.startActiveSpan('PATCH /api/tasks', async (span) => {
+      try {
+        const { id, version: clientVersion, ...updateData } = req.body
+        if (!id) {
+          res.status(400).json({ error: 'Task ID required', requestId })
+          return span.end()
+        }
 
-    const supabase = getSupabase()
+        const supabase = getSupabase()
     
     // 2.1 Enforce Strict Version-Based OCC
     const query = supabase
@@ -108,17 +162,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         });
 
-        return res.status(409).json({ 
-          error: 'STALE_UPDATE', 
-          message: 'Conflict detected: Task was modified by another client.',
-          serverVersion: currentTask?.version,
-          currentTask: currentTask
-        });
+          return res.status(409).json({ 
+            error: 'STALE_UPDATE', 
+            message: 'Conflict detected: Task was modified by another client.',
+            serverVersion: currentTask?.version,
+            currentTask: currentTask,
+            requestId
+          });
+        }
+        res.status(400).json({ error: error.message, requestId })
+        return span.end()
       }
-      return res.status(400).json({ error: error.message })
+      res.status(200).json(data)
+      span.end()
+    } catch (e) {
+      span.recordException(e as Error)
+      span.end()
+      throw e
     }
-    return res.status(200).json(data)
+    })
   }
 
-  res.status(405).json({ error: 'Method not allowed' })
+  res.status(405).json({ error: 'Method not allowed', requestId })
 }

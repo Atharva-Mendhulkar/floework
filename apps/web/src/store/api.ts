@@ -58,27 +58,24 @@ export const api = createApi({
                 const projectId = typeof args === 'object' ? args?.projectId : undefined;
                 const sprintId = typeof args === 'object' ? args?.sprintId : undefined;
 
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return { error: { status: 401, data: 'Unauthorized' } };
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return { error: { status: 401, data: 'Unauthorized' } };
 
-                let q = supabase.from('tasks').select('*, profiles(full_name, avatar_url)');
-                
-                if (projectId && projectId !== "fallback-id") {
-                    q = q.eq('project_id', projectId);
-                }
-
-                // Sprint filtering: if sprintId is provided, filter by it. 
-                // If it's explicitly null, it means "Backlog" (no sprint).
+                let url = `/api/bff/tasks?projectId=${projectId || 'fallback-id'}`;
                 if (sprintId !== undefined) {
-                    if (sprintId === null) {
-                        q = q.is('sprint_id', null);
-                    } else {
-                        q = q.eq('sprint_id', sprintId);
-                    }
+                    url += `&sprintId=${sprintId}`;
                 }
 
-                const { data, error } = await q.order('created_at', { ascending: false });
-                if (error) return { error: { status: 500, data: error.message } };
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    return { error: { status: res.status, data: err.error } };
+                }
+
+                const data = await res.json();
 
                 const statusToPhase: Record<string, string> = {
                     'backlog': 'allocation',
@@ -94,18 +91,10 @@ export const api = createApi({
                     'done': 'done'
                 };
 
-                // Fetch stars for this user
-                const { data: starredData } = await supabase
-                    .from('starred_tasks')
-                    .select('task_id')
-                    .eq('user_id', user.id);
-                
-                const starredIds = new Set(starredData?.map(s => s.task_id) || []);
-
                 return { 
                     data: { 
                         success: true, 
-                        data: (data || []).map(t => ({
+                        data: (data || []).map((t: any) => ({
                             id: t.id, 
                             title: t.title, 
                             description: t.description, 
@@ -120,9 +109,12 @@ export const api = createApi({
                             createdAt: t.created_at, 
                             updatedAt: t.updated_at,
                             version: t.version,
-                            isStarred: starredIds.has(t.id), 
-                            assignee: t.profiles ? { name: t.profiles.full_name, avatarUrl: t.profiles.avatar_url } : null,
-                        })) as any 
+                            isStarred: t.is_starred || false, 
+                            assignee: t.profiles ? { 
+                                name: t.profiles.full_name, 
+                                avatarUrl: t.profiles.avatar_url 
+                            } : undefined 
+                        })) 
                     } 
                 };
             },

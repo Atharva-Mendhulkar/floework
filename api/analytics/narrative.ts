@@ -4,8 +4,44 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { rateLimit } from '../lib/rateLimit'
 import { validateQuery, ProjectIdQuerySchema } from '../lib/validate'
 import { requireMember } from '../lib/auth'
+import { trace } from '@opentelemetry/api'
+import { v4 as uuidv4 } from 'uuid'
+import CircuitBreaker from 'opossum'
+import { redis } from '../lib/redis'
+
+// Setup Opossum Circuit Breaker for Gemini API
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+async function fetchGemini(prompt: string) {
+  const aiPromise = model.generateContent(prompt).then(r => r.response.text())
+  const timeoutPromise = new Promise<string>((_, reject) => 
+    setTimeout(() => reject(new Error('Gemini timeout')), 25000)
+  )
+  return Promise.race([aiPromise, timeoutPromise])
+}
+
+const breaker = new CircuitBreaker(fetchGemini, {
+  timeout: 25000, // 25s timeout
+  errorThresholdPercentage: 50, // trip if 50% fail
+  volumeThreshold: 5, // minimum 5 requests before tripping
+  resetTimeout: 60000 // half-open after 60s
+})
+
+breaker.fallback(() => {
+  return JSON.stringify({
+    summary: "Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.",
+    highlights: ["Workspace synchronized.", "Steady focus velocity."],
+    warnings: []
+  })
+})
+
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const tracer = trace.getTracer('floework-api')
+  const requestId = uuidv4()
+  res.setHeader('X-Request-ID', requestId)
+
   // 0. Rate Limiting
   if (!rateLimit(req, res, { windowMs: 60_000, max: 10 })) return
 
@@ -34,28 +70,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await requireMember(req, res, project.team_id)
   if (!user) return
 
+  return tracer.startActiveSpan('GET /api/analytics/narrative', async (span) => {
   try {
-    // 3. Check Cache (1 hour TTL)
-    const { data: cached } = await supabase
-      .from('narrative_cache')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('user_id', user.id)
-      .single()
+    const cacheKey = `narrative_cache:${projectId}:${user.id}`
+    // 3. Check Cache (1 hour TTL) using Redis
+    const cachedText = await redis.get<string>(cacheKey)
 
-    if (cached) {
-      const updatedAt = new Date(cached.updated_at).getTime()
-      const now = new Date().getTime()
-      if (now - updatedAt < 3600000) { // 1 hour
-        return res.status(200).json({
-          success: true,
-          data: {
-            summary: cached.summary,
-            highlights: cached.highlights,
-            warnings: cached.warnings
-          }
-        })
-      }
+    if (cachedText) {
+      res.status(200).json({
+        success: true,
+        data: typeof cachedText === 'string' ? JSON.parse(cachedText) : cachedText
+      })
+      return span.end()
     }
 
     // 4. Aggregate Data for Context (Last 24 Hours)
@@ -77,10 +103,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const doneCount = (tasks || []).filter(t => t.status === 'done').length
     const activeCount = (tasks || []).filter(t => t.status === 'in_progress' || t.status === 'review').length
 
-    // 5. Call Gemini with Timeout
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-
     const prompt = `
       You are an Executive Productivity Analyst for Floework. Write a concise 3-sentence summary.
       Context: ${hrs} focus hours, ${doneCount} tasks done, ${activeCount} active tasks.
@@ -88,51 +110,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Format (JSON): { "summary": "...", "highlights": ["..."], "warnings": ["..."] }
     `
 
-    // Implement a 25s timeout for the AI call
-    const aiPromise = model.generateContent(prompt).then(r => r.response.text())
-    const timeoutPromise = new Promise<string>((_, reject) => 
-      setTimeout(() => reject(new Error('Gemini timeout')), 25000)
-    )
+    // 5. Call Gemini with Timeout and Circuit Breaker
+    const responseText = await tracer.startActiveSpan('gemini-api-call', async (geminiSpan) => {
+      try {
+        const text = await breaker.fire(prompt)
+        geminiSpan.end()
+        return text
+      } catch (e) {
+        geminiSpan.recordException(e as Error)
+        geminiSpan.end()
+        throw e
+      }
+    })
 
-    let responseText: string
-    try {
-      responseText = await Promise.race([aiPromise, timeoutPromise])
-    } catch (e) {
-      console.warn("Gemini call failed or timed out, using fallback:", e)
-      responseText = JSON.stringify({
-        summary: "Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.",
-        highlights: ["Workspace synchronized.", "Steady focus velocity."],
-        warnings: []
-      })
-    }
 
     const aiData = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, '').trim())
 
-    // 6. Update Cache
-    await supabase.from('narrative_cache').upsert({
-      project_id: projectId,
-      user_id: user.id,
-      summary: aiData.summary,
-      highlights: aiData.highlights,
-      warnings: aiData.warnings,
-      updated_at: new Date().toISOString()
-    })
+    // 6. Update Cache in Redis with 1 hour TTL (3600 seconds)
+    await redis.setex(cacheKey, 3600, JSON.stringify(aiData))
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: aiData
     })
+    span.end()
 
   } catch (error: any) {
     console.error("AI Narrative Error:", error)
-    return res.status(500).json({ 
+    res.status(500).json({ 
       success: false, 
       error: error.message,
+      requestId,
       data: {
         summary: "Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.",
         highlights: ["Workspace synchronized.", "Steady focus velocity."],
         warnings: []
       }
     })
+    span.recordException(error as Error)
+    span.end()
   }
+  })
 }
