@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { requireMember } from '../lib/auth'
+import { requireMember } from '../_lib/auth'
 import { trace } from '@opentelemetry/api'
 
 // We configure a read replica for GET requests

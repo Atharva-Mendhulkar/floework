@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { publishEvent } from '../lib/kafka'
+import { publishEvent } from '../_lib/kafka'
 import { trace } from '@opentelemetry/api'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

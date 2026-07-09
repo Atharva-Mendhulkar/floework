@@ -2,10 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { trace } from '@opentelemetry/api'
 import { v4 as uuidv4 } from 'uuid'
-import { redis } from '../lib/redis'
+import { redis } from '../_lib/redis'
 
-import { validateBody, TaskCreateSchema } from '../lib/validate'
-import { requireMember } from '../lib/auth'
+import { validateBody, TaskCreateSchema } from '../_lib/validate'
+import { requireMember } from '../_lib/auth'
 
 async function simulateLatencyAndFailure(req: VercelRequest, res: VercelResponse) {
   if (process.env.NODE_ENV === 'production') return false;

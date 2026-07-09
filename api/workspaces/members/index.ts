@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-import { validateBody, MemberUpdateSchema } from '../../lib/validate'
-import { requireMember, requireAdmin, logAudit } from '../../lib/auth'
-import { rateLimit } from '../../lib/rateLimit'
+import { validateBody, MemberUpdateSchema } from '../../_lib/validate'
+import { requireMember, requireAdmin, logAudit } from '../../_lib/auth'
+import { rateLimit } from '../../_lib/rateLimit'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

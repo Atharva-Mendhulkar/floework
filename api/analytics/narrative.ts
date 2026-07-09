@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { rateLimit } from '../lib/rateLimit'
-import { validateQuery, ProjectIdQuerySchema } from '../lib/validate'
-import { requireMember } from '../lib/auth'
+import { rateLimit } from '../_lib/rateLimit'
+import { validateQuery, ProjectIdQuerySchema } from '../_lib/validate'
+import { requireMember } from '../_lib/auth'
 import { trace } from '@opentelemetry/api'
 import { v4 as uuidv4 } from 'uuid'
 import CircuitBreaker from 'opossum'
-import { redis } from '../lib/redis'
+import { redis } from '../_lib/redis'
 
 // Setup Opossum Circuit Breaker for Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
