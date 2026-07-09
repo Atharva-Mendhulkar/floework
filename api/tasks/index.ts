@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { redis } from '../_lib/redis'
 
 import { validateBody, TaskCreateSchema } from '../_lib/validate'
-import { requireMember } from '../_lib/auth'
+import { requireProjectMember } from '../_lib/auth'
 
 async function simulateLatencyAndFailure(req: VercelRequest, res: VercelResponse) {
   if (process.env.NODE_ENV === 'production') return false;
@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const validatedBody = validateBody(req, res, TaskCreateSchema)
         if (!validatedBody) return span.end() // validateBody already sent response
 
-    if (!await requireMember(req, res, validatedBody.project_id)) return
+    if (!await requireProjectMember(req, res, validatedBody.project_id)) return
 
     const idempotencyKey = req.headers['x-idempotency-key'] as string
     if (idempotencyKey) {

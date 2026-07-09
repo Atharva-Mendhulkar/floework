@@ -1,15 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { requireMember } from '../_lib/auth'
+import { getUser } from '../_lib/auth'
 import { trace } from '@opentelemetry/api'
 
 // We configure a read replica for GET requests
 const SUPABASE_READ_REPLICA_URL = process.env.SUPABASE_READ_REPLICA_URL || process.env.SUPABASE_URL!
 
-function getReadReplicaClient() {
+function getReadReplicaClient(token: string) {
   return createClient(
     SUPABASE_READ_REPLICA_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
   )
 }
 
@@ -27,17 +28,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return tracer.startActiveSpan('BFF GET /tasks', async (span) => {
       try {
         const { projectId, sprintId } = req.query
-        if (!projectId) return res.status(400).json({ error: 'Project ID required' })
         
-        const user = await requireMember(req, res, projectId as string)
-        if (!user) return span.end()
+        const authHeader = req.headers.authorization
+        if (!authHeader) {
+            res.status(401).json({ error: 'Unauthorized' })
+            return span.end()
+        }
+        const token = authHeader.replace('Bearer ', '')
 
-        // Use Read Replica for GET
-        const supabase = getReadReplicaClient()
+        // Get user for starred_tasks lookup
+        const user = await getUser(req)
+        if (!user) {
+            res.status(401).json({ error: 'Unauthorized' })
+            return span.end()
+        }
+
+        // Use Read Replica for GET with user token (RLS handles security)
+        const supabase = getReadReplicaClient(token)
+
         let q = supabase
           .from('tasks')
           .select('*, profiles(full_name, avatar_url), focus_sessions(count)')
-          .eq('project_id', projectId as string)
+
+        if (projectId && projectId !== 'fallback-id') {
+            q = q.eq('project_id', projectId as string)
+        }
 
         if (sprintId !== undefined && sprintId !== '') {
             if (sprintId === 'null' || sprintId === null) {

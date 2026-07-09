@@ -58,7 +58,15 @@ export const api = createApi({
                 const projectId = typeof args === 'object' ? args?.projectId : undefined;
                 const sprintId = typeof args === 'object' ? args?.sprintId : undefined;
 
-                const { data: { session } } = await supabase.auth.getSession();
+                let session;
+                try {
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                } catch (e: any) {
+                    // Retry once to handle Supabase GoTrue "Lock broken by another request" in Strict Mode
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                }
                 if (!session) return { error: { status: 401, data: 'Unauthorized' } };
 
                 let url = `/api/bff/tasks?projectId=${projectId || 'fallback-id'}`;

@@ -43,6 +43,29 @@ export async function requireMember(req: VercelRequest, res: VercelResponse, tea
   return user
 }
 
+export async function requireProjectMember(req: VercelRequest, res: VercelResponse, projectId: string): Promise<User | null> {
+  const user = await getUser(req)
+  if (!user) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return null
+  }
+
+  // Lookup the teamId for this project
+  const { data: project, error: projectError } = await supabaseAdmin
+    .from('projects')
+    .select('team_id')
+    .eq('id', projectId)
+    .single()
+
+  if (projectError || !project) {
+    res.status(404).json({ error: 'Project not found' })
+    return null
+  }
+
+  // Now verify member access to the team
+  return requireMember(req, res, project.team_id)
+}
+
 export async function requireAdmin(req: VercelRequest, res: VercelResponse, teamId: string): Promise<User | null> {
   const user = await getUser(req)
   if (!user) {
