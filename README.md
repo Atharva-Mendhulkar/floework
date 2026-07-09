@@ -15,10 +15,20 @@ A human-aware SaaS productivity and team collaboration platform. floework aligns
   - **Data Portability**: Integrated Excel (CSV) export and Calendar (ICS) sync for all activities and analytics.
 - **Premium UX**: Modern glassmorphism design with orchestrated reveal animations and a deterministic avatar system.
 
+## Enterprise Architecture
+
+Floework employs robust distributed systems patterns to ensure enterprise-grade reliability and observability:
+
+- **Observability & Telemetry**: Comprehensive `@opentelemetry/api` distributed tracing and a `prom-client` metrics endpoint for Grafana. Includes a custom frontend `NetworkDiagnostics` service tracking RTT, DNS, and TLS latency.
+- **Resilience Engineering**: A custom WebSocket `ConnectionManager` with exponential backoff/heartbeats, strict `opossum` Circuit Breakers wrapping external AI calls, and event backpressure management via batched queues.
+- **Distributed Consistency**: Integrated Upstash Redis for high-speed caching and `X-Idempotency-Key` validation to prevent duplicate records during network retries.
+- **Backend-For-Frontend (BFF)**: An API Gateway pattern routing complex aggregated queries to a dedicated Supabase Read Replica while reserving the primary DB node for mutations.
+- **Event Streaming**: Heavy background computations are decoupled into asynchronous workers orchestrated via a Kafka message broker (`kafkajs`).
+
 ## Tech Stack
 
-- **Frontend**: React (Vite), Redux Toolkit (RTK Query), Tailwind CSS, Framer-inspired Reveal system.
-- **Backend**: Vercel Serverless Functions (Node.js/TypeScript), Google Gemini AI API.
+- **Frontend**: React (Vite), Redux Toolkit (RTK Query), Tailwind CSS.
+- **Backend**: Vercel Serverless Functions (Node.js/TypeScript), Google Gemini AI API, Kafka, Redis.
 - **Database & Auth**: PostgreSQL (Supabase) with Row Level Security (RLS) and Realtime subscriptions.
 - **Storage**: Supabase Storage for secure profile asset management.
 
