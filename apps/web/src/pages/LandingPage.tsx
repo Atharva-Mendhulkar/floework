@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Zap, ChevronDown, CheckCircle, Target, ArrowRight, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,15 @@ export default function LandingPage() {
     const navigate = useNavigate();
     // Active node for ExecutionCausalityStrip — controls section scrolling
     const [activeNode, setActiveNode] = useState<NodeId>("focus");
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 24);
+
+        handleScroll();
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div className="min-h-screen bg-background font-sans selection:bg-focus/20 text-foreground overflow-x-hidden relative">
@@ -100,8 +109,14 @@ export default function LandingPage() {
                 </div>
 
                 {/* ─── Navbar */}
-                <nav className="relative z-50 py-4 md:py-5">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+                <nav className={`relative z-50 transition-all duration-300 ${isScrolled ? "sticky top-0 py-3 md:py-4" : "py-4 md:py-5"}`}>
+                    <div
+                        className={`max-w-7xl mx-auto flex items-center justify-between gap-3 transition-all duration-300 ${
+                            isScrolled
+                                ? "rounded-full border border-white/60 bg-white/55 px-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-5"
+                                : "px-4 sm:px-6"
+                        }`}
+                    >
                         <div className="flex-1">
                             <span className="font-bold text-2xl tracking-tight text-foreground sm:text-3xl">floework<span className="text-[#007dff]">.</span></span>
                         </div>
