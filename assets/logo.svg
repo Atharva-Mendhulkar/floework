@@ -3,21 +3,21 @@
     <!-- Liquid Glass Drop Shadow Filter -->
     <filter id="glass-shadow" x="-20%" y="-20%" width="150%" height="150%" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.18" />
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#007dff" flood-opacity="0.15" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#007dff" flood-opacity="0.15" />
     </filter>
 
     <!-- Liquid Specular Refraction Glow Filter -->
-    <filter id="liquid-glow" x="-10%" y="-10%" width="120%" height="120%">
+    <filter id="liquid-glow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="2" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
 
     <!-- Glass Surface Gradient (Multi-stop translucent frost) -->
     <linearGradient id="glass-surface" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
-      <stop offset="35%" stop-color="#f8fafc" stop-opacity="0.82" />
-      <stop offset="70%" stop-color="#eef2f6" stop-opacity="0.75" />
-      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.88" />
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.96" />
+      <stop offset="35%" stop-color="#f8fafc" stop-opacity="0.84" />
+      <stop offset="70%" stop-color="#eef2f6" stop-opacity="0.78" />
+      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.90" />
     </linearGradient>
 
     <!-- Liquid Glass Outer Border Gradient -->
@@ -76,19 +76,23 @@
         stroke-width="1.2" 
         stroke-opacity="0.8" />
 
-  <!-- Typography "f" with subtle depth -->
-  <text x="25" y="96"
-        font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif"
-        font-weight="800"
-        font-size="104"
-        letter-spacing="-0.04em"
-        fill="#090d16">
-    f
-  </text>
+  <!-- Centered & Proportionate "f." Lockup -->
+  <g id="brand-lockup">
+    <!-- Letter "f" centered with exact optical balance -->
+    <text x="49" y="98.5"
+          text-anchor="middle"
+          font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+          font-weight="800"
+          font-size="94"
+          letter-spacing="-0.03em"
+          fill="#090d16">
+      f
+    </text>
 
-  <!-- Liquid Focus Indicator Dot (Glowing cyan-blue sapphire) -->
-  <circle cx="84" cy="94" r="12" fill="url(#electric-dot)" filter="url(#liquid-glow)" />
-  
-  <!-- Dot Specular Pinpoint Highlight -->
-  <ellipse cx="80.5" cy="89.5" rx="3.5" ry="2" fill="#ffffff" opacity="0.85" />
+    <!-- Liquid Sapphire Focus Dot (aligned at baseline with optical harmony) -->
+    <circle cx="85" cy="91" r="9.5" fill="url(#electric-dot)" filter="url(#liquid-glow)" />
+    
+    <!-- Dot Specular Pinpoint Highlight -->
+    <ellipse cx="82.5" cy="87.5" rx="3" ry="1.8" fill="#ffffff" opacity="0.9" />
+  </g>
 </svg>
