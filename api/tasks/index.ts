@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return span.end()
         }
         
-        if (!await requireMember(req, res, projectId as string)) return span.end()
+        if (!await requireProjectMember(req, res, projectId as string)) return span.end()
 
     const supabase = getSupabase()
     const { data, error } = await supabase
@@ -130,56 +130,73 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const supabase = getSupabase()
-    
-    // 2.1 Enforce Strict Version-Based OCC
-    const query = supabase
-      .from('tasks')
-      .update(updateData)
-      .eq('id', id);
 
-    if (clientVersion !== undefined) {
-      query.eq('version', clientVersion);
-    }
+        // 1. Enforce Authentication & Project Membership (SEC-01)
+        const { data: existingTask, error: fetchError } = await supabase
+          .from('tasks')
+          .select('id, project_id, version')
+          .eq('id', id)
+          .single()
 
-    const { data, error } = await query.select().single();
-
-    if (error) {
-      // 2.2 Handle stale update
-      if (error.code === 'PGRST116') { // No rows returned due to version mismatch
-        // 4.0 Log conflict with enriched context
-        const { data: currentTask } = await supabase.from('tasks').select('version').eq('id', id).single();
-        
-        await supabase.from('concurrency_conflicts').insert({
-          entity_type: 'task',
-          entity_id: id,
-          client_version: clientVersion,
-          server_version: currentTask?.version,
-          user_id: (req as any).user?.id,
-          metadata: { 
-            endpoint: 'PATCH /api/tasks', 
-            method: req.method,
-            detected_at: new Date().toISOString()
-          }
-        });
-
-          return res.status(409).json({ 
-            error: 'STALE_UPDATE', 
-            message: 'Conflict detected: Task was modified by another client.',
-            serverVersion: currentTask?.version,
-            currentTask: currentTask,
-            requestId
-          });
+        if (fetchError || !existingTask) {
+          res.status(404).json({ error: 'Task not found', requestId })
+          return span.end()
         }
-        res.status(400).json({ error: error.message, requestId })
-        return span.end()
+
+        const user = await requireProjectMember(req, res, existingTask.project_id)
+        if (!user) return span.end()
+    
+        // 2.1 Enforce Strict Version-Based OCC
+        const query = supabase
+          .from('tasks')
+          .update(updateData)
+          .eq('id', id);
+
+        if (clientVersion !== undefined) {
+          query.eq('version', clientVersion);
+        }
+
+        const { data, error } = await query.select().single();
+
+        if (error) {
+          // 2.2 Handle stale update
+          if (error.code === 'PGRST116') { // No rows returned due to version mismatch
+            // 4.0 Log conflict with enriched context and tenant scoping (SEC-04)
+            const { data: currentTask } = await supabase.from('tasks').select('version').eq('id', id).single();
+            const { data: project } = await supabase.from('projects').select('team_id').eq('id', existingTask.project_id).single();
+        
+            await supabase.from('concurrency_conflicts').insert({
+              entity_type: 'task',
+              entity_id: id,
+              team_id: project?.team_id || null,
+              client_version: clientVersion,
+              server_version: currentTask?.version,
+              user_id: user.id,
+              metadata: { 
+                endpoint: 'PATCH /api/tasks', 
+                method: req.method,
+                detected_at: new Date().toISOString()
+              }
+            });
+
+            return res.status(409).json({ 
+              error: 'STALE_UPDATE', 
+              message: 'Conflict detected: Task was modified by another client.',
+              serverVersion: currentTask?.version,
+              currentTask: currentTask,
+              requestId
+            });
+          }
+          res.status(400).json({ error: error.message, requestId })
+          return span.end()
+        }
+        res.status(200).json(data)
+        span.end()
+      } catch (e) {
+        span.recordException(e as Error)
+        span.end()
+        throw e
       }
-      res.status(200).json(data)
-      span.end()
-    } catch (e) {
-      span.recordException(e as Error)
-      span.end()
-      throw e
-    }
     })
   }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { randomBytes } from 'crypto'
 
 import { validateBody, InviteSchema } from '../../_lib/validate'
 import { getUser, requireAdmin, logAudit } from '../../_lib/auth'
@@ -24,8 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const adminUser = await requireAdmin(req, res, team_id)
     if (!adminUser) return
 
-    // Generate secure token
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    // Generate secure token (SEC-06: cryptographically secure 256-bit entropy)
+    const token = randomBytes(32).toString('hex')
     
     const { data, error } = await supabase
       .from('team_invitations')
