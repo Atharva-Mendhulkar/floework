@@ -1,4 +1,4 @@
-<!-- Improved compatibility of back to top link: See https://github.com/othneildrew/Best-README-Template/pull/73 -->
+
 <a id="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
@@ -350,7 +350,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-**Atharva Mendhulkar** — [GitHub](https://github.com/Atharva-Mendhulkar) &middot; [Email](mailto:Atharvamendhulkar01@gmail.com)
+**Atharva Mendhulkar** — [GitHub](https://github.com/Atharva-Mendhulkar) &middot; [Email](mailto:atharvamendhulkar01@gmail.com) &middot; [X.com](https://x.com/atharvarta)
 
 Project Link: [https://github.com/Atharva-Mendhulkar/floework](https://github.com/Atharva-Mendhulkar/floework)
 
