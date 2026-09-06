@@ -187,7 +187,7 @@ floework/
 │   ├── migrate_storage_to_s3.mjs     # Automated S3 asset migration utility
 │   ├── smoke_test_e2e.mjs            # Synthetic end-to-end smoke testing harness
 │   └── seed_edges.mjs                # Dependency graph seeding script
-├── supabase/
+├── database/
 │   └── migrations/                   # PostgreSQL schema migrations (000 through 041)
 ├── terraform/                        # Infrastructure as Code (HashiCorp Terraform v1.9.5)
 │   ├── environments/
