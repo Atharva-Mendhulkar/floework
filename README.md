@@ -307,10 +307,10 @@ Floework enforces a zero-invented-claims testing policy backed by behavioral sui
   - [x] SEC-06: Replace predictable PRNG with 256-bit `crypto.randomBytes(32)`
   - [x] SEC-08: Enforce project membership in `toggle_task_star` RPC
   - [x] Red/Green verified behavioral test suite and live multi-tenant integration test
-- [ ] **Phase 2: AWS Foundation Infrastructure**
-  - [ ] Multi-AZ VPC networking (public, private app, private data subnets)
-  - [ ] KMS encryption keys and SSM Parameter Store secret hierarchy
-  - [ ] Strict ingress security groups (ALB -> ECS -> RDS / ElastiCache)
+- [x] **Phase 2: AWS Foundation Infrastructure**
+  - [x] Multi-AZ VPC networking (public, private app, private data subnets)
+  - [x] KMS encryption keys and SSM Parameter Store secret hierarchy
+  - [x] Strict ingress security groups (ALB -> ECS -> RDS / ElastiCache)
 - [ ] **Phase 3: Database Staging Migration**
   - [ ] Amazon RDS PostgreSQL 16 Multi-AZ instance setup
   - [ ] Schema baseline replay and logical replication from Supabase

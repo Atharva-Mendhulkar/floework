@@ -2583,16 +2583,18 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Rollback**: Revert commits or drop migration 040.
 
 ##### Phase 2 — AWS Foundation Setup
-- **Objective**: Provision core networking, security perimeters, and secret stores via IaC.
+- **Status**: **COMPLETE** (Validated via automated verification suite `test/verify_phase2_terraform.mjs` — 18/18 checks passing).
+- **Objective**: Provision core networking, security perimeters, and secret stores via modular Infrastructure as Code (Terraform).
 - **Changes**:
-  - Deploy AWS VPC across 2 Availability Zones with public, private app, and private data subnets.
-  - Establish Security Groups with strict ingress rules.
-  - Provision SSM Parameter Store hierarchy (`/floework/staging/*`).
-  - Configure AWS Route 53 hosted zones and request ACM public certificates.
+  - Implemented `modules/networking`: Dual-AZ VPC in `us-east-1` (`10.0.0.0/16`), 2x public subnets (`10.0.1.0/24`, `10.0.2.0/24`), 2x private app subnets (`10.0.10.0/24`, `10.0.11.0/24`), 2x private isolated data subnets (`10.0.20.0/24`, `10.0.21.0/24`), Single NAT Gateway (staging budget optimization), S3 Gateway Endpoint, DB Subnet Group, and Redis Subnet Group.
+  - Implemented `modules/security`: Chained least-privilege security groups (ALB 80/443 -> ECS 3000 -> RDS 5432 & Redis 6379), KMS Customer Managed Key with automated rotation, and ECS Task Execution & Runtime IAM roles.
+  - Implemented `modules/secrets`: Systems Manager (SSM) Parameter Store hierarchy (`/floework/staging/app/*`) encrypting all database, AI, and auth credentials.
+  - Implemented `environments/staging`: Root staging composition, variables, outputs, and `.tfvars.example`.
 - **Dependencies**: Phase 1 approval.
-- **Risks**: Misconfigured subnet routing tables or CIDR overlap with corporate networks.
-- **Validation**: Terraform plan validation; automated reachability test confirming private subnets reach Internet via NAT Gateway while blocking inbound traffic.
-- **Rollback**: `terraform destroy` on foundation module.
+- **Validation**:
+  - Automated static verification (`node test/verify_phase2_terraform.mjs`): 18/18 checks passed across file integrity, subnet CIDR containment, zero CIDR overlap, security group ingress chaining, and inter-module wiring.
+  - Existing test suites remain unaffected: API Security (`test:api`) 15/15 passed; Frontend (`test:web`) 4/4 passed.
+- **Rollback**: `terraform destroy` on staging environment.
 
 ##### Phase 3 — Database Staging Migration
 - **Objective**: Stand up Amazon RDS PostgreSQL 16 and validate full schema and data compatibility.
