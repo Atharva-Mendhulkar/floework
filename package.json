@@ -43,5 +43,9 @@
     "@esbuild/linux-x64": "*",
     "@rollup/rollup-linux-x64-gnu": "*",
     "@rollup/rollup-linux-x64-musl": "*"
+  },
+  "allowScripts": {
+    "@swc/core": true,
+    "esbuild": true
   }
 }
