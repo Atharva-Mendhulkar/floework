@@ -2,8 +2,8 @@ import { createClient, User } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key',
   {
     auth: {
       persistSession: false,
@@ -12,13 +12,34 @@ const supabaseAdmin = createClient(
   }
 )
 
+import { verifyToken } from './jwt'
+
 export async function getUser(req: VercelRequest): Promise<User | null> {
+  if ((req as any).user) {
+    return (req as any).user
+  }
+
   const authHeader = req.headers.authorization
   if (!authHeader) return null
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return null
-  return user
+  const token = authHeader.replace('Bearer ', '').trim()
+  if (!token) return null
+
+  // 1. Fast path: Local cryptographic verification (Cognito JWKS / JWT_SECRET)
+  const localUser = await verifyToken(token)
+  if (localUser) {
+    ;(req as any).user = localUser
+    return localUser
+  }
+
+  // 2. Fallback path: Remote verification via Supabase Admin (for legacy sessions)
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+    if (error || !user) return null
+    ;(req as any).user = user
+    return user
+  } catch {
+    return null
+  }
 }
 
 export async function requireMember(req: VercelRequest, res: VercelResponse, teamId: string): Promise<User | null> {

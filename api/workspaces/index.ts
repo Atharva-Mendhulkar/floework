@@ -6,8 +6,8 @@ import { getUser, requireMember, requireAdmin, logAudit } from '../_lib/auth'
 import { rateLimit } from '../_lib/rateLimit'
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
 )
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

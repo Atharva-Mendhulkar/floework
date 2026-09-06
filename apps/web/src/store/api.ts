@@ -1,5 +1,6 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
 import { supabase } from '@/lib/supabase';
+import { StorageService } from '@/services/StorageService';
 import type { TaskNode, Project, User } from '@/data/mockData';
 
 export const api = createApi({
@@ -827,36 +828,22 @@ export const api = createApi({
 
                     let updatedAvatarUrl = profileData.avatarUrl;
 
-                    // 1. Handle avatar upload
+                    // 1. Handle avatar upload via StorageService (AWS S3 with Supabase fallback)
                     if (profileData.avatarFile) {
-                        const file = profileData.avatarFile;
-                        const fileExt = file.name.split('.').pop();
-                        const filePath = `${user.id}/avatar.${fileExt}`;
+                        const token = localStorage.getItem('auth_token') || '';
+                        const { publicUrl, error: uploadErr } = await StorageService.uploadAvatar(
+                            profileData.avatarFile,
+                            user.id,
+                            token
+                        );
 
-                        // Upload to Supabase Storage with explicit content type
-                        const { error: uploadError } = await supabase.storage
-                            .from('avatars')
-                            .upload(filePath, file, { 
-                                upsert: true,
-                                contentType: file.type,
-                                cacheControl: '3600'
-                            });
-
-                        if (uploadError) {
-                            if (uploadError.message.includes('Bucket not found')) {
-                                console.error('[Floework] STORAGE ERROR: The "avatars" bucket does not exist. Please create it in your Supabase project (Storage -> Buckets -> Create "avatars" and set it to Public).');
-                            }
-                            console.error('[Floework] Avatar Upload Error:', uploadError);
-                            return { error: { status: 400, data: uploadError.message } };
+                        if (uploadErr || !publicUrl) {
+                            console.error('[Floework] Avatar Upload Error:', uploadErr);
+                            return { error: { status: 400, data: uploadErr || 'Avatar upload failed' } };
                         }
 
-                        // Get public URL
-                        const { data: urlData } = supabase.storage
-                            .from('avatars')
-                            .getPublicUrl(filePath);
-
-                        // Update profile with avatar URL (append cache-buster)
-                        updatedAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+                        // Update profile with avatar URL
+                        updatedAvatarUrl = publicUrl;
                         const { error: profileError } = await supabase.from('profiles').update({ avatar_url: updatedAvatarUrl }).eq('id', user.id);
                         if (profileError) {
                             console.error('[Floework] Profile Image Update Error:', profileError);

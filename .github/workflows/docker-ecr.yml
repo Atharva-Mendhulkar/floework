@@ -1,0 +1,110 @@
+name: Container Build & ECR Delivery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'api/**'
+      - 'workers/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/docker-ecr.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: floework-staging-api
+
+jobs:
+  build-scan-push:
+    name: Build Container, Security Scan & ECR Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials via OIDC
+        id: aws-auth
+        if: env.AWS_ROLE_TO_ASSUME != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-ECRPush
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+        env:
+          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        if: steps.aws-auth.outcome == 'success'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker Container Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: |
+            floework-staging-api:${{ github.sha }}
+            floework-staging-api:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy Container Security Vulnerability Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'floework-staging-api:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Tag and Push Image to Amazon ECR
+        if: steps.login-ecr.outcome == 'success'
+        run: |
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          COMMIT_TAG="$REGISTRY/${{ env.ECR_REPOSITORY }}:sha-${{ github.sha }}"
+          STAGING_TAG="$REGISTRY/${{ env.ECR_REPOSITORY }}:staging"
+          LATEST_TAG="$REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+
+          docker tag floework-staging-api:${{ github.sha }} "$COMMIT_TAG"
+          docker tag floework-staging-api:${{ github.sha }} "$STAGING_TAG"
+          docker tag floework-staging-api:${{ github.sha }} "$LATEST_TAG"
+
+          docker push "$COMMIT_TAG"
+          docker push "$STAGING_TAG"
+          docker push "$LATEST_TAG"
+
+          echo "IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $COMMIT_TAG)" >> $GITHUB_ENV
+
+      - name: Publish Delivery Report to GitHub Step Summary
+        run: |
+          echo "## 🚀 Container Delivery Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Base Image**: \`node:20-alpine\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Architecture**: Linux x86_64 / Fargate" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit SHA**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.login-ecr.outputs.registry }}" ]; then
+            echo "- **ECR Registry**: \`${{ steps.login-ecr.outputs.registry }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **ECR Repository**: \`${{ env.ECR_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Pushed Tags**:" >> $GITHUB_STEP_SUMMARY
+            echo "  - \`sha-${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "  - \`staging\`" >> $GITHUB_STEP_SUMMARY
+            echo "  - \`latest\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **ECR Status**: Container successfully built & security scanned locally. Configure \`AWS_ROLE_TO_ASSUME\` secret to enable automated ECR push." >> $GITHUB_STEP_SUMMARY
+          fi

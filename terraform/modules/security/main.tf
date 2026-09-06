@@ -156,6 +156,22 @@ resource "aws_kms_key" "main" {
           "kms:DescribeKey"
         ]
         Resource = "*"
+      },
+      {
+        Sid    = "AllowRDSEncryption"
+        Effect = "Allow"
+        Principal = {
+          Service = "rds.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:CreateGrant",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -252,3 +268,28 @@ resource "aws_iam_role" "ecs_task_role" {
     Environment = var.environment
   })
 }
+
+resource "aws_iam_role_policy" "ecs_task_bedrock" {
+  name = "${var.project_name}-${var.environment}-ecs-bedrock-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowBedrockFoundationModelInvocation"
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku*",
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-sonnet*",
+          "arn:aws:bedrock:*::foundation-model/amazon.titan-text*"
+        ]
+      }
+    ]
+  })
+}
+

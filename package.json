@@ -5,6 +5,10 @@
     "apps/*"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@aws-sdk/client-ses": "^3.1127.0",
+    "@aws-sdk/client-sqs": "^3.1127.0",
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
     "@google/generative-ai": "^0.21.0",
     "@opentelemetry/api": "^1.9.1",
     "@supabase/supabase-js": "^2.45.4",
@@ -22,12 +26,17 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
+    "start": "node -r ts-node/register/transpile-only api/server.ts",
+    "worker": "node -r ts-node/register/transpile-only workers/sqs-worker.ts",
     "build": "cd apps/web && npm run build",
     "vercel-build": "cd apps/web && npm run build",
     "test": "vitest run",
     "test:api": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:web": "cd apps/web && vitest run"
+    "test:web": "cd apps/web && vitest run",
+    "smoke": "node scripts/smoke_test_e2e.mjs",
+    "sync": "node scripts/cutover_delta_sync.mjs",
+    "migrate:s3": "node scripts/migrate_storage_to_s3.mjs"
   },
   "optionalDependencies": {
     "@esbuild/linux-arm64": "*",

@@ -60,8 +60,33 @@ variable "upstash_redis_rest_token" {
   default     = ""
 }
 
+variable "bedrock_model_id" {
+  description = "Amazon Bedrock Foundation Model ID for AI narrative generation"
+  type        = string
+  default     = "anthropic.claude-3-haiku-20240307-v1:0"
+}
+
+variable "bedrock_region" {
+  description = "AWS region for Amazon Bedrock runtime"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID for JWT validation"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  description = "Cognito User Pool Client ID for Web SPA"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Resource tags to append to all SSM parameters"
   type        = map(string)
   default     = {}
 }
+

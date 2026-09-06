@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { publishEvent } from '../_lib/kafka'
+import { publishFocusCompletionEvent } from '../_lib/sqs'
 import { trace } from '@opentelemetry/api'
 import { getUser, requireProjectMember } from '../_lib/auth'
 
@@ -38,8 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      // Publish to Kafka topic instead of synchronously calculating stability
-      await publishEvent('focus.events', targetUserId, {
+      // Publish to Amazon SQS FIFO queue instead of synchronously calculating stability
+      await publishFocusCompletionEvent(targetUserId, {
         type: 'FOCUS_SESSION_COMPLETED',
         userId: targetUserId,
         projectId,

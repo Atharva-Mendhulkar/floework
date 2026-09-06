@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { rateLimit } from '../_lib/rateLimit'
 import { validateQuery, ProjectIdQuerySchema } from '../_lib/validate'
@@ -8,20 +7,17 @@ import { trace } from '@opentelemetry/api'
 import { v4 as uuidv4 } from 'uuid'
 import CircuitBreaker from 'opossum'
 import { redis } from '../_lib/redis'
+import { generateNarrative, parseNarrativeResponse } from './bedrockClient'
 
-// Setup Opossum Circuit Breaker for Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-
-async function fetchGemini(prompt: string) {
-  const aiPromise = model.generateContent(prompt).then(r => r.response.text())
+async function fetchAI(prompt: string) {
+  const aiPromise = generateNarrative(prompt)
   const timeoutPromise = new Promise<string>((_, reject) => 
-    setTimeout(() => reject(new Error('Gemini timeout')), 25000)
+    setTimeout(() => reject(new Error('AI generation timeout')), 25000)
   )
   return Promise.race([aiPromise, timeoutPromise])
 }
 
-const breaker = new CircuitBreaker(fetchGemini, {
+const breaker = new CircuitBreaker(fetchAI, {
   timeout: 25000, // 25s timeout
   errorThresholdPercentage: 50, // trip if 50% fail
   volumeThreshold: 5, // minimum 5 requests before tripping
@@ -35,6 +31,7 @@ breaker.fallback(() => {
     warnings: []
   })
 })
+
 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -110,21 +107,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Format (JSON): { "summary": "...", "highlights": ["..."], "warnings": ["..."] }
     `
 
-    // 5. Call Gemini with Timeout and Circuit Breaker
-    const responseText = await tracer.startActiveSpan('gemini-api-call', async (geminiSpan) => {
+    // 5. Call AI Narrative Generator with Timeout and Circuit Breaker
+    const responseText = await tracer.startActiveSpan('ai-narrative-generation', async (aiSpan) => {
       try {
         const text = await breaker.fire(prompt)
-        geminiSpan.end()
+        aiSpan.end()
         return text
       } catch (e) {
-        geminiSpan.recordException(e as Error)
-        geminiSpan.end()
+        aiSpan.recordException(e as Error)
+        aiSpan.end()
         throw e
       }
     })
 
-
-    const aiData = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, '').trim())
+    const aiData = parseNarrativeResponse(responseText)
 
     // 6. Update Cache in Redis with 1 hour TTL (3600 seconds)
     await redis.setex(cacheKey, 3600, JSON.stringify(aiData))

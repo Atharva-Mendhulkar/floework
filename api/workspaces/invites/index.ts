@@ -5,10 +5,11 @@ import { randomBytes } from 'crypto'
 import { validateBody, InviteSchema } from '../../_lib/validate'
 import { getUser, requireAdmin, logAudit } from '../../_lib/auth'
 import { rateLimit } from '../../_lib/rateLimit'
+import { sendWorkspaceInviteEmail } from '../../_lib/ses'
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
 )
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -37,6 +38,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) return res.status(400).json({ error: error.message })
 
     await logAudit(team_id, adminUser.id, 'INVITE_SEND', 'team_invitations', data.id, { email, team_id })
+
+    // Dispatch transactional email via Amazon SES
+    try {
+      await sendWorkspaceInviteEmail({
+        to: email,
+        inviterName: adminUser.email || 'Team Administrator',
+        teamName: 'Floework Workspace',
+        inviteToken: token
+      })
+    } catch (err: any) {
+      console.error('Failed to dispatch invite email via SES:', err)
+    }
 
     return res.status(201).json(data)
   }

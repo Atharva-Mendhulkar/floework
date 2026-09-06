@@ -1,31 +1,52 @@
-# Build stage
+# ==============================================================================
+# Multi-Stage Dockerfile for Floework Modular Monolith API
+# Deployed to Amazon ECS Fargate behind Application Load Balancer
+# Non-root execution, minimal Alpine base, native HEALTHCHECK probe
+# ==============================================================================
+
+# Stage 1: Build & Dependencies
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+RUN apk add --no-cache libc6-compat
 
-# Install dependencies
-RUN npm install
+COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
 
-# Copy source code
+RUN npm ci
+
 COPY . .
 
-# Build the React application
-RUN npm run build
+# Stage 2: Production Runtime
+FROM node:20-alpine AS runner
 
-# Production stage (Nginx)
-FROM nginx:alpine
+WORKDIR /app
 
-# Copy the built assets to Nginx html directory
-COPY --from=builder /app/dist /usr/share/nginx/html
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
-# Replace default Nginx configuration to support SPA routing
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Install curl for container health check
+RUN apk add --no-cache curl
 
-# Expose port 80
-EXPOSE 80
+# Create non-root application user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 floework
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy dependencies and application source
+COPY --from=builder --chown=floework:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=floework:nodejs /app/api ./api
+COPY --from=builder --chown=floework:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=floework:nodejs /app/tsconfig.json* ./
+
+USER floework
+
+EXPOSE 3000
+
+# Health check probe aligned with ALB target group configuration
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start modular monolith API server
+CMD ["node", "-r", "ts-node/register/transpile-only", "api/server.ts"]

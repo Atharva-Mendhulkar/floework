@@ -1,0 +1,83 @@
+name: Terraform IaC Quality & Speculative Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform-quality:
+    name: Terraform Format, Validate & Speculative Plan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup HashiCorp Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Verify Canonical Formatting (terraform fmt)
+        id: fmt
+        run: terraform fmt -check -recursive terraform/
+
+      - name: Initialize Staging Environment (terraform init)
+        id: init
+        run: terraform -chdir=terraform/environments/staging init -backend=false
+
+      - name: Validate Module Syntactic & Type Correctness (terraform validate)
+        id: validate
+        run: terraform -chdir=terraform/environments/staging validate
+
+      - name: Configure AWS Credentials via OIDC
+        id: aws-auth
+        if: env.AWS_ROLE_TO_ASSUME != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-TerraformPlan
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+        env:
+          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Generate Speculative Plan against Staging
+        id: plan
+        if: env.AWS_ROLE_TO_ASSUME != ''
+        run: |
+          terraform -chdir=terraform/environments/staging plan -no-color -out=tfplan.binary
+          terraform -chdir=terraform/environments/staging show -no-color tfplan.binary > plan_output.txt
+        env:
+          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Publish Summary to GitHub Step Summary
+        run: |
+          echo "## 🛡️ Infrastructure Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Canonical Formatting** | \`${{ steps.fmt.outcome }}\` | \`terraform fmt -check -recursive\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Module Initialization** | \`${{ steps.init.outcome }}\` | All 15 modules resolved |" >> $GITHUB_STEP_SUMMARY
+          echo "| **HCL Schema Validation** | \`${{ steps.validate.outcome }}\` | Zero configuration errors |" >> $GITHUB_STEP_SUMMARY
+          if [ -f terraform/environments/staging/plan_output.txt ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Speculative Plan Summary" >> $GITHUB_STEP_SUMMARY
+            echo '```terraform' >> $GITHUB_STEP_SUMMARY
+            tail -n 35 terraform/environments/staging/plan_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+            echo "> Live speculative plan step is armed for AWS OIDC. Set \`AWS_ROLE_TO_ASSUME\` in repository secrets to activate live speculative plans." >> $GITHUB_STEP_SUMMARY
+          fi

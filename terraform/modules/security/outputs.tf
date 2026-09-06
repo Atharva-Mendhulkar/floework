@@ -42,3 +42,14 @@ output "ecs_task_role_arn" {
   description = "ARN of the ECS Task Runtime IAM Role"
   value       = aws_iam_role.ecs_task_role.arn
 }
+
+output "ecs_task_role_id" {
+  description = "ID of the ECS Task Runtime IAM Role"
+  value       = aws_iam_role.ecs_task_role.id
+}
+
+output "ecs_task_role_name" {
+  description = "Name of the ECS Task Runtime IAM Role"
+  value       = aws_iam_role.ecs_task_role.name
+}
+
