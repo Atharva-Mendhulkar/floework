@@ -7,7 +7,7 @@ import { trace } from '@opentelemetry/api'
 import { v4 as uuidv4 } from 'uuid'
 import CircuitBreaker from 'opossum'
 import { redis } from '../_lib/redis'
-import { generateNarrative, parseNarrativeResponse } from './bedrockClient'
+import { generateNarrative, parseNarrativeResponse } from '../_lib/bedrockClient'
 
 async function fetchAI(prompt: string) {
   const aiPromise = generateNarrative(prompt)

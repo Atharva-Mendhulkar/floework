@@ -293,3 +293,15 @@ if (require.main === module || process.env.START_SERVER === 'true') {
   process.on('SIGTERM', () => shutdown('SIGTERM'))
   process.on('SIGINT', () => shutdown('SIGINT'))
 }
+
+// Default export enables Vercel Serverless Function compatibility while supporting standalone ECS execution
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  res.status(200).json({
+    service: 'floework-api',
+    status: 'healthy',
+    mode: 'modular-monolith',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  })
+}
+
