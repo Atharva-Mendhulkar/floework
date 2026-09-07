@@ -37,6 +37,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy dependencies and application source
 COPY --from=builder --chown=floework:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=floework:nodejs /app/api ./api
+COPY --from=builder --chown=floework:nodejs /app/workers ./workers
+COPY --from=builder --chown=floework:nodejs /app/database ./database
+COPY --from=builder --chown=floework:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=floework:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=floework:nodejs /app/tsconfig.json* ./
 

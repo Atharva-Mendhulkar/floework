@@ -205,3 +205,43 @@ resource "aws_iam_role_policy" "terraform_plan" {
     ]
   })
 }
+
+# Least-privilege IAM Policy: Automated ECS Service Deployment & Task Registration
+resource "aws_iam_role_policy" "ecs_deploy" {
+  name = "${var.project_name}-${var.environment}-ecs-deploy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat(
+      [
+        {
+          Sid    = "ECSDeploymentManagement"
+          Effect = "Allow"
+          Action = [
+            "ecs:DescribeServices",
+            "ecs:DescribeTaskDefinition",
+            "ecs:RegisterTaskDefinition",
+            "ecs:UpdateService",
+            "ecs:ListTasks",
+            "ecs:DescribeTasks"
+          ]
+          Resource = "*"
+        }
+      ],
+      var.ecs_execution_role_arn != "" && var.ecs_task_role_arn != "" ? [
+        {
+          Sid    = "IAMPassRoleToECS"
+          Effect = "Allow"
+          Action = [
+            "iam:PassRole"
+          ]
+          Resource = [
+            var.ecs_execution_role_arn,
+            var.ecs_task_role_arn
+          ]
+        }
+      ] : []
+    )
+  })
+}

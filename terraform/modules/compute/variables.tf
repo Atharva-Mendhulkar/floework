@@ -142,6 +142,42 @@ variable "bedrock_region" {
   description = "Amazon Bedrock runtime AWS region"
 }
 
+variable "focus_completion_queue_url" {
+  type        = string
+  default     = ""
+  description = "URL of the focus completion SQS FIFO queue"
+}
+
+variable "audit_logs_queue_url" {
+  type        = string
+  default     = ""
+  description = "URL of the audit logs SQS FIFO queue"
+}
+
+variable "notifications_queue_url" {
+  type        = string
+  default     = ""
+  description = "URL of the notifications SQS FIFO queue"
+}
+
+variable "worker_desired_count" {
+  type        = number
+  default     = 1
+  description = "Desired number of background worker tasks"
+}
+
+variable "worker_cpu" {
+  type        = number
+  default     = 256
+  description = "CPU units allocated to background worker task (256 = 0.25 vCPU)"
+}
+
+variable "worker_memory" {
+  type        = number
+  default     = 512
+  description = "Memory (MB) allocated to background worker task"
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}

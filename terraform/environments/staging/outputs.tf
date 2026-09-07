@@ -214,6 +214,21 @@ output "ecs_task_definition_arn" {
   value       = module.compute.task_definition_arn
 }
 
+output "ecs_worker_service_name" {
+  description = "Name of the ECS Fargate background worker service"
+  value       = module.compute.worker_service_name
+}
+
+output "ecs_worker_task_definition_arn" {
+  description = "ARN of the ECS background worker task definition"
+  value       = module.compute.worker_task_definition_arn
+}
+
+output "ecs_migration_task_definition_arn" {
+  description = "ARN of the ephemeral database migration task definition"
+  value       = module.compute.migration_task_definition_arn
+}
+
 # ==============================================================================
 # Realtime Outputs (Phase 6 WebSocket API & DynamoDB Connection Store)
 # ==============================================================================

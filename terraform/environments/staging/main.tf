@@ -184,6 +184,10 @@ module "compute" {
   bedrock_model_id = var.bedrock_model_id
   bedrock_region   = var.bedrock_region
 
+  focus_completion_queue_url = module.queue.focus_completion_queue_url
+  audit_logs_queue_url       = module.queue.audit_logs_queue_url
+  notifications_queue_url    = module.queue.notifications_queue_url
+
   tags = var.tags
 }
 
@@ -293,12 +297,14 @@ module "email" {
 module "ci_cd" {
   source = "../../modules/ci_cd"
 
-  project_name         = var.project_name
-  environment          = var.environment
-  github_repo          = var.github_repo
-  kms_key_arn          = module.security.kms_key_arn
-  enable_oidc_provider = var.enable_ci_cd_oidc
-  tags                 = var.tags
+  project_name           = var.project_name
+  environment            = var.environment
+  github_repo            = var.github_repo
+  kms_key_arn            = module.security.kms_key_arn
+  enable_oidc_provider   = var.enable_ci_cd_oidc
+  ecs_execution_role_arn = module.security.ecs_execution_role_arn
+  ecs_task_role_arn      = module.security.ecs_task_role_arn
+  tags                   = var.tags
 }
 
 

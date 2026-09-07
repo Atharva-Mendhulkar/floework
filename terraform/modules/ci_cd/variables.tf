@@ -26,6 +26,18 @@ variable "enable_oidc_provider" {
   default     = true
 }
 
+variable "ecs_execution_role_arn" {
+  description = "ARN of the ECS task execution IAM role for scoping iam:PassRole in CI/CD"
+  type        = string
+  default     = ""
+}
+
+variable "ecs_task_role_arn" {
+  description = "ARN of the ECS task runtime IAM role for scoping iam:PassRole in CI/CD"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)

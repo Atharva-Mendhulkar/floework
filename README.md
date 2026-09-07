@@ -197,8 +197,8 @@ floework/
 │       ├── alb/                      # Application Load Balancer & target groups
 │       ├── auth/                     # Amazon Cognito User Pool & SPA client
 │       ├── cache/                    # Amazon ElastiCache Redis replication group
-│       ├── ci_cd/                    # GitHub Actions OIDC provider, IAM role & ECR
-│       ├── compute/                  # ECS Fargate cluster, task definition & auto-scaling
+│       ├── ci_cd/                    # GitHub Actions OIDC provider, IAM deployment roles & ECR
+│       ├── compute/                  # ECS Fargate cluster, API & SQS worker services, migration task & auto-scaling
 │       ├── database/                 # Amazon RDS PostgreSQL 16 Multi-AZ instance
 │       ├── dns/                      # Route 53 public zone, alias records & ACM SSL
 │       ├── email/                    # Amazon SES verified identity & sending policies
@@ -238,11 +238,13 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/observability_phase9│ JSON Logs & Metric Alarms  │ 10 tests    │ ✓ Passed     │
 │ test/api/cutover_phase10     │ Delta Sync & Smoke Harness │ 6 tests     │ ✓ Passed     │
 │ test/api/saas_phase11        │ SES Email, DAG & Stripe    │ 15 tests    │ ✓ Passed     │
+│ test/api/migrations_runner   │ Checksums, Shim & Runner   │ 15 tests    │ ✓ Passed     │
+│ test/api/compute_phase15     │ ECS Fargate, Worker & CD   │ 22 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 99 tests    │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 136 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ Terraform Staging Validation │ 15 Infrastructure Modules  │ 91 to add   │ Clean Plan   │
+│ Terraform Staging Validation │ 15 Infrastructure Modules  │ 96 to add   │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
 ```
 

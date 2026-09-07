@@ -63,7 +63,10 @@ resource "aws_ecs_task_definition" "api" {
         { name = "REDIS_HOST", value = var.redis_endpoint },
         { name = "REDIS_PORT", value = var.redis_port },
         { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
-        { name = "COGNITO_CLIENT_ID", value = var.cognito_client_id }
+        { name = "COGNITO_CLIENT_ID", value = var.cognito_client_id },
+        { name = "FOCUS_COMPLETION_QUEUE_URL", value = var.focus_completion_queue_url },
+        { name = "AUDIT_LOGS_QUEUE_URL", value = var.audit_logs_queue_url },
+        { name = "NOTIFICATIONS_QUEUE_URL", value = var.notifications_queue_url }
       ]
 
       logConfiguration = {
@@ -154,4 +157,146 @@ resource "aws_appautoscaling_policy" "memory" {
     scale_in_cooldown  = 300
     scale_out_cooldown = 60
   }
+}
+
+# ==============================================================================
+# Amazon SQS Background Worker Service (Phase 15 Containerized Worker)
+# Consumes focus completion events, calculates stability, acknowledges SQS FIFO
+# ==============================================================================
+
+resource "aws_cloudwatch_log_group" "worker" {
+  name              = "/ecs/${var.project_name}-${var.environment}-worker"
+  retention_in_days = 14
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-worker-logs"
+    Environment = var.environment
+  })
+}
+
+resource "aws_ecs_task_definition" "worker" {
+  family                   = "${var.project_name}-${var.environment}-worker"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = tostring(var.worker_cpu)
+  memory                   = tostring(var.worker_memory)
+  execution_role_arn       = var.ecs_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "worker"
+      image     = var.container_image
+      essential = true
+      command   = ["node", "-r", "ts-node/register/transpile-only", "workers/sqs-worker.ts"]
+
+      environment = [
+        { name = "NODE_ENV", value = var.environment },
+        { name = "AWS_REGION", value = var.aws_region },
+        { name = "FOCUS_COMPLETION_QUEUE_URL", value = var.focus_completion_queue_url },
+        { name = "AUDIT_LOGS_QUEUE_URL", value = var.audit_logs_queue_url },
+        { name = "NOTIFICATIONS_QUEUE_URL", value = var.notifications_queue_url },
+        { name = "DB_HOST", value = var.database_host },
+        { name = "DB_PORT", value = var.database_port },
+        { name = "DB_NAME", value = var.database_name },
+        { name = "DB_USER", value = var.database_username },
+        { name = "REDIS_HOST", value = var.redis_endpoint },
+        { name = "REDIS_PORT", value = var.redis_port }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.worker.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-worker-task-def"
+    Environment = var.environment
+  })
+}
+
+resource "aws_ecs_service" "worker" {
+  name            = "${var.project_name}-${var.environment}-worker-service"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.worker.arn
+  desired_count   = var.worker_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = var.private_app_subnet_ids
+    security_groups  = [var.ecs_security_group_id]
+    assign_public_ip = false
+  }
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-worker-service"
+    Environment = var.environment
+  })
+}
+
+# ==============================================================================
+# Database Schema Migration Task Definition (Ephemeral One-Off Runner)
+# ==============================================================================
+
+resource "aws_cloudwatch_log_group" "migration" {
+  name              = "/ecs/${var.project_name}-${var.environment}-migration"
+  retention_in_days = 14
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-migration-logs"
+    Environment = var.environment
+  })
+}
+
+resource "aws_ecs_task_definition" "migration" {
+  family                   = "${var.project_name}-${var.environment}-migration"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = var.ecs_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "migration"
+      image     = var.container_image
+      essential = true
+      command   = ["node", "scripts/run_migrations.mjs"]
+
+      environment = [
+        { name = "NODE_ENV", value = var.environment },
+        { name = "AWS_REGION", value = var.aws_region },
+        { name = "DB_HOST", value = var.database_host },
+        { name = "DB_PORT", value = var.database_port },
+        { name = "DB_NAME", value = var.database_name },
+        { name = "DB_USER", value = var.database_username }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.migration.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-migration-task-def"
+    Environment = var.environment
+  })
 }
