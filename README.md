@@ -183,12 +183,13 @@ floework/
 │       ├── src/services/             # AWS WebSocket & S3 Storage dual-mode services
 │       └── src/store/                # Redux state & API client layer
 ├── scripts/
+│   ├── run_migrations.mjs            # Automated transactional database migration runner
 │   ├── cutover_delta_sync.mjs        # Zero-data-loss delta sync engine with --reverse
 │   ├── migrate_storage_to_s3.mjs     # Automated S3 asset migration utility
 │   ├── smoke_test_e2e.mjs            # Synthetic end-to-end smoke testing harness
 │   └── seed_edges.mjs                # Dependency graph seeding script
 ├── database/
-│   └── migrations/                   # PostgreSQL schema migrations (000 through 041)
+│   └── migrations/                   # PostgreSQL schema migrations (42 files: 000 through 040)
 ├── terraform/                        # Infrastructure as Code (HashiCorp Terraform v1.9.5)
 │   ├── environments/
 │   │   └── staging/                  # Staging composition (15 modules wired together)
@@ -302,7 +303,7 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 
 | Command | Description |
 | :--- | :--- |
-| `npm run test:api` | Run all 95 backend API behavioral unit and integration tests |
+| `npm run test:api` | Run all 110 backend API behavioral unit and integration tests |
 | `npm run test:web` | Run frontend React unit and component tests with Vitest |
 | `npm run test` | Run complete backend and API test suite |
 | `npm run start` | Start the modular monolith Fastify API server locally |
@@ -310,6 +311,9 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 | `npm run build` | Build the production React SPA bundle into `apps/web/dist/` |
 | `npm run smoke` | Execute synthetic end-to-end smoke tests against API endpoints |
 | `npm run sync` | Run zero-data-loss database delta synchronization |
+| `npm run migrate:db` | Execute pending PostgreSQL migrations with transactional tracking |
+| `npm run migrate:status` | Inspect applied vs pending migration status across all 42 migrations |
+| `npm run migrate:dry-run` | Preview pending migrations without applying changes |
 | `npm run migrate:s3` | Migrate media assets from source storage to private S3 |
 
 ---

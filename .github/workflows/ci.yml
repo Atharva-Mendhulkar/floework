@@ -34,7 +34,7 @@ jobs:
       - name: Install Monorepo Dependencies
         run: npm ci
 
-      - name: Run 95-Test API Behavioral Suite
+      - name: Run 110-Test API Behavioral Suite
         run: ./node_modules/.bin/vitest run test/api/
         env:
           NODE_ENV: test
@@ -44,6 +44,9 @@ jobs:
         run: node scripts/cutover_delta_sync.mjs --dry-run
         env:
           DRY_RUN: 'true'
+
+      - name: Verify Database Migrations (--dry-run)
+        run: npm run migrate:dry-run
 
   frontend-tests:
     name: Frontend React Vitest & Production Build
