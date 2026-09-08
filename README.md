@@ -7,7 +7,7 @@
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
 [![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-204%2F204%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
+[![Tests Passing](https://img.shields.io/badge/Tests-217%2F217%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
 [![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
@@ -189,8 +189,10 @@ floework/
 ├── docs/
 │   ├── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
 │   ├── DISASTER_RECOVERY_RUNBOOK.md  # Multi-AZ failover, PITR restoration & cross-region DR
-│   └── SECURITY_AND_COMPLIANCE.md    # CIS Benchmark, SOC 2 Type II controls & audit policies
+│   ├── SECURITY_AND_COMPLIANCE.md    # CIS Benchmark, SOC 2 Type II controls & audit policies
+│   └── CHAOS_AND_RESILIENCY_PLAYBOOK.md # Fault injection, SLO error budgets & GameDay drills
 ├── scripts/
+│   ├── chaos_resiliency_test.mjs     # Automated chaos engineering & latency SLA engine
 │   ├── security_compliance_audit.mjs # Automated CIS Benchmark v3.0 audit engine
 │   ├── dr_backup_restore.mjs         # Automated disaster recovery validation & PITR engine
 │   ├── production_cutover.mjs        # 6-stage production cutover orchestrator & rollback
@@ -259,13 +261,15 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/cutover_phase17     │ Live Verification & DNS    │ 18 tests    │ ✓ Passed     │
 │ test/api/production_phase18  │ WAF v2, Prod HA & DR       │ 16 tests    │ ✓ Passed     │
 │ test/api/compliance_phase19  │ CIS Benchmark & CloudTrail │ 17 tests    │ ✓ Passed     │
+│ test/api/resiliency_phase20  │ Chaos, Fallback & SLOs     │ 13 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 204 tests   │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 217 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
 │ Terraform Staging Validation │ 16 Infrastructure Modules  │ 103 to add  │ Clean Plan   │
 │ Terraform Production Valid.  │ 18 Infrastructure Modules  │ 122 to add  │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
+
 
 
 ```
@@ -341,6 +345,8 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 | `npm run dr:dry-run` | Rehearse disaster recovery evaluation in simulated dry-run mode |
 | `npm run compliance:audit` | Run automated CIS AWS Foundations Benchmark compliance audit |
 | `npm run compliance:dry-run` | Rehearse security compliance evaluation in simulated dry-run mode |
+| `npm run chaos:test` | Run automated chaos fault injection and latency percentile SLA suite |
+| `npm run chaos:dry-run` | Rehearse chaos engineering scenarios in simulated dry-run mode |
 | `npm run migrate:db` | Execute pending PostgreSQL migrations with transactional tracking |
 | `npm run migrate:status` | Inspect applied vs pending migration status across all 42 migrations |
 | `npm run migrate:dry-run` | Preview pending migrations without applying changes |
@@ -371,7 +377,7 @@ terraform -chdir=terraform/environments/staging plan -no-color
 
 ---
 
-## Architectural Roadmap (All 19 Phases Completed)
+## Architectural Roadmap (All 20 Phases Completed)
 
 - [x] **Phase 1: P0 Security & Concurrency Correctness**
   - OCC version checks, anti-spoofing guards, and 256-bit cryptographic invite tokens.
@@ -411,6 +417,8 @@ terraform -chdir=terraform/environments/staging plan -no-color
   - Regional AWS WAF v2 Web ACL associated with ALB (OWASP Top 10, IP reputation, rate limiting), 17-module production composition (`terraform/environments/production`), multi-AZ redundant NAT Gateways, RDS PostgreSQL 16 Multi-AZ standby with 30-day retention and deletion protection, Redis HA failover, and automated Disaster Recovery validation (`scripts/dr_backup_restore.mjs`, `docs/DISASTER_RECOVERY_RUNBOOK.md`).
 - [x] **Phase 19: Enterprise Security Governance, AWS CloudTrail, AWS Config Continuous Compliance & Automated CIS Benchmark Auditing**
   - Multi-region AWS CloudTrail with cryptographic log file integrity validation, dedicated 365-day compliance S3 audit bucket, AWS Config continuous resource recording & managed rules, automated CIS AWS Foundations Benchmark audit engine (100% score), and SOC 2 Type II trust mapping (`scripts/security_compliance_audit.mjs`, `docs/SECURITY_AND_COMPLIANCE.md`).
+- [x] **Phase 20: Chaos Engineering, Automated Resiliency Testing & Service Level Objective (SLO) Verification Harness**
+  - 5 chaos fault injection scenarios (Redis partition, Bedrock circuit breaker, transient DB retry with exponential backoff, SQS poison pill DLQ isolation, concurrency burst), mathematical latency percentile engine (p50/p90/p95/p99), and operational GameDay playbook (`scripts/chaos_resiliency_test.mjs`, `docs/CHAOS_AND_RESILIENCY_PLAYBOOK.md`).
 
 ---
 
