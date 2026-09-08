@@ -610,8 +610,7 @@ export default function LandingPage() {
                             <ul className="space-y-4 text-[14px]">
                                 {[
                                     { name: "Features", path: "/features" },
-                                    { name: "Design", path: "/design" },
-                                    { name: "Philosophy", path: "/philosophy" }
+                                    { name: "Design", path: "/design" }
                                 ].map((item) => (
                                     <li key={item.name}>
                                         <button onClick={() => navigate(item.path)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">

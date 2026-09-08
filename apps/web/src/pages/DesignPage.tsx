@@ -53,7 +53,7 @@ const DesignPage = () => {
           </div>
           <h1 className="text-[40px] sm:text-[56px] md:text-[72px] font-semibold tracking-tight leading-[1.05] text-foreground mb-6">
             Crafting <br />
-            <span className="text-[#007dff]">floework.</span>
+            <span className="font-bold text-xl tracking-tight text-foreground">floework<span className="text-[#007dff]">.</span></span>
           </h1>
           <p className="text-lg md:text-xl text-slate-500 max-w-[600px] leading-relaxed font-medium">
             From logomark to interface - every design decision in floework is intentional.
