@@ -172,13 +172,13 @@ export default function LandingPage() {
 
                 {/* ─── Floating Avatars */}
                 {/* Top Left */}
-                <FloatingAvatar color="#3b82f6" img="https://i.pravatar.cc/150?img=5" delay="0s" anim="swayC" rotate={-45} top="18%" left="12%" />
+                <FloatingAvatar color="#3b82f6" img="/assets/one.png" delay="0s" anim="swayC" rotate={-45} top="18%" left="12%" />
                 {/* Top Right */}
-                <FloatingAvatar color="#10b981" img="https://i.pravatar.cc/150?img=11" delay="1s" anim="swayA" rotate={45} top="20%" right="12%" />
+                <FloatingAvatar color="#10b981" img="/assets/two.png" delay="1s" anim="swayA" rotate={45} top="20%" right="12%" />
                 {/* Bottom Left */}
-                <FloatingAvatar color="#8b5cf6" img="https://i.pravatar.cc/150?img=43" delay="0.5s" anim="swayB" rotate={-110} bottom="10%" left="18%" />
+                <FloatingAvatar color="#8b5cf6" img="/assets/three.png" delay="0.5s" anim="swayB" rotate={-110} bottom="10%" left="18%" />
                 {/* Bottom Right */}
-                <FloatingAvatar color="#f43f5e" img="https://i.pravatar.cc/150?img=68" delay="1.5s" anim="swayC" rotate={110} bottom="15%" right="18%" />
+                <FloatingAvatar color="#f43f5e" img="/assets/four.png" delay="1.5s" anim="swayC" rotate={110} bottom="15%" right="18%" />
             </div>
 
             {/* ExecutionCausalityStrip — title + systems-diagram strip */}
