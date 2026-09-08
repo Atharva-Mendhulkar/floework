@@ -24,7 +24,7 @@ import {
   executeCutover,
   executeRollback
 } from '../../scripts/production_cutover.mjs'
-import { createServer } from '../../api/server'
+import { createServer } from '../../api/_server'
 
 describe('Phase 17: Multi-Surface Synthetic Smoke Testing Harness (scripts/smoke_test_e2e.mjs)', () => {
   let apiServer: http.Server
