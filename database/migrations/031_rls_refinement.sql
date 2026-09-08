@@ -1,4 +1,4 @@
--- supabase/migrations/031_rls_refinement.sql
+-- database/migrations/031_rls_refinement.sql
 
 -- 1. Refined Profile Visibility (Performance Optimized + Join-Based)
 DROP POLICY IF EXISTS "profiles_select_team_members" ON public.profiles;

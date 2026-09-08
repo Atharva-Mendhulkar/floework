@@ -11,7 +11,7 @@ import {
   runDeltaSync
 } from '../../scripts/cutover_delta_sync.mjs'
 import { runSmokeTests } from '../../scripts/smoke_test_e2e.mjs'
-import { createServer } from '../../api/server'
+import { createServer } from '../../api/_server'
 
 describe('Phase 10: Zero-Data-Loss Delta Synchronization Engine (scripts/cutover_delta_sync.mjs)', () => {
   beforeEach(() => {

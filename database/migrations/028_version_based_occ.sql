@@ -1,4 +1,4 @@
--- supabase/migrations/028_version_based_occ.sql
+-- database/migrations/028_version_based_occ.sql
 
 -- 1. Add version column for strict causal consistency
 ALTER TABLE public.tasks

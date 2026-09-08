@@ -1,52 +1,59 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-import path from 'path';
+// scripts/seed_edges.mjs
+// ==============================================================================
+// Seeds task dependency edges directly in Amazon RDS PostgreSQL
+// ==============================================================================
+import pg from 'pg'
+import dotenv from 'dotenv'
+import path from 'path'
 
-// Assuming we run this from apps/web or root
-dotenv.config({ path: path.resolve(process.cwd(), 'apps/web/.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/web/.env.local') })
+dotenv.config({ path: path.resolve(process.cwd(), '.env') })
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing env vars");
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const connectionString = process.env.DATABASE_URL || 'postgresql://floework_admin:floework_secure_pass@localhost:5432/floework'
+const pool = new pg.Pool({ connectionString })
 
 async function run() {
-  const { data: tasks, error } = await supabase.from('tasks').select('id, title, project_id').limit(20);
-  if (error || !tasks) {
-    console.error(error);
-    process.exit(1);
-  }
+  const client = await pool.connect()
+  try {
+    const res = await client.query('SELECT id, title, project_id FROM public.tasks LIMIT 20')
+    const tasks = res.rows || []
 
-  console.log(`Found ${tasks.length} tasks`);
-  if (tasks.length < 2) return;
-
-  // Let's create some logical dependencies:
-  // We'll create a linear chain of 3 tasks, and maybe one branching.
-  const dependencies = [];
-  
-  // Find specific tasks by title if possible, or just link first few
-  const t1 = tasks[0];
-  const t2 = tasks[1];
-  const t3 = tasks[2];
-  const t4 = tasks[3];
-
-  if (t1 && t2) dependencies.push({ source_task_id: t1.id, target_task_id: t2.id, relationship_type: 'blocks' });
-  if (t2 && t3) dependencies.push({ source_task_id: t2.id, target_task_id: t3.id, relationship_type: 'depends_on' });
-  if (t1 && t4) dependencies.push({ source_task_id: t1.id, target_task_id: t4.id, relationship_type: 'relates_to' });
-
-  for (const dep of dependencies) {
-    const { error: insErr } = await supabase.from('task_dependencies').insert(dep);
-    if (insErr) {
-      console.log(`Error inserting ${dep.source_task_id} -> ${dep.target_task_id}:`, insErr.message);
-    } else {
-      console.log(`Inserted dependency ${dep.source_task_id} -> ${dep.target_task_id}`);
+    console.log(`Found ${tasks.length} tasks`)
+    if (tasks.length < 2) {
+      console.log('Not enough tasks to build dependency graph')
+      return
     }
+
+    const dependencies = []
+    const t1 = tasks[0]
+    const t2 = tasks[1]
+    const t3 = tasks[2]
+    const t4 = tasks[3]
+
+    if (t1 && t2) dependencies.push({ source_task_id: t1.id, target_task_id: t2.id, relationship_type: 'blocks' })
+    if (t2 && t3) dependencies.push({ source_task_id: t2.id, target_task_id: t3.id, relationship_type: 'depends_on' })
+    if (t1 && t4) dependencies.push({ source_task_id: t1.id, target_task_id: t4.id, relationship_type: 'relates_to' })
+
+    for (const dep of dependencies) {
+      try {
+        await client.query(
+          `INSERT INTO public.task_dependencies (source_task_id, target_task_id, relationship_type)
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING`,
+          [dep.source_task_id, dep.target_task_id, dep.relationship_type]
+        )
+        console.log(`Inserted dependency ${dep.source_task_id} -> ${dep.target_task_id}`)
+      } catch (err) {
+        console.log(`Error inserting ${dep.source_task_id} -> ${dep.target_task_id}:`, err.message)
+      }
+    }
+  } finally {
+    client.release()
+    await pool.end()
   }
 }
 
-run();
+run().catch((err) => {
+  console.error('Fatal error seeding edges:', err)
+  process.exit(1)
+})

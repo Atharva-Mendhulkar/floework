@@ -38,8 +38,21 @@ variable "ecs_task_role_arn" {
   default     = ""
 }
 
+variable "frontend_bucket_arn" {
+  description = "ARN of the frontend S3 bucket for deployment synchronization"
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_distribution_arn" {
+  description = "ARN of the frontend CloudFront distribution for cache invalidation"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)
   default     = {}
 }
+

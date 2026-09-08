@@ -1,11 +1,8 @@
-// Set mock environment variables before imports
-process.env.SUPABASE_URL = 'https://mock.supabase.test'
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-key'
 process.env.NODE_ENV = 'test'
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import http from 'http'
-import { createServer } from '../../api/server'
+import { createServer } from '../../api/_server'
 import { rateLimit } from '../../api/_lib/rateLimit'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 

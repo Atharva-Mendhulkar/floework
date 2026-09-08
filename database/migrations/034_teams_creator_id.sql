@@ -1,4 +1,4 @@
--- supabase/migrations/034_teams_creator_id.sql
+-- database/migrations/034_teams_creator_id.sql
 
 -- 1. Add creator_id to teams to allow RLS visibility before team_members join is populated
 ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS creator_id uuid REFERENCES public.profiles(id) DEFAULT auth.uid();

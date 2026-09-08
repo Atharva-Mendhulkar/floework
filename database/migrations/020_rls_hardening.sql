@@ -1,4 +1,4 @@
--- supabase/migrations/20240001_rls_hardening.sql
+-- database/migrations/20240001_rls_hardening.sql
 -- Ensure RLS is enabled on every application table
 ALTER TABLE public.profiles         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks            ENABLE ROW LEVEL SECURITY;

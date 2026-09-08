@@ -19,47 +19,66 @@ import {
 import { verifyStripeSignature } from '../../api/billing/webhook'
 import crypto from 'crypto'
 
-// Mock Supabase
-const mockEdges: any[] = []
-const mockUser = { id: 'usr-charlie', email: 'charlie@floework.test' }
+import { setMockQueryHandler } from '../../api/_lib/db'
+import { setMockUserResolver } from '../../api/_lib/auth'
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({
-    auth: {
-      getUser: vi.fn().mockImplementation(async (token: string) => {
-        if (token === 'valid-charlie-token') {
-          return { data: { user: mockUser }, error: null }
-        }
-        return { data: { user: null }, error: { message: 'Invalid token' } }
-      })
-    },
-    from: (table: string) => {
-      const builder: any = {
-        select: () => builder,
-        eq: () => builder,
-        single: async () => {
-          if (table === 'projects') {
-            return { data: { team_id: 'team-alpha' }, error: null }
-          }
-          if (table === 'team_members') {
-            return { data: { role: 'admin' }, error: null }
-          }
-          if (table === 'task_dependencies') {
-            return { data: mockEdges[mockEdges.length - 1], error: null }
-          }
-          return { data: null, error: { message: 'Not found' } }
-        },
-        insert: (payload: any) => {
-          mockEdges.push({ id: `dep-${mockEdges.length + 1}`, ...payload })
-          return builder
-        },
-        update: () => builder,
-        delete: () => builder
-      }
-      return builder
+const mockEdges: any[] = []
+const mockUser = {
+  id: 'usr-charlie',
+  email: 'charlie@floework.test',
+  role: 'admin',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString()
+}
+
+setMockUserResolver(async (token: string) => {
+  if (token === 'valid-charlie-token') {
+    return mockUser
+  }
+  return null
+})
+
+setMockQueryHandler(async (sql: string, params: any[] = []) => {
+  const lower = sql.toLowerCase()
+
+  // 1. Projects lookup
+  if (lower.includes('from projects') || lower.includes('from public.projects')) {
+    return { rows: [{ team_id: 'team-alpha' }], rowCount: 1 }
+  }
+
+  // 2. Team members lookup
+  if (lower.includes('from team_members') || lower.includes('from public.team_members')) {
+    return { rows: [{ role: 'admin' }], rowCount: 1 }
+  }
+
+  // 3. Dependencies select
+  if (lower.includes('from task_dependencies') || lower.includes('from public.task_dependencies')) {
+    return { rows: mockEdges, rowCount: mockEdges.length }
+  }
+
+  // 4. Dependencies insert
+  if (lower.includes('insert into task_dependencies')) {
+    const newEdge = {
+      id: `dep-${mockEdges.length + 1}`,
+      project_id: params[0],
+      source_task_id: params[1],
+      target_task_id: params[2],
+      dependency_type: params[3] || 'BLOCKS',
+      created_at: new Date().toISOString()
     }
-  })
-}))
+    mockEdges.push(newEdge)
+    return { rows: [newEdge], rowCount: 1 }
+  }
+
+  // 5. Teams update (billing)
+  if (lower.includes('update teams') || lower.includes('update public.teams')) {
+    return { rows: [{ id: params[2] || 'team-alpha', plan: params[0] }], rowCount: 1 }
+  }
+
+  return { rows: [], rowCount: 0 }
+})
 
 import dependenciesHandler from '../../api/tasks/dependencies'
 import billingWebhookHandler from '../../api/billing/webhook'

@@ -15,48 +15,54 @@ Modern software development teams rely on fractured toolchains (separate apps fo
 - Deliver context-rich, plain-English execution analytics.
 
 **Key Features:**
-- **FlowBoard:** A Kanban-style interface featuring real-time collaborative updates powered by Supabase Realtime.
+- **FlowBoard:** A Kanban-style interface featuring real-time collaborative updates powered by AWS WebSockets and Redis PubSub.
 - **Autonomous Focus Engine:** An integrated, task-linked lifecycle timer that auto-transitions task states (Focus → In Progress) and logs effort with audio success chimes and automated data persistence.
-- **AI Executive Narrative:** Powered by Google Gemini AI, this engine synthesizes raw workspace focus data into professional, plain-English effort narratives for team-wide insights.
+- **AI Executive Narrative:** Powered by Amazon Bedrock Claude AI, this engine synthesizes raw workspace focus data into professional, plain-English effort narratives for team-wide insights.
 - **Deep Analytics & Burnout Hardening:** Predictive models tracking team health trends, workflow bottlenecks, and calculation of estimation accuracy (Expected vs. Actual).
-- **Team Pulse:** Real-time visibility of teammate activity across the workspace using Row-Level Security (RLS) to ensure privacy and collaborative transparency.
+- **Team Pulse:** Real-time visibility of teammate activity across the workspace using Amazon API Gateway WebSockets to ensure collaborative transparency.
 
 ---
 
 ## 2. System Architecture
 
 **High-Level Architecture:**
-The platform leverages a Layered, Event-Driven Client-Server Architecture. The core relies on a strict separation of concerns, ensuring high interactivity for standard tasks while offloading heavy analytical computations to background queues.
+The platform leverages a Layered, Event-Driven Client-Server Architecture on Amazon Web Services. The core relies on a strict separation of concerns, ensuring high interactivity for standard tasks while offloading heavy analytical computations to background queues.
 
 ```mermaid
 graph TD
     Client["User Client (React/Vite)"]
-    subgraph "Serverless Layer (Vercel)"
-        AI_Engine["AI Narrative Engine (Node.js/Gemini)"]
-        API_Routes["Vercel Functions (api/*)"]
+    Cognito["Amazon Cognito (Auth/JWT)"]
+    subgraph "Compute & API Layer (ECS Fargate / ALB)"
+        API["Fastify API Monolith (api/server.ts)"]
+        Worker["SQS FIFO Worker (workers/sqs-worker.ts)"]
     end
-    subgraph "Supabase Cloud"
-        Realtime["Supabase Realtime (Presence)"]
-        PostgREST["PostgREST API"]
-        RLS["RLS Security Layer"]
-        DB[("PostgreSQL Database")]
+    subgraph "AWS Data & Realtime Services"
+        RDS[("Amazon RDS PostgreSQL 16")]
+        S3["Amazon S3 Object Storage"]
+        Redis["ElastiCache / Upstash Redis (Cache & PubSub)"]
+        SQS["Amazon SQS FIFO Queues"]
+        Bedrock["Amazon Bedrock (Claude 3 Haiku)"]
+        SES["Amazon SES (Transactional Email)"]
     end
     
-    Client -->|REST & AI Queries| API_Routes
-    API_Routes -->|GenAI SDK| AI_Engine
-    Client <-->|WebSocket/Presence| Realtime
-    API_Routes -->|Service Role| DB
-    Client -->|Direct SQL Queries| PostgREST
-    PostgREST --> RLS
-    RLS --> DB
+    Client -->|Cognito Identity Provider| Cognito
+    Client -->|REST & GraphQL (Bearer JWT)| API
+    API -->|Parameterized SQL| RDS
+    API -->|Presigned SigV4 URLs| S3
+    API -->|PubSub / Caching| Redis
+    API -->|Asynchronous Events| SQS
+    SQS -->|Event Delivery| Worker
+    Worker -->|State Updates| RDS
+    API -->|Model Invocations| Bedrock
+    API -->|Email Dispatch| SES
 ```
 
 **Component Interaction Flow:**
-1. **User Client (Browser):** Built using React, handles user interaction, real-time presence sync, and state management via Redux Toolkit.
-2. **Serverless Layer (Vercel):** Hosts the AI Narrative Engine and specialized API routes for complex data aggregation, utilizing Google Gemini for executive reporting.
-3. **Supabase Realtime:** Powers the "In Focus Now" pulse, broadcasting teammate status changes across the workspace without a custom backend socket server.
-4. **Supabase PostgREST:** Provides instant, reliable data access with built-in Row-Level Security (RLS) to manage team visibility and data privacy.
-5. **Data Layer (PostgreSQL):** Centralized source of truth for all projects, tasks, focus sessions, and analytics.
+1. **User Client (Browser):** Built using React, handles user interaction, real-time presence sync, and state management via Redux Toolkit and CognitoAuthService.
+2. **Compute Layer (ECS Fargate):** Hosts the Fastify API monolith and specialized routes for complex data aggregation, utilizing Amazon Bedrock for executive reporting.
+3. **Realtime Engine:** Powers the "In Focus Now" pulse and chat notifications via AWS API Gateway WebSockets and Redis PubSub.
+4. **Data Layer (Amazon RDS PostgreSQL 16):** Centralized ACID source of truth with connection pooling, parameterized queries, and strict version-based Optimistic Concurrency Control (OCC).
+5. **Storage Layer (Amazon S3):** Secure multi-tenant binary asset storage with SigV4 presigned upload and download URLs.
 
 ---
 
@@ -68,10 +74,13 @@ graph TD
 - **Tailwind CSS:** Comprehensive styling framework for premium, responsive layouts.
 
 **Backend & Infrastructure:**
-- **Supabase (Backend-as-a-Service):** Handles Authentication, PostgreSQL Database, and Realtime state broadcasting.
-- **Vercel Functions:** Executes serverless logic for complex analytics and AI generation.
-- **Google Gemini AI:** Powers the Executive Narrative engine for data-driven executive reporting.
-- **PostgreSQL / PostgREST:** Highly scalable relational storage with built-in API accessibility.
+- **Amazon Cognito:** Manages user registration, sign-in, MFA, and cryptographic JWT issuance.
+- **Amazon RDS PostgreSQL 16:** Multi-tenant relational database with connection pooling and OCC.
+- **Amazon S3 & CloudFront:** Secure multi-tenant binary asset storage with presigned URLs.
+- **Amazon API Gateway WebSockets & Redis:** Realtime presence, state broadcasting, and pub/sub.
+- **Amazon SQS FIFO Queues:** Guarantees ordered, deduplicated background event dispatch.
+- **Amazon Bedrock (Claude 3 Haiku):** AI synthesis engine for executive standup narratives.
+- **Amazon SES:** Transactional workspace email invitation dispatch.
 
 ---
 
@@ -119,8 +128,8 @@ The system uses `FocusSession` as a primary entity. When a user begins working o
 
 ## 5. Database Design
 
-**Type:** Cloud-Native PostgreSQL (managed via Supabase).
-*Note: The database leverages Row-Level Security (RLS) to enforce workspace isolation, ensuring that teammates can only see data within their authorized teams.*
+**Type:** Amazon RDS PostgreSQL 16 (Multi-AZ).
+*Note: The database leverages multi-tenant team and project boundaries to enforce workspace isolation, ensuring that teammates can only see data within their authorized teams.*
 
 **Entity-Relationship (ER) Diagram:**
 ```mermaid
@@ -197,19 +206,19 @@ This demonstrates the real-time functionality when a user interacts with the pro
 ```mermaid
 sequenceDiagram
     participant U as User (React)
-    participant SB as Supabase (PostgREST)
-    participant RT as Supabase (Realtime)
-    participant DB as PostgreSQL
+    participant API as Fastify API (ALB / ECS)
+    participant RDS as Amazon RDS PostgreSQL
+    participant WS as AWS WebSocket / Redis
 
-    U->>SB: UPDATE tasks {status: 'In Focus'}
-    SB->>RLS: Validate Workspace Permission
-    RLS->>DB: Apply Change
-    DB-->>RT: New Task State
-    RT-->>U: Broadcast {taskId, status: 'In Focus'}
+    U->>API: PATCH /api/tasks {status: 'In Focus'}
+    API->>RDS: Verify Project Membership & Execute OCC Update
+    RDS-->>API: Task Updated (version + 1)
+    API-->>WS: Broadcast State Change
+    WS-->>U: Push {taskId, status: 'In Focus'}
     
-    U->>SB: INSERT focus_sessions {startTime: now}
-    SB->>DB: Log Start Event
-    DB-->>U: 201 Created (Session Tracking Active)
+    U->>API: POST /api/focus/complete {durationSecs: 1800}
+    API->>RDS: Log Session & Dispatch SQS Event
+    RDS-->>U: 202 Accepted (Session Queued)
 ```
 
 **Step-by-Step Data Flow:**
@@ -284,29 +293,28 @@ The API operates strictly on a REST framework built on Node.js/Express.js.
 
 ### 11.2 Database Storage & Configuration Paths
 
-The system utilizes Supabase for relational storage and Vercel for serverless logic.
-- **Relational Schema:** [001_schema.sql](file:///Users/atharvamendhulkar/Downloads/floework/supabase/migrations/001_schema.sql) rigorously defines all models (`profiles`, `tasks`, `focus_sessions`).
-- **Workspace Security:** [013_workspace_visibility.sql](file:///Users/atharvamendhulkar/Downloads/floework/supabase/migrations/013_workspace_visibility.sql) implements the Row-Level Security (RLS) policies that enable peer-to-peer workspace visibility.
-- **API Store Orchestrator:** [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) acts as the central hub for all project, task, and analytics queries.
+The system utilizes Amazon RDS PostgreSQL 16 for relational storage and Amazon S3 for multi-tenant asset storage.
+- **Relational Schema:** [001_schema.sql](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql) rigorously defines all models (`profiles`, `tasks`, `focus_sessions`).
+- **Workspace Security:** [013_workspace_visibility.sql](file:///home/topfloorboss/Downloads/floework-main/database/migrations/013_workspace_visibility.sql) implements the tenant visibility rules across workspaces.
+- **API Store Orchestrator:** [api.ts](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) acts as the central hub for all project, task, and analytics queries.
 
 ### 11.3 Authentication & Security Implementation
 
-Authentication is managed robustly via custom JSON Web Tokens (JWT) reinforced by Bcrypt password hashing.
-- **Backend Authentication Controller:** `backend/src/controllers/authController.ts` handles the execution scripts for `registerUser`, `loginUser`, and `forgotPassword`. Passwords are cryptographically salted and hashed using `bcrypt` prior to insertion into the DB.
-- **Backend Authorization Middleware:** `backend/src/middleware/authMiddleware.ts` intercepts and secures designated endpoints. Any request targeting protected data must pass the `protect` function which parses the auth header, decrypts the JWT safely using the internal `JWT_SECRET`, and explicitly injects the user's verified identity object sequentially into the `req` flow.
-- **Frontend Authentication State:** (Likely housed under standard contexts or stores like AuthContext) Holds the global React state tracking if a user is logged in, parses browser local storage for the physical token, and utilizes React Router conditional rendering to protect dashboard components against unauthenticated access. OAuth routines similarly map through `backend/src/controllers/authController.ts`.
+Authentication is managed via Amazon Cognito User Pools with cryptographic RS256 JWT validation.
+- **Cognito Auth Service:** `apps/web/src/services/CognitoAuthService.ts` handles user sign-in, registration, MFA, and token refresh.
+- **Backend Authorization Middleware:** `api/_lib/auth.ts` intercepts and secures designated endpoints. Any request targeting protected data must pass `getUser` and `requireProjectMember` or `requireMember`, verifying identity against Cognito and checking tenant membership in Amazon RDS PostgreSQL.
 
 ### 11.4 Feature-by-Feature Codebase Mapping
 
-Every major system pipeline maps directly from a specific React UI Component (Frontend) strictly into a specialized Express Controller (Backend).
+Every major system pipeline maps directly from a specific React UI Component (Frontend) strictly into a specialized API Controller (Backend).
 
 | Feature Name | Frontend Logic | Backend Logic (AI/API) | Internal Description |
 | :--- | :--- | :--- | :--- |
-| **FlowBoard (Kanban)** | [BoardsPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/BoardsPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Real-time collaborative task board synced via Supabase. |
-| **Autonomous Focus** | [FocusPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/FocusPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Automated lifecycle management (Chimes, Auto-Log, Status Sync). |
-| **AI Narrative Engine** | [NarrativePage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/NarrativePage.tsx) | [narrative.ts](file:///Users/atharvamendhulkar/Downloads/floework/api/analytics/narrative.ts) | Synthesis of workspace effort using Google Gemini AI models. |
-| **Executive Analytics** | [AnalyticsPage.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/AnalyticsPage.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Multi-teammate burnout risk, bottleneck maps, and accuracy metrics. |
-| **Team Pulse** | [Index.tsx](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/pages/Index.tsx) | [api.ts](file:///Users/atharvamendhulkar/Downloads/floework/apps/web/src/store/api.ts) | Real-time deduplicated presence tracking of unique teammates. |
+| **FlowBoard (Kanban)** | [BoardsPage.tsx](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/BoardsPage.tsx) | [api.ts](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) | Real-time collaborative task board synced via AWS WebSockets. |
+| **Autonomous Focus** | [FocusPage.tsx](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/FocusPage.tsx) | [api.ts](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) | Automated lifecycle management (Chimes, Auto-Log, SQS dispatch). |
+| **AI Narrative Engine** | [NarrativePage.tsx](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/NarrativePage.tsx) | [narrative.ts](file:///home/topfloorboss/Downloads/floework-main/api/analytics/narrative.ts) | Synthesis of workspace effort using Amazon Bedrock Claude models. |
+| **Executive Analytics** | [AnalyticsPage.tsx](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/AnalyticsPage.tsx) | [api.ts](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) | Multi-teammate burnout risk, bottleneck maps, and accuracy metrics. |
+| **Team Pulse** | [Index.tsx](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/Index.tsx) | [api.ts](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) | Real-time deduplicated presence tracking of unique teammates via WebSockets. |
 
 ---
 

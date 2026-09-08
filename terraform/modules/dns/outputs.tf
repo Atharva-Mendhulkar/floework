@@ -21,3 +21,9 @@ output "api_dns_record" {
   description = "FQDN of the API alias DNS record"
   value       = var.enable_custom_domain ? aws_route53_record.api[0].fqdn : ""
 }
+
+output "web_dns_record" {
+  description = "FQDN of the Web frontend alias DNS record"
+  value       = var.enable_custom_domain ? aws_route53_record.web[0].fqdn : ""
+}
+

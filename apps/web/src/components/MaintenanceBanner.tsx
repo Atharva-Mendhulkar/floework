@@ -9,7 +9,7 @@ export interface MaintenanceBannerProps {
 
 export const MaintenanceBanner: React.FC<MaintenanceBannerProps> = ({
   active = false,
-  message = 'Floework is currently undergoing a planned maintenance window and live migration. Real-time updates may be temporarily paused.',
+  message = 'Floework is currently undergoing scheduled platform maintenance. Real-time updates may be briefly delayed.',
   scheduledEnd,
   isLockout = false
 }) => {

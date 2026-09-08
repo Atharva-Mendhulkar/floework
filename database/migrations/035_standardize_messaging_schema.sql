@@ -1,4 +1,4 @@
--- supabase/migrations/035_standardize_messaging_schema.sql
+-- database/migrations/035_standardize_messaging_schema.sql
 
 -- 1. Standardize column naming: Rename author_id to user_id to match system-wide patterns
 ALTER TABLE public.messages RENAME COLUMN author_id TO user_id;

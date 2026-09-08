@@ -29,13 +29,4 @@ CREATE POLICY "Users can send messages to their projects" ON public.messages
         )
     );
 
--- 4. Safely refresh the Realtime Publication
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' AND tablename = 'messages'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-  END IF;
-END $$;
+-- 4. Realtime broadcast handled via AWS API Gateway WebSockets & Redis PubSub

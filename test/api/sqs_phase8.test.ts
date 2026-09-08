@@ -32,36 +32,36 @@ vi.mock('@aws-sdk/client-sqs', () => {
   }
 })
 
-// Mock Supabase Auth & DB
-const mockUser = { id: 'usr-charlie', email: 'charlie@floework.test' }
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({
-    auth: {
-      getUser: vi.fn().mockImplementation(async (token: string) => {
-        if (token === 'valid-charlie-token') {
-          return { data: { user: mockUser }, error: null }
-        }
-        return { data: { user: null }, error: { message: 'Invalid token' } }
-      })
-    },
-    from: (table: string) => {
-      const builder: any = {
-        select: () => builder,
-        eq: () => builder,
-        single: async () => {
-          if (table === 'projects') {
-            return { data: { team_id: 'team-alpha' }, error: null }
-          }
-          if (table === 'team_members') {
-            return { data: { role: 'member' }, error: null }
-          }
-          return { data: null, error: { message: 'Not found' } }
-        }
-      }
-      return builder
-    }
-  })
-}))
+import { setMockQueryHandler } from '../../api/_lib/db'
+import { setMockUserResolver } from '../../api/_lib/auth'
+
+const mockUser = {
+  id: 'usr-charlie',
+  email: 'charlie@floework.test',
+  role: 'member',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString()
+}
+
+setMockUserResolver(async (token: string) => {
+  if (token === 'valid-charlie-token') {
+    return mockUser
+  }
+  return null
+})
+
+setMockQueryHandler(async (sql: string) => {
+  const lower = sql.toLowerCase()
+  if (lower.includes('from projects') || lower.includes('from public.projects')) {
+    return { rows: [{ team_id: 'team-alpha' }], rowCount: 1 }
+  }
+  if (lower.includes('from team_members') || lower.includes('from public.team_members')) {
+    return { rows: [{ role: 'member' }], rowCount: 1 }
+  }
+  return { rows: [], rowCount: 0 }
+})
 
 // Import SQS library and worker after mocks
 import {

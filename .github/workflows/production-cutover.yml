@@ -1,0 +1,147 @@
+name: Production Cutover & Live Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to execute'
+        required: true
+        type: choice
+        options:
+          - validate
+          - cutover
+          - rollback
+        default: validate
+      environment:
+        description: 'Target deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      dry_run:
+        description: 'Execute in safe dry-run mode (no destructive changes)'
+        required: true
+        type: boolean
+        default: true
+      domain:
+        description: 'Target custom domain name'
+        required: false
+        type: string
+        default: 'floework.internal'
+      target_api_url:
+        description: 'Custom API target URL (optional override)'
+        required: false
+        type: string
+        default: ''
+      target_cdn_url:
+        description: 'Custom CloudFront CDN target URL (optional override)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cutover:
+    name: Production Cutover Orchestration
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Authenticate to AWS via Keyless OIDC Federation
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME || 'arn:aws:iam::123456789012:role/floework-staging-github-actions-role' }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          audience: sts.amazonaws.com
+
+      - name: Execute Cutover Orchestrator
+        id: cutover_exec
+        run: |
+          ACTION="${{ inputs.action }}"
+          DRY_RUN="${{ inputs.dry_run }}"
+          DOMAIN="${{ inputs.domain }}"
+          API_URL="${{ inputs.target_api_url }}"
+          CDN_URL="${{ inputs.target_cdn_url }}"
+
+          CMD="node scripts/production_cutover.mjs"
+
+          if [ "$ACTION" = "rollback" ]; then
+            CMD="$CMD --rollback"
+          fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            CMD="$CMD --dry-run"
+          else
+            CMD="$CMD --execute"
+          fi
+
+          if [ -n "$DOMAIN" ]; then
+            CMD="$CMD --domain $DOMAIN"
+          fi
+
+          if [ -n "$API_URL" ]; then
+            CMD="$CMD --api-url $API_URL"
+          fi
+
+          if [ -n "$CDN_URL" ]; then
+            CMD="$CMD --cdn-url $CDN_URL"
+          fi
+
+          echo "Running command: $CMD"
+          $CMD
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NODE_ENV: production
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload Cutover Audit Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cutover-audit-report
+          path: |
+            cutover_audit_report.json
+            rollback_audit_report.json
+          retention-days: 30
+
+      - name: Render Cutover Summary to GitHub Step Summary
+        if: always()
+        run: |
+          echo "## 🚀 Floework Production Cutover Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Action**: \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dry-Run**: \`${{ inputs.dry_run }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Domain**: \`${{ inputs.domain }}\`" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "cutover_audit_report.json" ]; then
+            STATUS=$(node -e "const r=require('./cutover_audit_report.json'); console.log(r.status)")
+            VERDICT=$(node -e "const r=require('./cutover_audit_report.json'); console.log(r.signOff?.verdict || 'N/A')")
+            DIGEST=$(node -e "const r=require('./cutover_audit_report.json'); console.log(r.deltaDigest || 'N/A')")
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| Cutover Status | **$STATUS** |" >> $GITHUB_STEP_SUMMARY
+            echo "| Sign-Off Verdict | **$VERDICT** |" >> $GITHUB_STEP_SUMMARY
+            echo "| Delta Consistency Digest | \`$DIGEST\` |" >> $GITHUB_STEP_SUMMARY
+          elif [ -f "rollback_audit_report.json" ]; then
+            STATUS=$(node -e "const r=require('./rollback_audit_report.json'); console.log(r.status)")
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Rollback Executed**: \`$STATUS\`" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -7,7 +7,7 @@
 -- 1. Create auth schema
 CREATE SCHEMA IF NOT EXISTS auth;
 
--- 2. Create baseline auth.users table matching GoTrue / Supabase schema expectations
+-- 2. Create baseline auth.users table matching identity schema expectations
 CREATE TABLE IF NOT EXISTS auth.users (
   id                          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   instance_id                 uuid,
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS users_email_idx ON auth.users (email);
 
 -- 3. Session Context Functions for Row-Level Security (RLS)
 -- Enables auth.uid() to resolve either from session configuration (request.jwt.claim.sub)
--- or from standard Supabase request context.
+-- or from standard JWT claims request context.
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid
 LANGUAGE sql

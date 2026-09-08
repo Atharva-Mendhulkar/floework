@@ -1,4 +1,4 @@
--- supabase/migrations/026_fix_rls_recursion.sql
+-- database/migrations/026_fix_rls_recursion.sql
 
 -- Fix infinite recursion in team_members policy
 -- We use a security definer function to check membership without triggering RLS recursively

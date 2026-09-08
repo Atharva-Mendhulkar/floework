@@ -1,4 +1,4 @@
--- supabase/migrations/040_sec_p0_fixes.sql
+-- database/migrations/040_sec_p0_fixes.sql
 -- Phase 1: P0 Security & Correctness Hardening
 -- Fixes:
 -- 1. SEC-04: Enforce strict tenant isolation on concurrency_conflicts and observability views

@@ -1,7 +1,7 @@
 // apps/web/src/services/AwsWebSocketClient.ts
 // ==============================================================================
 // AWS Native WebSocket Client
-// Replaces Supabase Realtime with Amazon API Gateway WebSockets + Redis PubSub.
+// Native Amazon API Gateway WebSockets + Redis PubSub realtime client.
 // Features 500ms backpressure batching, heartbeat ping/pong, and jittered reconnection.
 // ==============================================================================
 

@@ -52,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3000/health || exit 1
 
 # Start modular monolith API server
-CMD ["node", "-r", "ts-node/register/transpile-only", "api/server.ts"]
+CMD ["node", "-r", "ts-node/register/transpile-only", "api/_server.ts"]

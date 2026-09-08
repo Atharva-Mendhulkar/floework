@@ -2,7 +2,7 @@
 // scripts/cutover_delta_sync.mjs
 // ==============================================================================
 // Floework Production Cutover & Delta Synchronization Engine
-// Replays database deltas from source (Supabase) to destination (RDS PostgreSQL)
+// Replays database deltas between staging and production PostgreSQL instances
 // with zero data loss, transactional UPSERT semantics, and reverse replication support.
 // ==============================================================================
 
@@ -45,29 +45,33 @@ export async function runDeltaSync(options = {}) {
       let sourceRows = []
       let targetCount = 0
 
-      if (options.sourceClient && options.targetClient) {
-        const srcRes = await options.sourceClient.query(
-          `SELECT * FROM ${table} WHERE updated_at > $1 ORDER BY updated_at ASC`,
-          [since]
-        )
-        sourceRows = srcRes.rows || []
+      if (options.sourceClient || options.targetClient) {
+        if (options.sourceClient) {
+          const srcRes = await options.sourceClient.query(
+            `SELECT * FROM ${table} WHERE updated_at > $1 ORDER BY updated_at ASC`,
+            [since]
+          )
+          sourceRows = srcRes.rows || []
+        }
 
-        const tgtRes = await options.targetClient.query(`SELECT COUNT(*)::int AS cnt FROM ${table}`)
-        targetCount = tgtRes.rows?.[0]?.cnt || 0
+        if (options.targetClient) {
+          const tgtRes = await options.targetClient.query(`SELECT COUNT(*)::int AS cnt FROM ${table}`)
+          targetCount = tgtRes.rows?.[0]?.cnt || 0
 
-        if (!dryRun && sourceRows.length > 0) {
-          // Transactional UPSERT
-          for (const row of sourceRows) {
-            const keys = Object.keys(row)
-            const values = Object.values(row)
-            const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ')
-            const updates = keys.map((k) => `${k} = EXCLUDED.${k}`).join(', ')
+          if (!dryRun && sourceRows.length > 0) {
+            // Transactional UPSERT
+            for (const row of sourceRows) {
+              const keys = Object.keys(row)
+              const values = Object.values(row)
+              const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ')
+              const updates = keys.map((k) => `${k} = EXCLUDED.${k}`).join(', ')
 
-            await options.targetClient.query(
-              `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})
-               ON CONFLICT (id) DO UPDATE SET ${updates}`,
-              values
-            )
+              await options.targetClient.query(
+                `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})
+                 ON CONFLICT (id) DO UPDATE SET ${updates}`,
+                values
+              )
+            }
           }
         }
       } else {

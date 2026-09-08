@@ -14,7 +14,8 @@ import {
   useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useGetTaskDependenciesQuery } from '@/store/api';
+import { useGetTaskDependenciesQuery, useAddDependencyMutation } from '@/store/api';
+import { toast } from 'sonner';
 import TaskCustomNode from './TaskCustomNode';
 import ExecutionCustomEdge from './ExecutionCustomEdge';
 import GraphModes, { GraphMode } from './GraphModes';
@@ -44,6 +45,7 @@ export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
   const projectId = tasks[0]?.projectId || '';
 
   const { data: depsData } = useGetTaskDependenciesQuery(projectId, { skip: !projectId });
+  const [addDependency] = useAddDependencyMutation();
 
   // Map API edges to React Flow Edges
   const graphEdges: Edge[] = useMemo(() => {
@@ -213,17 +215,33 @@ export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
   }, [graphMode, nodes, setEdges]);
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge({ 
-      ...params, 
-      type: 'execution',
-      animated: true,
-      style: { stroke: '#007dff', strokeWidth: 2 },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: '#007dff',
-      },
-    }, eds)),
-    [setEdges],
+    async (params: Connection | Edge) => {
+      if (params.source && params.target) {
+        try {
+          await addDependency({
+            sourceId: params.source,
+            targetId: params.target,
+            type: 'BLOCKS',
+            projectId
+          }).unwrap();
+          toast.success('Dependency linked in execution graph');
+        } catch (err: any) {
+          toast.error(err.data || err.message || 'Failed to link dependency (cycle prevented)');
+          return;
+        }
+      }
+      setEdges((eds) => addEdge({ 
+        ...params, 
+        type: 'execution',
+        animated: true,
+        style: { stroke: '#007dff', strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: '#007dff',
+        },
+      }, eds));
+    },
+    [setEdges, addDependency, projectId],
   );
 
   return (

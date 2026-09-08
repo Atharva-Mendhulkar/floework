@@ -6,45 +6,6 @@ locals {
   prefix = "/${var.project_name}/${var.environment}/app"
 }
 
-resource "aws_ssm_parameter" "supabase_url" {
-  name        = "${local.prefix}/SUPABASE_URL"
-  description = "Supabase API and database project endpoint URL"
-  type        = "String"
-  value       = var.supabase_url
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-param-supabase-url"
-    Environment = var.environment
-  })
-}
-
-resource "aws_ssm_parameter" "supabase_anon_key" {
-  count       = var.supabase_anon_key != "" ? 1 : 0
-  name        = "${local.prefix}/SUPABASE_ANON_KEY"
-  description = "Supabase client publishable anon key"
-  type        = "String"
-  value       = var.supabase_anon_key
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-param-supabase-anon-key"
-    Environment = var.environment
-  })
-}
-
-resource "aws_ssm_parameter" "supabase_service_role_key" {
-  count       = var.supabase_service_role_key != "" ? 1 : 0
-  name        = "${local.prefix}/SUPABASE_SERVICE_ROLE_KEY"
-  description = "Supabase backend administrative service role key"
-  type        = "SecureString"
-  key_id      = var.kms_key_id
-  value       = var.supabase_service_role_key
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-param-supabase-service-key"
-    Environment = var.environment
-  })
-}
-
 resource "aws_ssm_parameter" "gemini_api_key" {
   count       = var.gemini_api_key != "" ? 1 : 0
   name        = "${local.prefix}/GEMINI_API_KEY"

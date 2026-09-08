@@ -1,4 +1,4 @@
--- supabase/migrations/027_consistency_hardening.sql
+-- database/migrations/027_consistency_hardening.sql
 
 -- 1. Introduce Versioned State
 ALTER TABLE public.tasks

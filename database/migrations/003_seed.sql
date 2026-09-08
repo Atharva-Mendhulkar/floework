@@ -1,5 +1,5 @@
 -- Demo is seeded via auth.users insert which triggers handle_new_user()
--- Use Supabase Dashboard → Auth → Add user to create:
+-- Use AWS Cognito User Pool to create:
 --   demo@floework.dev / Demo1234!
 -- Then note the UUID and substitute below.
 
@@ -19,7 +19,7 @@ begin
 
   -- Realistic task set across all statuses
   insert into public.tasks (project_id, assignee_id, title, status, effort, focus_count) values
-    (proj_id, demo_uid, 'Setup Supabase Realtime channels',      'done',        'M', 4),
+    (proj_id, demo_uid, 'Setup AWS WebSocket realtime channels',      'done',        'M', 4),
     (proj_id, demo_uid, 'FlowBoard drag-and-drop (Kanban)',       'done',        'L', 7),
     (proj_id, demo_uid, 'Focus session post-confirm screen',      'done',        'S', 2),
     (proj_id, demo_uid, 'Burnout risk trend chart (4-week)',       'in_progress', 'L', 3),

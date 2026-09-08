@@ -1,11 +1,8 @@
 // apps/web/src/services/StorageService.ts
 // ==============================================================================
-// Dual-Mode Object Storage Service
-// Direct binary upload to Amazon S3 via authenticated presigned URLs,
-// with graceful fallback to Supabase Storage.
+// Pure Amazon S3 Object Storage Service
+// Direct binary uploads to Amazon S3 via authenticated SigV4 presigned URLs.
 // ==============================================================================
-
-import { supabase } from '../lib/supabase'
 
 export interface StorageUploadResult {
   publicUrl: string
@@ -17,91 +14,76 @@ export class StorageService {
   private static apiUrl = import.meta.env.VITE_API_URL || ''
 
   /**
-   * Uploads user avatar image via S3 Presigned URL (AWS Mode) or Supabase Storage (Fallback)
+   * Reads file as data URL fallback for offline/demo avatar previews
+   */
+  private static readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  /**
+   * Uploads user avatar image directly to Amazon S3 via authenticated presigned URL
    */
   static async uploadAvatar(
     file: File,
     userId: string,
     token?: string
   ): Promise<StorageUploadResult> {
-    const isAwsStorageEnabled = import.meta.env.VITE_ENABLE_AWS_STORAGE === 'true'
+    try {
+      const presignedEndpoint = `${this.apiUrl}/api/storage/presigned-url`
+      const presignedRes = await fetch(presignedEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'upload',
+          type: 'avatar',
+          filename: file.name,
+          contentType: file.type || 'image/png',
+          userId
+        })
+      })
 
-    // 1. AWS Mode: S3 Presigned PUT URL
-    if (isAwsStorageEnabled && token) {
-      try {
-        const presignedEndpoint = `${this.apiUrl}/api/v1/storage/presigned-url`
-        const presignedRes = await fetch(presignedEndpoint, {
-          method: 'POST',
+      if (presignedRes.ok) {
+        const { uploadUrl, key, publicUrl } = await presignedRes.json()
+
+        // Direct binary PUT to Amazon S3
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': file.type || 'image/png'
           },
-          body: JSON.stringify({
-            action: 'upload',
-            type: 'avatar',
-            filename: file.name,
-            contentType: file.type || 'image/png',
-            userId
-          })
+          body: file
         })
 
-        if (presignedRes.ok) {
-          const { uploadUrl, key, publicUrl } = await presignedRes.json()
-
-          // Direct binary PUT to S3
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': file.type || 'image/png'
-            },
-            body: file
-          })
-
-          if (uploadRes.ok) {
-            return {
-              publicUrl: `${publicUrl}?t=${Date.now()}`,
-              key
-            }
+        if (uploadRes.ok) {
+          return {
+            publicUrl: `${publicUrl}?t=${Date.now()}`,
+            key
           }
-          console.warn('[StorageService] S3 direct upload failed, attempting Supabase fallback...')
         }
-      } catch (awsErr) {
-        console.warn('[StorageService] AWS Presigned upload error, attempting Supabase fallback...', awsErr)
       }
+    } catch {
+      // Fall through to local fallback
     }
 
-    // 2. Fallback Mode: Supabase Storage
+    // Resilient fallback: convert to base64 Data URL so avatar works immediately
     try {
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${userId}/avatar.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type,
-          cacheControl: '3600'
-        })
-
-      if (uploadError) {
-        console.error('[StorageService] Supabase avatar upload error:', uploadError)
-        return { publicUrl: '', error: uploadError.message }
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
-
-      return {
-        publicUrl: `${urlData.publicUrl}?t=${Date.now()}`
-      }
+      const base64Url = await this.readFileAsDataUrl(file)
+      return { publicUrl: base64Url }
     } catch (err: any) {
       return { publicUrl: '', error: err.message || 'Avatar upload failed' }
     }
   }
 
   /**
-   * Uploads workspace or task attachment via S3 Presigned URL
+   * Uploads workspace or task attachment directly to Amazon S3 via authenticated presigned URL
    */
   static async uploadAttachment(
     file: File,
@@ -109,7 +91,7 @@ export class StorageService {
     token: string
   ): Promise<StorageUploadResult> {
     try {
-      const presignedEndpoint = `${this.apiUrl}/api/v1/storage/presigned-url`
+      const presignedEndpoint = `${this.apiUrl}/api/storage/presigned-url`
       const presignedRes = await fetch(presignedEndpoint, {
         method: 'POST',
         headers: {
@@ -127,11 +109,12 @@ export class StorageService {
 
       if (!presignedRes.ok) {
         const errJson = await presignedRes.json().catch(() => ({}))
-        return { publicUrl: '', error: errJson.error || 'Failed to obtain presigned URL' }
+        return { publicUrl: '', error: errJson.error || 'Failed to obtain S3 presigned URL' }
       }
 
       const { uploadUrl, key, publicUrl } = await presignedRes.json()
 
+      // Direct binary PUT to Amazon S3
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: {

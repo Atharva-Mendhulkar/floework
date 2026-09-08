@@ -100,10 +100,11 @@ export function detectCycle(
 
   // Check starting from the source of the new edge first (most likely path)
   if (dfs(newEdge.source, [])) {
+    const cycle = (detectedCycle as string[] | null) || [newEdge.source, newEdge.target]
     return {
       hasCycle: true,
-      cyclePath: detectedCycle || [newEdge.source, newEdge.target],
-      error: `Circular dependency detected: ${detectedCycle?.join(' -> ')}`
+      cyclePath: cycle,
+      error: `Circular dependency detected: ${cycle.join(' -> ')}`
     }
   }
 
@@ -111,10 +112,11 @@ export function detectCycle(
   for (const node of allNodes) {
     if ((state.get(node) || 0) === 0) {
       if (dfs(node, [])) {
+        const cycle = (detectedCycle as string[] | null) || []
         return {
           hasCycle: true,
-          cyclePath: detectedCycle || [],
-          error: `Circular dependency detected: ${detectedCycle?.join(' -> ')}`
+          cyclePath: cycle,
+          error: `Circular dependency detected: ${cycle.join(' -> ')}`
         }
       }
     }

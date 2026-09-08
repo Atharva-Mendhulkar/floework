@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useGetProfileQuery, useUpdateProfileMutation, useDisconnectGitHubMutation, useGetGoogleCalendarStatusQuery, useDisconnectGoogleCalendarMutation } from "@/store/api";
+import { CognitoAuthService } from "@/services/CognitoAuthService";
 import { toast } from "sonner";
 import { User as UserIcon, Lock, Mail, Save, Github, CheckCircle2, Calendar, Bell, Camera, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,12 @@ export default function ProfilePage() {
 
         setIsUploadingAvatar(true);
         try {
-            await updateProfile({ avatarFile: file } as any).unwrap();
+            const res = await updateProfile({ avatarFile: file } as any).unwrap();
+            const session = CognitoAuthService.getSession();
+            if (session && res?.data?.avatarUrl) {
+                session.user.avatarUrl = res.data.avatarUrl;
+                localStorage.setItem('floework_cognito_session', JSON.stringify(session));
+            }
             toast.success('Profile picture updated!');
             refetch();
         } catch {
@@ -82,9 +88,10 @@ export default function ProfilePage() {
     };
 
     const handleConnectGitHub = () => {
-        const token = localStorage.getItem('floe_token'); // ← fixed token key
+        const token = CognitoAuthService.getToken();
         if (!token) { toast.error("Please log in first"); return; }
-        const popup = window.open(`http://localhost:5001/api/v1/auth/github?token=${token}`, 'github-oauth', 'width=600,height=700');
+        const baseUrl = window.location.origin;
+        const popup = window.open(`${baseUrl}/api/auth/github?token=${token}`, 'github-oauth', 'width=600,height=700');
         window.addEventListener('message', (e) => {
             if (e.data === 'github:connected') {
                 popup?.close();
@@ -95,9 +102,10 @@ export default function ProfilePage() {
     };
 
     const handleConnectGoogleCalendar = () => {
-        const token = localStorage.getItem('floe_token');
+        const token = CognitoAuthService.getToken();
         if (!token) { toast.error("Please log in first"); return; }
-        const popup = window.open(`http://localhost:5001/api/v1/auth/google-calendar?token=${token}`, 'gcal-oauth', 'width=600,height=700');
+        const baseUrl = window.location.origin;
+        const popup = window.open(`${baseUrl}/api/auth/google-calendar?token=${token}`, 'gcal-oauth', 'width=600,height=700');
         window.addEventListener('message', (e) => {
             if (e.data === 'gcal:connected') {
                 popup?.close();

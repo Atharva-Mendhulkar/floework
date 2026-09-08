@@ -1,4 +1,4 @@
--- supabase/migrations/039_execution_graph.sql
+-- database/migrations/039_execution_graph.sql
 
 -- 1. Task Dependencies (Graph Edges)
 CREATE TABLE IF NOT EXISTS public.task_dependencies (
@@ -94,5 +94,4 @@ CREATE POLICY "Users can view edge intelligence for their projects" ON public.ex
         )
     );
 
--- Add to Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.task_dependencies;
+-- Realtime broadcast handled via AWS API Gateway WebSockets & Redis PubSub

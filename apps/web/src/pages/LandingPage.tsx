@@ -124,7 +124,7 @@ export default function LandingPage() {
                         <div className="hidden md:flex flex-1 justify-center items-center gap-8 text-[15px] font-medium text-text-secondary">
                             <button onClick={() => navigate("/philosophy")} className="hover:text-foreground transition-colors">Philosophy</button>
                             <button onClick={() => navigate("/features")} className="hover:text-foreground transition-colors">Features</button>
-                            <button onClick={() => navigate("/pricing")} className="hover:text-foreground transition-colors">Pricing</button>
+                            <button onClick={() => navigate("/design")} className="hover:text-foreground transition-colors">Design</button>
                         </div>
 
                         <div className="flex flex-1 justify-end items-center gap-3">
@@ -610,8 +610,7 @@ export default function LandingPage() {
                             <ul className="space-y-4 text-[14px]">
                                 {[
                                     { name: "Features", path: "/features" },
-                                    { name: "Pricing", path: "/pricing" },
-                                    { name: "Philosophy", path: "/philosophy" }
+                                    { name: "Design", path: "/design" }
                                 ].map((item) => (
                                     <li key={item.name}>
                                         <button onClick={() => navigate(item.path)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">

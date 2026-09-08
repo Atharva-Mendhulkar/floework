@@ -1,4 +1,4 @@
--- supabase/migrations/032_elite_rls_refinement.sql
+-- database/migrations/032_elite_rls_refinement.sql
 
 -- 1. Precision Messaging Security (No trust in client-provided sender_id)
 -- Ensure author_id always defaults to the authenticated user

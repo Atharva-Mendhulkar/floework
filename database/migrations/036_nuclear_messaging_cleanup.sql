@@ -1,4 +1,4 @@
--- supabase/migrations/036_nuclear_messaging_cleanup.sql
+-- database/migrations/036_nuclear_messaging_cleanup.sql
 
 -- 1. Total Policy Wipe: Detect and destroy ALL existing policies on the messages table
 -- This removes any "phantom" policies referencing old columns like author_id

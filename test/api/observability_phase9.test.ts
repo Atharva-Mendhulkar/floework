@@ -12,7 +12,7 @@ import {
   extractCorrelationContext,
   formatStructuredLog
 } from '../../api/_lib/logger'
-import { createServer } from '../../api/server'
+import { createServer } from '../../api/_server'
 
 describe('Phase 9: Structured JSON Correlation Logger (api/_lib/logger.ts)', () => {
   beforeEach(() => {

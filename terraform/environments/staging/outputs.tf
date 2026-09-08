@@ -339,6 +339,21 @@ output "dns_api_record" {
   value       = module.dns.api_dns_record
 }
 
+output "dns_web_record" {
+  description = "Web frontend apex domain alias DNS record FQDN"
+  value       = module.dns.web_dns_record
+}
+
+output "dns_certificate_arn" {
+  description = "ARN of the managed ACM SSL/TLS certificate"
+  value       = module.dns.certificate_arn
+}
+
+output "dns_name_servers" {
+  description = "Name servers for the public Route 53 hosted zone"
+  value       = module.dns.name_servers
+}
+
 # ==============================================================================
 # Email Outputs (Phase 11 Amazon SES Transactional Email)
 # ==============================================================================
@@ -372,6 +387,55 @@ output "ecr_repository_arn" {
   value       = module.ci_cd.ecr_repository_arn
 }
 
+# ==============================================================================
+# Frontend Outputs (Phase 16 React Web App S3 Hosting & CloudFront CDN)
+# ==============================================================================
 
+output "frontend_s3_bucket_name" {
+  description = "Name of the S3 bucket hosting frontend static assets"
+  value       = module.frontend.s3_bucket_name
+}
 
+output "frontend_s3_bucket_arn" {
+  description = "ARN of the S3 bucket hosting frontend static assets"
+  value       = module.frontend.s3_bucket_arn
+}
 
+output "frontend_cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution serving frontend traffic"
+  value       = module.frontend.cloudfront_distribution_id
+}
+
+output "frontend_cloudfront_domain_name" {
+  description = "Canonical domain name of the frontend CloudFront CDN"
+  value       = module.frontend.cloudfront_domain_name
+}
+
+# ==============================================================================
+# FinOps Outputs (Phase 21 Cost Governance, Budgets & Anomaly Monitoring)
+# ==============================================================================
+
+output "finops_budget_id" {
+  description = "ID of the AWS Cost Budget"
+  value       = module.finops.budget_id
+}
+
+output "finops_budget_name" {
+  description = "Name of the AWS Cost Budget"
+  value       = module.finops.budget_name
+}
+
+output "finops_budget_limit_amount" {
+  description = "Configured monthly budget limit amount in USD"
+  value       = module.finops.budget_limit_amount
+}
+
+output "finops_anomaly_monitor_arn" {
+  description = "ARN of the AWS Cost Anomaly Monitor"
+  value       = module.finops.anomaly_monitor_arn
+}
+
+output "finops_anomaly_subscription_arn" {
+  description = "ARN of the AWS Cost Anomaly Alert Subscription"
+  value       = module.finops.anomaly_subscription_arn
+}

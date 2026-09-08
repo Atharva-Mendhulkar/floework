@@ -1,7 +1,7 @@
 # Floework — Comprehensive Project Documentation & Technical Architecture Analysis
 
 > **Authoritative Technical Documentation, Product Thesis & Codebase Audit**  
-> **Source of Truth:** Repository source code, Supabase database migrations (`000`–`039`), Vercel serverless API handlers, React 18 / Vite client application, and infrastructure configurations.  
+> **Source of Truth:** Repository source code, AWS database migrations (`000`–`039`), Vercel serverless API handlers, React 18 / Vite client application, and infrastructure configurations.  
 > **Analysis & Audit Date:** August 2026  
 > **Repository Root:** `/home/topfloorboss/Downloads/floework-main`
 
@@ -19,7 +19,7 @@
 8. [End-to-End User Journeys](#8-end-to-end-user-journeys)
 9. [Frontend Architecture & Component Systems](#9-frontend-architecture--component-systems)
 10. [Backend Architecture & API Route Inventory](#10-backend-architecture--api-route-inventory)
-11. [Database Architecture & Data Model (Supabase/PostgreSQL)](#11-database-architecture--data-model-supabasepostgresql)
+11. [Database Architecture & Data Model (AWS/PostgreSQL)](#11-database-architecture--data-model-databasepostgresql)
 12. [Redis, Message Brokers, Workers & Async Processing](#12-redis-message-brokers-workers--async-processing)
 13. [Engineering Innovations & Distributed Resilience](#13-engineering-innovations--distributed-resilience)
 14. [AI Architecture & Generative Synthesis (Gemini 1.5 Flash)](#14-ai-architecture--generative-synthesis-gemini-15-flash)
@@ -51,7 +51,7 @@
 - **Core Problem**: Traditional issue trackers track *administrative state* without visibility into *cognitive effort*, *interruption friction*, *blocker cascades*, or *burnout trajectory*.
 - **Core Solution**: A unified execution engine combining an autonomous deep work timer, topological execution graph, versioned optimistic concurrency control, real-time presence, and AI executive synthesis.
 - **Current Stage**: Functional Production-Ready Core with Showcase Stubs for External Enterprise Integrations
-- **Implementation Status**: Core application is fully functional across React 18, Supabase PostgreSQL, Realtime channels, Vercel Serverless Functions, Upstash Redis, and Google Gemini AI.
+- **Implementation Status**: Core application is fully functional across React 18, Amazon RDS PostgreSQL, Realtime channels, Vercel Serverless Functions, Upstash Redis, and Google Gemini AI.
 
 ---
 
@@ -64,12 +64,12 @@
 > Floework solves the disconnect between task checklists and engineering reality. By integrating an autonomous Pomodoro-style focus timer directly with Kanban state transitions, DAG dependency mapping, and real-time team presence, Floework captures the true cognitive cost of software delivery. It provides engineering leaders with plain-English AI summaries and workload fatigue heuristics while giving developers uninterrupted deep work blocks.
 
 #### 100-Word Description
-> Floework is an execution intelligence platform built for modern software teams. Conventional project management tools treat tasks as static checklists, ignoring context switching, interruption density, and developer burnout. Floework unifies task orchestration with an autonomous focus session engine: starting deep work automatically transitions task states, tracks cognitive effort, updates dependency graphs, and broadcasts non-invasive team presence. Powered by React 18, Supabase PostgreSQL with Row-Level Security, Vercel Serverless Functions, Upstash Redis caching, and Google Gemini 1.5 Flash, Floework transforms raw execution signals into predictive delivery metrics, bottleneck maps, and automated executive narratives.
+> Floework is an execution intelligence platform built for modern software teams. Conventional project management tools treat tasks as static checklists, ignoring context switching, interruption density, and developer burnout. Floework unifies task orchestration with an autonomous focus session engine: starting deep work automatically transitions task states, tracks cognitive effort, updates dependency graphs, and broadcasts non-invasive team presence. Powered by React 18, Amazon RDS PostgreSQL with Row-Level Security, Vercel Serverless Functions, Upstash Redis caching, and Google Gemini 1.5 Flash, Floework transforms raw execution signals into predictive delivery metrics, bottleneck maps, and automated executive narratives.
 
 #### 250-Word Description
 > Floework represents a paradigm shift from passive project tracking to active execution intelligence. Modern software teams suffer from fractured toolchains—issues in Jira, communication in Slack, time logs in Harvest, and code in GitHub—leading to chronic context switching, invisible blocker stagnation, and developer fatigue. Floework bridges this gap by establishing an explicit causal chain: Focus Session $\to$ Cognitive Effort $\to$ Task State Transition $\to$ Outcome.
 > 
-> When an engineer starts a task in Floework, an integrated focus timer automatically advances the board state, records interruption metrics, and illuminates a live "In Focus" presence indicator across the team workspace. Downstream, an interactive Execution Intelligence Graph (@xyflow/react) dynamically visualizes critical paths and blocker cascades. All updates are synchronized in real-time through Supabase Realtime channels with backpressure batching and guarded by version-based Optimistic Concurrency Control (OCC) to prevent collaborative write collisions.
+> When an engineer starts a task in Floework, an integrated focus timer automatically advances the board state, records interruption metrics, and illuminates a live "In Focus" presence indicator across the team workspace. Downstream, an interactive Execution Intelligence Graph (@xyflow/react) dynamically visualizes critical paths and blocker cascades. All updates are synchronized in real-time through AWS WebSocket Realtime channels with backpressure batching and guarded by version-based Optimistic Concurrency Control (OCC) to prevent collaborative write collisions.
 > 
 > In the backend, raw focus signals are aggregated through Vercel Serverless Functions and synthesized via Google Gemini 1.5 Flash (shielded by Opossum circuit breakers and 1-hour Redis TTL caching) to generate plain-English executive summaries and estimation accuracy analytics. By measuring the physical mechanics of work rather than arbitrary story points, Floework gives engineering organizations unprecedented delivery visibility while safeguarding individual cognitive limits.
 
@@ -292,7 +292,7 @@ A Kanban board is merely a view over a database column (`status`). Floework trea
   - *Status*: `Implemented`
 - **Project-Scoped Chat**:
   - *Frontend*: `MessagesPage.tsx` with auto-scroll and message author avatar resolution.
-  - *Backend*: Supabase Realtime subscription on `messages` table filtered by `project_id`.
+  - *Backend*: AWS WebSocket Realtime subscription on `messages` table filtered by `project_id`.
   - *Status*: `Implemented`
 - **In-App Notification Center**:
   - *Frontend*: `AlertsPage.tsx`, sidebar unread badge.
@@ -307,7 +307,7 @@ A Kanban board is merely a view over a database column (`status`). Floework trea
   - *Status*: `Implemented`
 - **Profile & Custom Avatar Storage**:
   - *Frontend*: `ProfilePage.tsx` with camera upload overlay.
-  - *Storage*: Uploads binary files directly to Supabase Storage bucket `avatars` with public URL generation.
+  - *Storage*: Uploads binary files directly to Amazon S3 Storage bucket `avatars` with public URL generation.
   - *Status*: `Implemented`
 
 ---
@@ -396,7 +396,7 @@ The entire Floework platform operates as a cohesive execution lifecycle:
 
 ### 8.1 Journey 1: New User Onboarding & Workspace Initialization
 1. **Signup**: User navigates to `/register` ([`RegisterPage.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/modules/auth/views/RegisterPage.tsx)), enters name, email, and password.
-2. **Auth & Profile Creation**: Supabase Auth creates user in `auth.users`. PostgreSQL trigger `on_auth_user_created` automatically inserts records into `public.profiles` and `public.subscriptions`.
+2. **Auth & Profile Creation**: Amazon Cognito creates user in `auth.users`. PostgreSQL trigger `on_auth_user_created` automatically inserts records into `public.profiles` and `public.subscriptions`.
 3. **Onboarding Fork**: User is redirected to `/onboarding` ([`OnboardingPage.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/OnboardingPage.tsx)).
    - *Path A (Create)*: Enters Workspace Name $\to$ Project Name $\to$ Sprint Name $\to$ `setupWorkspace` mutation creates `teams`, `team_members` (as admin), `projects`, and `sprints`.
    - *Path B (Join)*: Enters 30-character invite token $\to$ `joinTeam` mutation verifies `team_invitations`, adds user to `team_members`, and purges the used token.
@@ -454,7 +454,7 @@ All route components are declared with `React.lazy` and rendered inside `<Suspen
 | `/privacy` | `PrivacyPolicy.tsx` | No | None | Privacy compliance declaration |
 | `/terms` | `TermsOfService.tsx` | No | None | Terms of service |
 | `/narrative/shared/:token` | `SharedNarrativePage.tsx` | No | None | Public read-only AI summary link |
-| `/login` | `LoginPage.tsx` | No | None | Supabase email/password login |
+| `/login` | `LoginPage.tsx` | No | None | AWS email/password login |
 | `/register` | `RegisterPage.tsx` | No | None | User signup & profile bootstrap |
 | `/forgot-password`| `ForgotPasswordPage.tsx` | No | None | Password reset request |
 | `/reset-password/:token`| `ResetPasswordPage.tsx` | No | None | Password update form |
@@ -477,7 +477,7 @@ All route components are declared with `React.lazy` and rendered inside `<Suspen
 ## 10. Backend Architecture & API Route Inventory
 
 ### 10.1 Serverless Architecture Model
-The Floework backend executes as Node.js TypeScript serverless functions on Vercel (`/api`). All database interactions utilize either the Supabase PostgREST client or the privileged `supabaseAdmin` service role client with strict parameter validation via Zod.
+The Floework backend executes as Node.js TypeScript serverless functions on Vercel (`/api`). All database interactions utilize either the Amazon RDS PostgreSQL client or the privileged `dbClient` service role client with strict parameter validation via Zod.
 
 ```
 api/
@@ -530,7 +530,7 @@ api/
 
 ---
 
-## 11. Database Architecture & Data Model (Supabase/PostgreSQL)
+## 11. Database Architecture & Data Model (AWS/PostgreSQL)
 
 ```mermaid
 erDiagram
@@ -694,7 +694,7 @@ graph TD
 ## 16. Security Architecture & Security Risks
 
 ### 16.1 Security Controls Matrix
-- **Authentication**: Cryptographic JWTs validated server-side via Supabase GoTrue.
+- **Authentication**: Cryptographic JWTs validated server-side via AWS GoTrue.
 - **Authorization**: Row-Level Security (RLS) on all 19 application tables. Helper functions `is_team_member(team_id)` and `can_post_to_project(project_id)` restrict data to authorized workspace members.
 - **Input Validation**: Zod schemas on all API inputs in `validate.ts`.
 - **Security Headers (`vercel.json`)**: `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
@@ -727,7 +727,7 @@ graph TD
 ### 18.1 Automated Test Suite
 - **Configuration**: Vitest 3.2.4 with JSDOM environment in `apps/web/vitest.config.ts`.
 - **Unit Tests**: [`button.test.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ui/__tests__/button.test.tsx) testing variant classes and disabled states.
-- **Database Invariant Check**: [`verify-deploy.sh`](file:///home/topfloorboss/Downloads/floework-main/scripts/verify-deploy.sh) executes `SELECT * FROM verify_security_invariants()` via Supabase CLI to guarantee no overly permissive RLS policies exist.
+- **Database Invariant Check**: [`verify-deploy.sh`](file:///home/topfloorboss/Downloads/floework-main/scripts/verify-deploy.sh) executes `SELECT * FROM verify_security_invariants()` via AWS / RDS migration runner to guarantee no overly permissive RLS policies exist.
 
 ### 18.2 Adversarial Failure & Concurrency Simulations
 - [`simulate_failures.sh`](file:///home/topfloorboss/Downloads/floework-main/scripts/simulate_failures.sh): Tests serverless latency injection (`x-sim-delay: 2000`) and simulated 20% failure probabilities (`x-sim-fail: true`).
@@ -741,7 +741,7 @@ graph TD
 
 | Dimension / Component | Verified Count | Source / Evidence |
 | :--- | :--- | :--- |
-| **SQL Migrations** | `40` | `supabase/migrations/000_*.sql` to `039_*.sql` |
+| **SQL Migrations** | `40` | `database/migrations/000_*.sql` to `039_*.sql` |
 | **Database Tables** | `19` | 19 application tables + `storage.objects` |
 | **Database Views** | `2` | `conflict_stats`, `conflict_hotspots` |
 | **Materialized Views** | `1` | `mv_focus_stability` |
@@ -758,7 +758,7 @@ graph TD
 | **Background Workers** | `1` | `workers/focus-stability.ts` |
 | **Shell / Test Scripts** | `3` | Scripts in `/scripts` + `seed_edges.mjs` |
 | **Frontend Source LOC** | `16,132` | TS, TSX, CSS across `apps/web/src`, `api`, `workers` |
-| **SQL Migration LOC** | `2,104` | SQL across `supabase/migrations` |
+| **SQL Migration LOC** | `2,104` | SQL across `database/migrations` |
 | **Total Handwritten LOC** | **`18,236`** | Codebase total (excluding packages/lockfiles) |
 
 ---
@@ -773,10 +773,10 @@ graph TD
 - **Task Idempotency Cache TTL**: `86,400s (24 hours)` ([`api/tasks/index.ts:110`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L110))
 - **AI Circuit Breaker Timeout**: `25,000ms` ([`narrative.ts:25`](file:///home/topfloorboss/Downloads/floework-main/api/analytics/narrative.ts#L25))
 - **Client Diagnostics Reporting Interval**: `30,000ms` ([`NetworkDiagnostics.ts:19`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/services/NetworkDiagnostics.ts#L19))
-- **Invitation Token Validity**: `7 days` ([`009_workspace_system.sql:62`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/009_workspace_system.sql#L62))
+- **Invitation Token Validity**: `7 days` ([`009_workspace_system.sql:62`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/009_workspace_system.sql#L62))
 
 ### 20.2 Not Yet Benchmarked
-- Absolute maximum sustained WebSocket channel concurrency on Supabase Cloud.
+- Absolute maximum sustained WebSocket channel concurrency on Amazon Web Services.
 - Exact end-to-end event latency for Kafka consumer processing under $>1,000\text{ msg/s}$ loads.
 
 ---
@@ -822,11 +822,11 @@ graph TD
 - Autonomous Focus Session Engine with audio completion chimes
 - `@xyflow/react` Execution Intelligence Graph with 4 topological modes
 - AI Executive Narrative generation with Gemini 1.5 Flash
-- Multi-tenant Supabase PostgreSQL database with 112 RLS policies
+- Multi-tenant Amazon RDS PostgreSQL database with 112 RLS policies
 - Versioned Optimistic Concurrency Control with conflict logging
 - Prometheus metrics registry and in-browser network diagnostics
 - Workspace, project, sprint, member, and token-based invitation management
-- User profile editing and direct Supabase avatar storage uploads
+- User profile editing and direct AWS avatar storage uploads
 
 ### 2. Implemented but Requires Hardening
 - Serverless rate limiting in `api/_lib/rateLimit.ts` (currently in-memory; needs Redis backend)
@@ -841,7 +841,7 @@ graph TD
 - Google Calendar OAuth sync ([`ProfilePage.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/ProfilePage.tsx))
 
 ### 5. Dead / Legacy Code
-- [`SocketContext.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/modules/socket/SocketContext.tsx): Mock Socket.IO stub (app uses Supabase Realtime).
+- [`SocketContext.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/modules/socket/SocketContext.tsx): Mock Socket.IO stub (app uses AWS WebSocket Realtime).
 - Legacy Express / Prisma references in `docker-compose.yml` and `docs/Project_Documentation.md`.
 
 ---
@@ -875,7 +875,7 @@ graph TD
 
 ### P3: Future (Scalability & Monetization)
 - [ ] **Live Stripe Webhooks**: Connect Stripe billing portal and webhook handling.
-- [ ] **Automated Read Replica Failover**: Implement dynamic query routing between Supabase primary and read replica nodes.
+- [ ] **Automated Read Replica Failover**: Implement dynamic query routing between AWS primary and read replica nodes.
 
 ---
 
@@ -887,7 +887,7 @@ graph TD
 - **30-Second Pitch**: Floework replaces static task checklists with execution intelligence. By integrating a 25-minute Pomodoro timer directly into Kanban state transitions, DAG dependency mapping, and real-time presence, Floework measures empirical cognitive effort rather than arbitrary story points. It provides engineering leaders with plain-English AI summaries and workload fatigue heuristics while protecting developer flow.
 - **Core Problem**: Traditional project management tools measure ticket output but hide context switching, interruption friction, blocker cascades, and developer burnout.
 - **Core Solution**: A unified execution engine linking focus sessions, task state transitions, graph dependencies, and AI narrative synthesis.
-- **Technical Architecture**: React 18 / Vite SPA + Supabase (PostgreSQL 15, Auth, Realtime, Storage) + Vercel Serverless Functions + Upstash Redis (caching/idempotency) + Kafka (event streaming) + Google Gemini 1.5 Flash (AI synthesis with Opossum circuit breakers).
+- **Technical Architecture**: React 18 / Vite SPA + AWS (PostgreSQL 15, Auth, Realtime, Storage) + Vercel Serverless Functions + Upstash Redis (caching/idempotency) + Kafka (event streaming) + Google Gemini 1.5 Flash (AI synthesis with Opossum circuit breakers).
 - **Key Engineering Innovation**: Version-based Optimistic Concurrency Control (OCC) with automated conflict logging and jittered client retries, paired with 500ms backpressure batching for real-time WebSocket synchronization.
 - **Current Status**: Fully functional production-ready core application with modular stubs for external third-party integrations (Stripe, GitHub PR sync).
 
@@ -895,8 +895,8 @@ graph TD
 
 ## 26. Technical Defense & Evaluator Q&A
 
-#### Q1: Why use Supabase instead of a custom Express + PostgreSQL server?
-**Answer**: Supabase provides database-enforced Row-Level Security (RLS), built-in GoTrue JWT authentication, and native PostgreSQL Change Data Capture (CDC) over WebSockets. This eliminates boilerplate CRUD and custom socket servers while enforcing multi-tenant isolation directly in PostgreSQL.
+#### Q1: Why use AWS instead of a custom Express + PostgreSQL server?
+**Answer**: AWS provides database-enforced Row-Level Security (RLS), built-in GoTrue JWT authentication, and native PostgreSQL Change Data Capture (CDC) over WebSockets. This eliminates boilerplate CRUD and custom socket servers while enforcing multi-tenant isolation directly in PostgreSQL.
 
 #### Q2: Why use Vercel Serverless Functions for the API layer?
 **Answer**: Serverless functions scale to zero, execute with low cold-start overhead, and isolate failures between endpoints (e.g., a heavy AI generation request cannot degrade task fetching).
@@ -948,10 +948,10 @@ Chart Engine:               Recharts 2.15.4
 
 Backend Execution:          Vercel Serverless Functions (@vercel/node 3.0.0)
 API Validation:             Zod 4.4.3 / 3.25.76
-Database:                   PostgreSQL 15 via Supabase Cloud
+Database:                   PostgreSQL 15 via Amazon Web Services
 Database Security:          Row-Level Security (RLS) with 112 policies
-Authentication:             Supabase Auth (GoTrue JWT)
-Realtime Engine:            Supabase Realtime (Postgres CDC & Presence Channels)
+Authentication:             Amazon Cognito Auth (JWT)
+Realtime Engine:            AWS WebSocket Realtime (Postgres CDC & Presence Channels)
 Distributed Cache:          Upstash Redis (@upstash/redis 1.38.0)
 Message Streaming:          Apache Kafka (kafkajs 2.2.4)
 Generative AI:              Google Gemini 1.5 Flash (@google/generative-ai 0.21.0)
@@ -1016,7 +1016,7 @@ floework-main/
 ├── scripts/
 │   ├── mutation_storm.sh                  # Multi-threaded OCC mutation simulation script
 │   ├── simulate_failures.sh               # Header-based latency/failure injection script
-│   └── verify-deploy.sh                   # Supabase migration push & security invariant runner
+│   └── verify-deploy.sh                   # AWS migration push & security invariant runner
 ├── seed_edges.mjs                         # Standalone Node script to insert task dependencies
 ├── storm-report.md                        # Historical mutation storm test report
 ├── vercel.json                            # Vercel deployment, security headers & cron config
@@ -1071,8 +1071,8 @@ floework-main/
 │           ├── store/                     # Redux Toolkit store, slices, and RTK Query api.ts
 │           └── test/                      # Vitest test setup and test files
 ├── src/                                   # Orphaned legacy root directory (PageSkeleton & ErrorBoundary)
-├── supabase/                              # Supabase Local & Cloud Database Management
-│   ├── .temp/                             # Supabase CLI project metadata & linked references
+├── database/                              # AWS Local & Cloud Database Management
+│   ├── .temp/                             # AWS / RDS migration runner project metadata & linked references
 │   └── migrations/                        # 40 SQL migration files (000_*.sql to 039_*.sql)
 └── workers/                               # Asynchronous Background Processing
     └── focus-stability.ts                 # Kafka consumer worker on focus.events
@@ -1081,7 +1081,7 @@ floework-main/
 #### 1.2 Package Manifests & Workspaces
 - **Root `package.json`** ([`package.json:1-34`](file:///home/topfloorboss/Downloads/floework-main/package.json#L1-L34)):
   - Defines npm workspace `workspaces: ["apps/*"]`.
-  - Defines root runtime dependencies: `@google/generative-ai`, `@opentelemetry/api`, `@supabase/supabase-js`, `@upstash/redis`, `kafkajs`, `lru-cache`, `opossum`, `prom-client`, `uuid`, `zod`.
+  - Defines root runtime dependencies: `@google/generative-ai`, `@opentelemetry/api`, `pg & @aws-sdk/client-s3`, `@upstash/redis`, `kafkajs`, `lru-cache`, `opossum`, `prom-client`, `uuid`, `zod`.
   - Build script delegates to `apps/web`: `"build": "cd apps/web && npm run build"`.
 - **Web App `apps/web/package.json`** ([`apps/web/package.json:1-95`](file:///home/topfloorboss/Downloads/floework-main/apps/web/package.json#L1-L95)):
   - Declares React 18.3.1, Vite 5.4.19, Redux Toolkit 2.11.2, TanStack React Query 5.83.0, `@xyflow/react` 12.10.2, Recharts 2.15.4, Lucide React, and Radix UI primitives.
@@ -1110,12 +1110,12 @@ floework-main/
 ├─────────────────────────┼──────────────────────────────────┼───────────────────────────┤
 │ Frontend SPA            │ React 18 + Vite 5 + Redux/RTK    │ apps/web/src/App.tsx      │
 │ Serverless API Layer    │ Vercel Functions (Node.js)       │ api/*, api/_lib/*         │
-│ Database & Security     │ Supabase PostgreSQL 15 + RLS     │ supabase/migrations/*     │
-│ Realtime Synchronization│ Supabase Realtime (CDC/Presence) │ ConnectionManager.ts      │
+│ Database & Security     │ Amazon RDS PostgreSQL 15 + RLS     │ database/migrations/*     │
+│ Realtime Synchronization│ AWS WebSocket Realtime (CDC/Presence) │ ConnectionManager.ts      │
 │ Async Event Processing  │ Kafka Producer + Worker Skeleton │ api/_lib/kafka.ts, worker │
 │ Distributed Caching     │ Upstash Redis (REST)             │ api/_lib/redis.ts         │
 │ Generative AI Engine    │ Gemini 1.5 Flash + Opossum       │ api/analytics/narrative.ts│
-│ Object Storage          │ Supabase Storage (avatars)       │ apps/web/src/store/api.ts │
+│ Object Storage          │ Amazon S3 Storage (avatars)       │ apps/web/src/store/api.ts │
 │ Observability           │ Prometheus Metrics + OTel Spans  │ api/metrics/index.ts      │
 │ Client Telemetry        │ NetworkDiagnostics PerformanceAPI│ NetworkDiagnostics.ts     │
 │ Billing (Showcase)      │ Stubbed / Local UI Mock          │ BillingPage.tsx           │
@@ -1128,25 +1128,25 @@ floework-main/
 - **Exact Implementation**: Single-page application configured with `react-router-dom` (v6.30.1) across 24 routes. All pages use `React.lazy` code splitting wrapped in `<Suspense fallback={<PageSkeleton />}>` and top-level `<ErrorBoundary>`.
 - **Key Files**: [`apps/web/src/App.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/App.tsx), [`apps/web/src/store/api.ts`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts), [`apps/web/src/store/index.ts`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/index.ts), [`apps/web/src/components/ExecutionGraph.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx).
 - **Data Flow**: Components dispatch RTK Query hooks $\to$ queries execute direct PostgREST or `/api/bff/tasks` $\to$ optimistic cache updates apply immediately $\to$ server response reconciles cache.
-- **Dependencies**: React, Redux, Supabase JS, xyflow, Recharts.
+- **Dependencies**: React, Redux, AWS SDK, xyflow, Recharts.
 - **Current Maturity**: **Fully Implemented** for core views. Dual caching libraries present (`@tanstack/react-query` alongside RTK Query).
 
 #### 2.2 Backend Subsystem
 - **Technology**: Vercel Serverless Functions (`@vercel/node:3.0.0`), TypeScript, Zod, Opossum, OpenTelemetry.
 - **Exact Implementation**: 10 distinct API route handlers exporting `default async function handler(req, res)` under `/api`.
 - **Key Files**: [`api/tasks/index.ts`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts), [`api/bff/tasks.ts`](file:///home/topfloorboss/Downloads/floework-main/api/bff/tasks.ts), [`api/analytics/narrative.ts`](file:///home/topfloorboss/Downloads/floework-main/api/analytics/narrative.ts), [`api/_lib/auth.ts`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/auth.ts).
-- **Data Flow**: HTTP Request $\to$ `validateBody`/`validateQuery` (Zod) $\to$ `requireMember`/`requireAdmin` (Auth) $\to$ Supabase Service Role query or Redis $\to$ HTTP Response.
+- **Data Flow**: HTTP Request $\to$ `validateBody`/`validateQuery` (Zod) $\to$ `requireMember`/`requireAdmin` (Auth) $\to$ AWS Service Role query or Redis $\to$ HTTP Response.
 - **Current Maturity**: **Partially Implemented / Requiring Hardening**. Core routes function, but `PATCH /api/tasks` lacks auth validation and `GET /api/tasks` has a broken `requireMember` reference.
 
 #### 2.3 Database Subsystem
-- **Technology**: PostgreSQL 15 via Supabase Cloud.
+- **Technology**: PostgreSQL 15 via Amazon Web Services.
 - **Exact Implementation**: 40 sequential migration files defining 19 tables, 1 materialized view, 2 standard views, 12 functions/RPCs, 6 triggers, and 112 RLS policies.
-- **Key Files**: [`supabase/migrations/001_schema.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql), [`022_indexes.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/022_indexes.sql), [`028_version_based_occ.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql), [`039_execution_graph.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/039_execution_graph.sql).
+- **Key Files**: [`database/migrations/001_schema.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql), [`022_indexes.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/022_indexes.sql), [`028_version_based_occ.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql), [`039_execution_graph.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/039_execution_graph.sql).
 - **Data Flow**: Direct PostgREST queries from browser enforce RLS via `auth.uid()`. Backend API functions use service role bypass with explicit security checks.
 - **Current Maturity**: **Fully Implemented**. Extensive schema with indexes and triggers.
 
 #### 2.4 Realtime Subsystem
-- **Technology**: Supabase Realtime (PostgreSQL CDC over WebSockets & Realtime Presence).
+- **Technology**: AWS WebSocket Realtime (PostgreSQL CDC over WebSockets & Realtime Presence).
 - **Exact Implementation**:
   - `ConnectionManager.ts` manages channel subscriptions with a **500ms sliding queue batch window** to buffer incoming Postgres updates before updating the Redux store.
   - `usePresence.ts` joins `presence:team:{teamId}` broadcasting `in_focus` status.
@@ -1169,9 +1169,9 @@ floework-main/
 - **Current Maturity**: **Fully Implemented**.
 
 #### 2.7 Storage Subsystem
-- **Technology**: Supabase Storage (`storage.objects`).
+- **Technology**: Amazon S3 Storage (`storage.objects`).
 - **Exact Implementation**: Single public bucket `avatars`. Files are stored under `${userId}/avatar.${ext}`. RLS policies allow public read but restrict write/update/delete strictly to folder matching `auth.uid()`.
-- **Key Files**: [`supabase/migrations/021_storage_rls.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/021_storage_rls.sql), [`apps/web/src/store/api.ts:899-906`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts#L899-L906).
+- **Key Files**: [`database/migrations/021_storage_rls.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/021_storage_rls.sql), [`apps/web/src/store/api.ts:899-906`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts#L899-L906).
 - **Current Maturity**: **Fully Implemented** for user avatars. No task attachment or file storage bucket exists.
 
 #### 2.8 Observability Subsystem
@@ -1204,19 +1204,19 @@ floework-main/
 | Capability | Evidence | Status | Confidence |
 | :--- | :--- | :--- | :--- |
 | **FlowBoard Kanban (Drag & Drop)** | [`FlowBoard.tsx:1-288`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/FlowBoard.tsx), [`PhaseColumn.tsx:25-95`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/PhaseColumn.tsx#L25-L95), [`api/tasks/index.ts:123-184`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L123-L184) | Fully Implemented | High |
-| **Autonomous Focus Session Timer** | [`FocusPage.tsx:1-250`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/FocusPage.tsx), [`supabase/migrations/001_schema.sql:57-67`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L57-L67), [`increment_focus_count()`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L97-L110) | Fully Implemented | High |
-| **Execution Intelligence Graph** | [`ExecutionGraph.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx), [`GraphModes.tsx:1-50`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/GraphModes.tsx), [`supabase/migrations/039_execution_graph.sql:1-99`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/039_execution_graph.sql#L1-L99) | Fully Implemented | High |
+| **Autonomous Focus Session Timer** | [`FocusPage.tsx:1-250`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/FocusPage.tsx), [`database/migrations/001_schema.sql:57-67`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L57-L67), [`increment_focus_count()`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L97-L110) | Fully Implemented | High |
+| **Execution Intelligence Graph** | [`ExecutionGraph.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx), [`GraphModes.tsx:1-50`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/GraphModes.tsx), [`database/migrations/039_execution_graph.sql:1-99`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/039_execution_graph.sql#L1-L99) | Fully Implemented | High |
 | **AI Executive Narrative Generator**| [`api/analytics/narrative.ts:1-155`](file:///home/topfloorboss/Downloads/floework-main/api/analytics/narrative.ts#L1-L155), [`NarrativePage.tsx:1-110`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/NarrativePage.tsx) | Fully Implemented | High |
 | **Realtime Task Sync (Backpressure)**| [`ConnectionManager.ts:1-140`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/services/ConnectionManager.ts#L1-L140), [`useTaskRealtime.ts:1-60`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/hooks/useTaskRealtime.ts#L1-L60) | Fully Implemented | High |
 | **Live Team Presence Pulse** | [`usePresence.ts:1-50`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/hooks/usePresence.ts#L1-L50), [`Index.tsx:180-220`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/Index.tsx) | Fully Implemented | High |
-| **Optimistic Concurrency Control** | [`supabase/migrations/028_version_based_occ.sql:1-47`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql#L1-L47), [`api/tasks/index.ts:134-175`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L134-L175), [`PhaseColumn.tsx:56-90`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/PhaseColumn.tsx#L56-L90) | Fully Implemented | High |
-| **Conflict Observability Views** | [`supabase/migrations/029_conflict_observability.sql:1-35`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/029_conflict_observability.sql#L1-L35), [`037_concurrency_conflicts_metadata.sql:7-9`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/037_concurrency_conflicts_metadata.sql#L7-L9) | Fully Implemented | High |
+| **Optimistic Concurrency Control** | [`database/migrations/028_version_based_occ.sql:1-47`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql#L1-L47), [`api/tasks/index.ts:134-175`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L134-L175), [`PhaseColumn.tsx:56-90`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/PhaseColumn.tsx#L56-L90) | Fully Implemented | High |
+| **Conflict Observability Views** | [`database/migrations/029_conflict_observability.sql:1-35`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/029_conflict_observability.sql#L1-L35), [`037_concurrency_conflicts_metadata.sql:7-9`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/037_concurrency_conflicts_metadata.sql#L7-L9) | Fully Implemented | High |
 | **Workspace & Team Governance** | [`api/workspaces/index.ts:1-82`](file:///home/topfloorboss/Downloads/floework-main/api/workspaces/index.ts#L1-L82), [`api/workspaces/members/index.ts:1-80`](file:///home/topfloorboss/Downloads/floework-main/api/workspaces/members/index.ts#L1-L80), [`WorkspaceSettingsPage.tsx:1-200`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/WorkspaceSettingsPage.tsx) | Fully Implemented | High |
-| **Token-Based Workspace Invites** | [`api/workspaces/invites/index.ts:1-82`](file:///home/topfloorboss/Downloads/floework-main/api/workspaces/invites/index.ts#L1-L82), [`supabase/migrations/009_workspace_system.sql:56-65`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/009_workspace_system.sql#L56-L65) | Fully Implemented | High |
-| **Project-Scoped Team Chat** | [`MessagesPage.tsx:1-150`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/MessagesPage.tsx), [`supabase/migrations/036_nuclear_messaging_cleanup.sql:54-68`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/036_nuclear_messaging_cleanup.sql#L54-L68) | Fully Implemented | High |
-| **In-App Notification Alerts** | [`AlertsPage.tsx:1-122`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/AlertsPage.tsx), [`supabase/migrations/036_nuclear_messaging_cleanup.sql:70-107`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/036_nuclear_messaging_cleanup.sql#L70-L107) | Fully Implemented | High |
-| **Private Starred Tasks Pinboard** | [`StarredPage.tsx:1-100`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/StarredPage.tsx), [`supabase/migrations/038_fix_toggle_task_star.sql:1-43`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/038_fix_toggle_task_star.sql#L1-L43) | Fully Implemented | High |
-| **Profile & Avatar Storage** | [`ProfilePage.tsx:44-70`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/ProfilePage.tsx#L44-L70), [`supabase/migrations/021_storage_rls.sql:1-34`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/021_storage_rls.sql#L1-L34) | Fully Implemented | High |
+| **Token-Based Workspace Invites** | [`api/workspaces/invites/index.ts:1-82`](file:///home/topfloorboss/Downloads/floework-main/api/workspaces/invites/index.ts#L1-L82), [`database/migrations/009_workspace_system.sql:56-65`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/009_workspace_system.sql#L56-L65) | Fully Implemented | High |
+| **Project-Scoped Team Chat** | [`MessagesPage.tsx:1-150`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/MessagesPage.tsx), [`database/migrations/036_nuclear_messaging_cleanup.sql:54-68`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/036_nuclear_messaging_cleanup.sql#L54-L68) | Fully Implemented | High |
+| **In-App Notification Alerts** | [`AlertsPage.tsx:1-122`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/AlertsPage.tsx), [`database/migrations/036_nuclear_messaging_cleanup.sql:70-107`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/036_nuclear_messaging_cleanup.sql#L70-L107) | Fully Implemented | High |
+| **Private Starred Tasks Pinboard** | [`StarredPage.tsx:1-100`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/StarredPage.tsx), [`database/migrations/038_fix_toggle_task_star.sql:1-43`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/038_fix_toggle_task_star.sql#L1-L43) | Fully Implemented | High |
+| **Profile & Avatar Storage** | [`ProfilePage.tsx:44-70`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/ProfilePage.tsx#L44-L70), [`database/migrations/021_storage_rls.sql:1-34`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/021_storage_rls.sql#L1-L34) | Fully Implemented | High |
 | **Client Network Diagnostics** | [`NetworkDiagnostics.ts:1-60`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/services/NetworkDiagnostics.ts#L1-L60), [`api/metrics/diagnostics.ts:1-33`](file:///home/topfloorboss/Downloads/floework-main/api/metrics/diagnostics.ts#L1-L33) | Fully Implemented | High |
 | **Prometheus Metrics Registry** | [`api/metrics/index.ts:1-53`](file:///home/topfloorboss/Downloads/floework-main/api/metrics/index.ts#L1-L53) | Fully Implemented | High |
 | **Distributed Idempotency (Redis)**| [`api/tasks/index.ts:87-111`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L87-L111), [`api/_lib/redis.ts:1-9`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/redis.ts#L1-L9) | Fully Implemented | High |
@@ -1244,7 +1244,7 @@ floework-main/
 
 1. **Missing Authentication and Authorization on `PATCH /api/tasks` (IDOR / BOLA)**
    - **Evidence**: [`api/tasks/index.ts:123-184`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L123-L184).
-   - **Finding**: The `PATCH /api/tasks` handler updates tasks using `supabaseAdmin` (service role bypass) without executing `getUser()`, `requireMember()`, or `requireProjectMember()`. Any unauthenticated caller can modify any task record across any project or workspace.
+   - **Finding**: The `PATCH /api/tasks` handler updates tasks using `dbClient` (service role bypass) without executing `getUser()`, `requireMember()`, or `requireProjectMember()`. Any unauthenticated caller can modify any task record across any project or workspace.
    - **Confidence**: High.
    - **Unknowns**: None. The code is completely unauthenticated.
 
@@ -1263,7 +1263,7 @@ floework-main/
 ##### P1 — High Vulnerabilities
 
 1. **Cross-Tenant Information Leak in `concurrency_conflicts` RLS Policy**
-   - **Evidence**: [`supabase/migrations/028_version_based_occ.sql:40-46`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql#L40-L46).
+   - **Evidence**: [`database/migrations/028_version_based_occ.sql:40-46`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql#L40-L46).
    - **Finding**: The RLS policy `Admins can view conflicts` evaluates:
      `EXISTS (SELECT 1 FROM public.team_members WHERE user_id = auth.uid() AND role = 'admin')`.
      An admin of Workspace A can read conflict logs for Workspace B, C, and D because `concurrency_conflicts` lacks tenant scoping.
@@ -1291,7 +1291,7 @@ floework-main/
    - **Unknowns**: None.
 
 2. **Unverified Task Ownership in `toggle_task_star` RPC**
-   - **Evidence**: [`supabase/migrations/038_fix_toggle_task_star.sql:7-37`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/038_fix_toggle_task_star.sql#L7-L37).
+   - **Evidence**: [`database/migrations/038_fix_toggle_task_star.sql:7-37`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/038_fix_toggle_task_star.sql#L7-L37).
    - **Finding**: `public.toggle_task_star(p_task_id)` inserts records into `starred_tasks` for any valid UUID without verifying if the user belongs to the project owning `p_task_id`.
    - **Confidence**: High.
    - **Unknowns**: None.
@@ -1299,7 +1299,7 @@ floework-main/
 ##### P3 — Low Vulnerabilities
 
 1. **Hardcoded Asia/Kolkata Timezone in Materialized View**
-   - **Evidence**: [`supabase/migrations/004_analytics_views.sql:4-5`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/004_analytics_views.sql#L4-L5).
+   - **Evidence**: [`database/migrations/004_analytics_views.sql:4-5`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/004_analytics_views.sql#L4-L5).
    - **Finding**: Materialized view `mv_focus_stability` explicitly converts `started_at` to `'Asia/Kolkata'`, skewing hour-of-day analytics for international tenants.
    - **Confidence**: High.
    - **Unknowns**: None.
@@ -1340,17 +1340,17 @@ Tenant (teams.id / workspaceId)
 #### 5.3 Code Paths NOT Scoped by Tenant (Critical Audit Findings)
 
 1. **`concurrency_conflicts` Table**:
-   - **Evidence**: [`supabase/migrations/028_version_based_occ.sql:28-36`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql#L28-L36).
+   - **Evidence**: [`database/migrations/028_version_based_occ.sql:28-36`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql#L28-L36).
    - **Finding**: The table contains `entity_id` and `user_id` but **has no `team_id` or `tenant_id` column**. Its RLS policy allows any admin of any team to read all records across all tenants.
    - **Confidence**: High.
 
 2. **`focus_stability_slots` Table**:
-   - **Evidence**: [`supabase/migrations/001_schema.sql:79-86`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L79-L86).
+   - **Evidence**: [`database/migrations/001_schema.sql:79-86`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L79-L86).
    - **Finding**: Scoped strictly by `user_id`, `day_of_week`, and `hour_of_day`. Has no workspace or team boundary.
    - **Confidence**: High.
 
 3. **`public.subscriptions` Table**:
-   - **Evidence**: [`supabase/migrations/001_schema.sql:89-94`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L89-L94).
+   - **Evidence**: [`database/migrations/001_schema.sql:89-94`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L89-L94).
    - **Finding**: Scoped to `user_id`. Subscription tiers are modeled per-user, not per-workspace.
    - **Confidence**: High.
 
@@ -1359,8 +1359,8 @@ Tenant (teams.id / workspaceId)
    - **Finding**: Key format is `idempotency:task:{idempotencyKey}`. There is no `tenant_id` or `team_id` prefix in the Redis key namespace.
    - **Confidence**: High.
 
-5. **Supabase Storage Avatar Paths**:
-   - **Evidence**: [`supabase/migrations/021_storage_rls.sql:17-33`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/021_storage_rls.sql#L17-L33).
+5. **Amazon S3 Storage Avatar Paths**:
+   - **Evidence**: [`database/migrations/021_storage_rls.sql:17-33`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/021_storage_rls.sql#L17-L33).
    - **Finding**: Storage objects live in `avatars/${userId}/avatar.${ext}`. There is no workspace partition. Avatars are globally readable across the public bucket.
    - **Confidence**: High.
 
@@ -1377,11 +1377,11 @@ Tenant (teams.id / workspaceId)
 | **In-Memory Serverless Rate Limiter** | [`api/_lib/rateLimit.ts:7-35`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/rateLimit.ts#L7-L35) | Non-shared in-memory cache on Vercel allows trivial rate limit evasion. | **P1 (High)** |
 | **Broken Docker Compose Configuration** | [`docker-compose.yml:41-70`](file:///home/topfloorboss/Downloads/floework-main/docker-compose.yml#L41-L70) | Points to non-existent `./backend` directory, failing local container builds. | **P1 (High)** |
 | **Broken Root Dockerfile Build Target** | [`Dockerfile:22`](file:///home/topfloorboss/Downloads/floework-main/Dockerfile#L22) | Copies from `/app/dist` instead of `/app/apps/web/dist`, failing image builds. | **P1 (High)** |
-| **Dead Socket.IO Provider** | [`apps/web/src/modules/socket/SocketContext.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/modules/socket/SocketContext.tsx) | Dead no-op mock socket object creates confusion vs. active Supabase Realtime. | **P2 (Medium)** |
-| **Broken In-App Alert Navigation Links**| [`supabase/migrations/036_nuclear_messaging_cleanup.sql:85,100`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/036_nuclear_messaging_cleanup.sql#L85) | Database trigger creates alerts with `/projects/:id` link which triggers 404 in SPA. | **P2 (Medium)** |
+| **Dead Socket.IO Provider** | [`apps/web/src/modules/socket/SocketContext.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/modules/socket/SocketContext.tsx) | Dead no-op mock socket object creates confusion vs. active AWS WebSocket Realtime. | **P2 (Medium)** |
+| **Broken In-App Alert Navigation Links**| [`database/migrations/036_nuclear_messaging_cleanup.sql:85,100`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/036_nuclear_messaging_cleanup.sql#L85) | Database trigger creates alerts with `/projects/:id` link which triggers 404 in SPA. | **P2 (Medium)** |
 | **Dual Client Query Libraries** | [`apps/web/src/App.tsx:21`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/App.tsx#L21), [`apps/web/src/store/api.ts`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts) | Bundles both React Query and RTK Query, inflating client bundle size. | **P2 (Medium)** |
 | **Orphaned Root `src/` Directory** | [`src/components/`](file:///home/topfloorboss/Downloads/floework-main/src/components) | Duplicate `PageSkeleton.tsx` and `ErrorBoundary.tsx` outside active `apps/web`. | **P3 (Low)** |
-| **Hardcoded Asia/Kolkata Timezone** | [`supabase/migrations/004_analytics_views.sql:4-5`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/004_analytics_views.sql#L4-L5) | Hardcoded timezone in materialized view distorts international hourly analytics. | **P3 (Low)** |
+| **Hardcoded Asia/Kolkata Timezone** | [`database/migrations/004_analytics_views.sql:4-5`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/004_analytics_views.sql#L4-L5) | Hardcoded timezone in materialized view distorts international hourly analytics. | **P3 (Low)** |
 | **Zero Automated CI/CD Pipelines** | Root repository | No automated linting, test execution, or deployment verification in CI. | **P3 (Low)** |
 
 ---
@@ -1408,8 +1408,8 @@ import { requireProjectMember } from '../_lib/auth'
 
 **PATCH handler** (lines 123–183): Starts at line 123 `if (req.method === 'PATCH')`. The handler body:
 - Line 126: destructures `req.body` directly.
-- Line 132: creates the service-role Supabase client via `getSupabase()` (uses `SUPABASE_SERVICE_ROLE_KEY`).
-- Lines 135–143: executes `supabase.from('tasks').update(updateData).eq('id', id)` with no prior auth call.
+- Line 132: creates the database client via `getPool()` (uses `DATABASE_URL`).
+- Lines 135–143: executes `database.from('tasks').update(updateData).eq('id', id)` with no prior auth call.
 - No call to `getUser()`, `requireProjectMember()`, `requireMember()`, or any bearer token check appears between lines 123 and 183.
 
 **Auth module**: [`api/_lib/auth.ts`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/auth.ts) — `requireProjectMember` (lines 46–67) does validate JWT bearer tokens and team membership. It is exported and functional. It is imported into `api/tasks/index.ts` (line 8). It is **not called** anywhere in the PATCH branch.
@@ -1486,8 +1486,8 @@ The prior documentation claim that "requireMember is called with the wrong argum
 
 #### C.1 `concurrency_conflicts`
 
-- **Schema** ([`028_version_based_occ.sql:28-36`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql#L28-L36)): Columns are `id`, `entity_type`, `entity_id`, `client_version`, `server_version`, `user_id`, `created_at`. Extended in migration 037 with `metadata` (JSONB). **No `team_id` column at any migration stage.**
-- **RLS Policy** ([`028_version_based_occ.sql:40-46`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/028_version_based_occ.sql#L40-L46)):
+- **Schema** ([`028_version_based_occ.sql:28-36`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql#L28-L36)): Columns are `id`, `entity_type`, `entity_id`, `client_version`, `server_version`, `user_id`, `created_at`. Extended in migration 037 with `metadata` (JSONB). **No `team_id` column at any migration stage.**
+- **RLS Policy** ([`028_version_based_occ.sql:40-46`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/028_version_based_occ.sql#L40-L46)):
   ```sql
   CREATE POLICY "Admins can view conflicts" ON public.concurrency_conflicts
     FOR SELECT USING (
@@ -1498,7 +1498,7 @@ The prior documentation claim that "requireMember is called with the wrong argum
     );
   ```
   The predicate checks only `role = 'admin'` with no `team_id` join condition. An admin of any workspace satisfies this policy for **all** rows.
-- **`conflict_stats` / `conflict_hotspots` views** ([`029_conflict_observability.sql:4-22`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/029_conflict_observability.sql#L4-L22)): `GRANT SELECT ... TO authenticated`. Migration 037 applies `security_invoker = true`, meaning these views now inherit the caller's RLS context — **but the underlying table's RLS policy itself is still cross-tenant** for admins.
+- **`conflict_stats` / `conflict_hotspots` views** ([`029_conflict_observability.sql:4-22`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/029_conflict_observability.sql#L4-L22)): `GRANT SELECT ... TO authenticated`. Migration 037 applies `security_invoker = true`, meaning these views now inherit the caller's RLS context — **but the underlying table's RLS policy itself is still cross-tenant** for admins.
 - **No INSERT policy** exists on `concurrency_conflicts`. The table is written to by the PATCH handler using the service role client, which bypasses RLS entirely for writes.
 
 | Field | Value |
@@ -1511,8 +1511,8 @@ The prior documentation claim that "requireMember is called with the wrong argum
 
 #### C.2 `focus_stability_slots`
 
-- **Schema** ([`001_schema.sql:79-86`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L79-L86)): Columns `user_id`, `day_of_week`, `hour_of_day`, `score`, `updated_at`. No `team_id`.
-- **RLS Policy** ([`002_rls.sql:60-61`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/002_rls.sql#L60-L61), re-declared in [`017_security_compliance.sql:24-25`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/017_security_compliance.sql#L24-L25)):
+- **Schema** ([`001_schema.sql:79-86`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L79-L86)): Columns `user_id`, `day_of_week`, `hour_of_day`, `score`, `updated_at`. No `team_id`.
+- **RLS Policy** ([`002_rls.sql:60-61`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/002_rls.sql#L60-L61), re-declared in [`017_security_compliance.sql:24-25`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/017_security_compliance.sql#L24-L25)):
   ```sql
   CREATE POLICY "own stability" ON public.focus_stability_slots
     FOR ALL USING (user_id = auth.uid());
@@ -1529,8 +1529,8 @@ The prior documentation claim that "requireMember is called with the wrong argum
 
 #### C.3 `audit_logs`
 
-- **Schema** ([`025_audit_system.sql:4-16`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/025_audit_system.sql#L4-L16)): Contains `team_id` FK to `public.teams`.
-- **RLS SELECT Policy** ([`025_audit_system.sql:29-35`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/025_audit_system.sql#L29-L35)):
+- **Schema** ([`025_audit_system.sql:4-16`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/025_audit_system.sql#L4-L16)): Contains `team_id` FK to `public.teams`.
+- **RLS SELECT Policy** ([`025_audit_system.sql:29-35`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/025_audit_system.sql#L29-L35)):
   ```sql
   CREATE POLICY "audit_logs_select_admin" ON public.audit_logs FOR SELECT
     USING (EXISTS (
@@ -1552,8 +1552,8 @@ The prior documentation claim that "requireMember is called with the wrong argum
 
 #### C.4 `alerts`
 
-- **Schema** ([`015_notification_system.sql:6-15`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/015_notification_system.sql#L6-L15)): Columns `id`, `user_id`, `title`, `description`, `type`, `link`, `is_read`, `created_at`. No `team_id`.
-- **RLS Policies** ([`015_notification_system.sql:21-25`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/015_notification_system.sql#L21-L25)):
+- **Schema** ([`015_notification_system.sql:6-15`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/015_notification_system.sql#L6-L15)): Columns `id`, `user_id`, `title`, `description`, `type`, `link`, `is_read`, `created_at`. No `team_id`.
+- **RLS Policies** ([`015_notification_system.sql:21-25`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/015_notification_system.sql#L21-L25)):
   ```sql
   CREATE POLICY "Users can see own alerts" ON public.alerts
     FOR SELECT USING (user_id = auth.uid());
@@ -1571,22 +1571,22 @@ The prior documentation claim that "requireMember is called with the wrong argum
 
 #### C.5 Storage Objects (`avatars` bucket)
 
-- **Bucket configuration** ([`021_storage_rls.sql:5-7`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/021_storage_rls.sql#L5-L7)): `public = true` — public bucket (object URLs are unauthenticated).
-- **SELECT policy** ([`021_storage_rls.sql:14-15`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/021_storage_rls.sql#L14-L15)): `USING (bucket_id = 'avatars')` — anyone can read any avatar. **This policy was then dropped in migration 037** ([`037_concurrency_conflicts_metadata.sql:33-35`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/037_concurrency_conflicts_metadata.sql#L33-L35)):
+- **Bucket configuration** ([`021_storage_rls.sql:5-7`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/021_storage_rls.sql#L5-L7)): `public = true` — public bucket (object URLs are unauthenticated).
+- **SELECT policy** ([`021_storage_rls.sql:14-15`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/021_storage_rls.sql#L14-L15)): `USING (bucket_id = 'avatars')` — anyone can read any avatar. **This policy was then dropped in migration 037** ([`037_concurrency_conflicts_metadata.sql:33-35`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/037_concurrency_conflicts_metadata.sql#L33-L35)):
   ```sql
   DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
   DROP POLICY IF EXISTS "avatars_select_public" ON storage.objects;
   ```
-  After migration 037 executes, the `avatars_select_public` SELECT policy is **dropped with no replacement SELECT policy created** in any later migration. The bucket remains `public = true` at the bucket level. Whether avatars are actually publicly accessible after migration 037 depends on whether Supabase Storage uses the bucket's `public` flag or requires an active RLS SELECT policy — this is runtime behavior that cannot be fully determined from migration SQL alone.
+  After migration 037 executes, the `avatars_select_public` SELECT policy is **dropped with no replacement SELECT policy created** in any later migration. The bucket remains `public = true` at the bucket level. Whether avatars are actually publicly accessible after migration 037 depends on whether Amazon S3 Storage uses the bucket's `public` flag or requires an active RLS SELECT policy — this is runtime behavior that cannot be fully determined from migration SQL alone.
 - **Write policies** (INSERT, UPDATE, DELETE): Enforced by `auth.uid()::text = (storage.foldername(name))[1]`. Correctly user-scoped.
 
 | Field | Value |
 | :--- | :--- |
-| **Current Isolation** | Write: correctly user-scoped to own UID folder. Read: bucket `public = true` at migration 021 stage; explicit SELECT policy dropped at migration 037 with no replacement. Final read behavior depends on Supabase Storage runtime evaluation of bucket-level `public` flag. |
-| **Risk** | If Supabase Storage still serves public reads from the `public = true` bucket flag after the SELECT policy is dropped, cross-tenant avatar enumeration is possible via predictable `${userId}/avatar.*` paths. If the bucket-level flag is authoritative for reads, photos remain world-readable by design. The exact runtime behavior cannot be determined from migration SQL alone. |
+| **Current Isolation** | Write: correctly user-scoped to own UID folder. Read: bucket `public = true` at migration 021 stage; explicit SELECT policy dropped at migration 037 with no replacement. Final read behavior depends on Amazon S3 Storage runtime evaluation of bucket-level `public` flag. |
+| **Risk** | If Amazon S3 Storage still serves public reads from the `public = true` bucket flag after the SELECT policy is dropped, cross-tenant avatar enumeration is possible via predictable `${userId}/avatar.*` paths. If the bucket-level flag is authoritative for reads, photos remain world-readable by design. The exact runtime behavior cannot be determined from migration SQL alone. |
 | **Evidence** | `021_storage_rls.sql:5-15`, `037_concurrency_conflicts_metadata.sql:33-35` |
 | **Confidence** | **Medium** — write-side confirmed High; read-side behavior post-037 requires runtime verification |
-| **Unknowns** | Whether Supabase Storage enforces the bucket-level `public` flag independently of RLS SELECT policies in the version deployed on the live project. |
+| **Unknowns** | Whether Amazon S3 Storage enforces the bucket-level `public` flag independently of RLS SELECT policies in the version deployed on the live project. |
 
 ---
 
@@ -1599,10 +1599,10 @@ The Phase 1A audit used "Confidence: High / Unknowns: None" for nearly every fin
 The following are real gaps that cannot be closed without access to live systems:
 
 1. **Vercel Environment Variables and Runtime Configuration**  
-   All API handlers reference `process.env.SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `UPSTASH_REDIS_REST_URL`, `KAFKA_BROKERS`, `GEMINI_API_KEY`, `CRON_SECRET` etc. Whether these are correctly populated, restricted to specific IP ranges, or scoped by Vercel deployment environment (preview vs. production) is **not determinable from source code**. A misconfigured or leaked `SUPABASE_SERVICE_ROLE_KEY` would be catastrophic regardless of handler-level auth logic.
+   All API handlers reference `process.env.DATABASE_URL`, `JWT_SECRET`, `UPSTASH_REDIS_REST_URL`, `KAFKA_BROKERS`, `GEMINI_API_KEY`, `CRON_SECRET` etc. Whether these are correctly populated, restricted to specific IP ranges, or scoped by deployment environment is **not determinable from source code**. A misconfigured or leaked credential would be catastrophic regardless of handler-level auth logic.
 
-2. **Supabase Dashboard RLS Enforcement Status**  
-   RLS is enabled on all tables via `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` in migration files. However, the Supabase dashboard allows administrators to disable RLS per-table independently of migrations. Whether RLS is currently enforced on every table in the live Supabase project **cannot be verified from migration SQL**. A dashboard-level override would nullify all RLS findings.
+2. **AWS Dashboard RLS Enforcement Status**  
+   RLS is enabled on all tables via `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` in migration files. However, the AWS dashboard allows administrators to disable RLS per-table independently of migrations. Whether RLS is currently enforced on every table in the live AWS project **cannot be verified from migration SQL**. A dashboard-level override would nullify all RLS findings.
 
 3. **Vercel Edge Middleware (`middleware.ts`)**  
    The PATCH handler auth analysis assumes no Vercel Edge middleware exists. A `middleware.ts` file at the repository root or under `apps/web/` was not found in the inspected directory listing. However, if one existed in a `public/` directory or was injected as part of a Vercel integration not visible in the filesystem snapshot, it could intercept and authenticate requests before they reach the serverless function. **Verified absent from repository root and `apps/web/` scan; not verified in all possible Vercel project config locations.**
@@ -1610,11 +1610,11 @@ The following are real gaps that cannot be closed without access to live systems
 4. **Kafka Broker Availability and Consumer Group State**  
    The Kafka producer in `api/_lib/kafka.ts` and consumer in `workers/focus-stability.ts` both reference `KAFKA_BROKERS` environment variable. Whether a live Kafka broker is configured, whether the consumer worker process is running as a persistent service or has never been deployed, and whether topic `focus.events` exists in production **cannot be determined from source code**. If the broker is unreachable, `POST /api/focus/complete` will throw at `publishEvent()` and return a 500 error.
 
-5. **Supabase Storage Bucket Public Flag vs. RLS Interaction**  
-   As noted in Finding C.5, whether `storage.objects` SELECT access is governed by the bucket-level `public` flag or requires an active RLS policy after migration 037 drops `avatars_select_public` is a runtime question. The Supabase Storage documentation distinguishes between public buckets (anonymous CDN access without going through the PostgREST API) and RLS-controlled access (PostgREST endpoint). Direct CDN URL access is always public for `public = true` buckets. This means avatar enumeration via direct CDN URLs is likely possible regardless of the dropped SELECT policy.
+5. **Amazon S3 Storage Bucket Public Flag vs. RLS Interaction**  
+   As noted in Finding C.5, whether `storage.objects` SELECT access is governed by the bucket-level `public` flag or requires an active RLS policy after migration 037 drops `avatars_select_public` is a runtime question. The Amazon S3 Storage documentation distinguishes between public buckets (anonymous CDN access without going through the PostgREST API) and RLS-controlled access (PostgREST endpoint). Direct CDN URL access is always public for `public = true` buckets. This means avatar enumeration via direct CDN URLs is likely possible regardless of the dropped SELECT policy.
 
 6. **Deployed vs. Local Migration State Divergence**  
-   The repository contains 40 migration files numbered `000` through `039`. Whether these have all been applied to the production Supabase instance in order, whether any were rolled back, or whether there are out-of-band schema changes made directly in the Supabase dashboard cannot be verified from the repository. The `supabase/.temp/` metadata contains a linked project reference but no migration history log.
+   The repository contains 40 migration files numbered `000` through `039`. Whether these have all been applied to the production AWS instance in order, whether any were rolled back, or whether there are out-of-band schema changes made directly in the AWS dashboard cannot be verified from the repository. The `database/.temp/` metadata contains a linked project reference but no migration history log.
 
 7. **Rate Limiter Effectiveness in Practice on Vercel**  
    The in-memory rate limiter using `LRUCache` is confirmed ineffective across serverless instances. However, whether Vercel's own WAF, edge network, or DDoS protection provides any compensating control in production is **not determinable from this codebase**. Vercel Pro/Enterprise plans include attack challenge modes and bot filtering that operate at the network edge.
@@ -1695,9 +1695,9 @@ Every architectural conclusion adheres to the rigorous Evidence Standard:
 | 1. Frontend Hosting          | S3 + CloudFront (OAC)                 | Replace During Migration   |
 | 2. API / Compute             | ECS Fargate (Modular Monolith)        | Replace During Migration   |
 | 3. Database Layer            | RDS PostgreSQL 16 (Single-AZ + Standby)| Replace During Migration   |
-| 4. Identity & Auth           | Supabase Auth (Retained via JWKS)    | Keep Temporarily           |
+| 4. Identity & Auth           | Amazon Cognito (Retained via JWKS)    | Keep Temporarily           |
 | 5. Caching & State           | ElastiCache (Valkey / Redis OSS)      | Replace During Migration   |
-| 6. Realtime Communication    | Supabase Realtime -> API GW WS (Ph.6) | Keep Temporarily           |
+| 6. Realtime Communication    | AWS WebSocket Realtime -> API GW WS (Ph.6) | Keep Temporarily           |
 | 7. Async / Event Streaming   | Amazon SQS FIFO + EventBridge         | Replace During Migration   |
 | 8. Object Storage            | Amazon S3 (Private + Presigned URLs)  | Replace During Migration   |
 | 9. Secrets & Config          | SSM Parameter Store + Secrets Manager | Replace During Migration   |
@@ -1737,19 +1737,19 @@ Every architectural conclusion adheres to the rigorous Evidence Standard:
 - **Evaluation**:
   - *Current Workload & Scale*: 38 SQL migrations, 114+ schema objects, complex plpgsql stored procedures (`claim_focus_slot`, `log_audit_event`), and materialized views (`mv_focus_stability`).
   - *Operational Complexity & Cost*: Minimal. Managed automated daily snapshots, 30-day point-in-time recovery (PITR), minor version auto-upgrades, and Performance Insights.
-  - *Compatibility & Cross-Major-Version Risk*: Source Supabase runs PostgreSQL 15, while target RDS is PostgreSQL 16. Upgrading major versions across cloud boundaries introduces potential risks (catalog alterations, query planner behavioral shifts, and extension differences). While `uuid-ossp`, `pgcrypto`, and `pg_stat_statements` are supported in both, Phase 3 mandates a strict compatibility test spike. *Staging Fallback*: If schema replay exposes any behavioral divergence under PostgreSQL 16, provision RDS PostgreSQL 15.7 first for zero-version-gap binary compatibility, then schedule an in-place engine upgrade to PostgreSQL 16 post-cutover.
-- **Evidence**: `supabase/migrations/*.sql` confirms standard PostgreSQL DDL, native foreign keys, and plpgsql functions without proprietary Supabase engine extensions.
+  - *Compatibility & Cross-Major-Version Risk*: Source AWS runs PostgreSQL 15, while target RDS is PostgreSQL 16. Upgrading major versions across cloud boundaries introduces potential risks (catalog alterations, query planner behavioral shifts, and extension differences). While `uuid-ossp`, `pgcrypto`, and `pg_stat_statements` are supported in both, Phase 3 mandates a strict compatibility test spike. *Staging Fallback*: If schema replay exposes any behavioral divergence under PostgreSQL 16, provision RDS PostgreSQL 15.7 first for zero-version-gap binary compatibility, then schedule an in-place engine upgrade to PostgreSQL 16 post-cutover.
+- **Evidence**: `database/migrations/*.sql` confirms standard PostgreSQL DDL, native foreign keys, and plpgsql functions without proprietary AWS engine extensions.
 - **Confidence**: High.
 - **Unknowns**: Validating that all 38 migrations and plpgsql triggers execute identically across PostgreSQL 15 vs 16, benchmarking I/O performance on gp3 storage (3,000 IOPS baseline) under concurrent focus slot contention, and optimizing `shared_buffers` / `work_mem` for the modular monolith connection pool.
 
-#### 4. Identity & Authentication: Retain Supabase Auth Temporarily (Verified via Public JWKS)
-- **Single Decision**: **Keep Temporarily** (Retain Supabase Auth / GoTrue as the external JWT issuer; migrate to AWS Cognito or Auth0 only at enterprise scale).
-- **Rejected Alternative**: *AWS Cognito User Pools*. Migrating now requires either forcing a 100% user password reset (Supabase uses bcrypt with project-specific salts), building a complex migration Lambda hook, or rewriting client auth state management (`apps/web/src/lib/supabase.ts`). This introduces catastrophic user friction and high delivery risk for zero functional gain.
+#### 4. Identity & Authentication: Retain Amazon Cognito Temporarily (Verified via Public JWKS)
+- **Single Decision**: **Keep Temporarily** (Retain Amazon Cognito / GoTrue as the external JWT issuer; migrate to AWS Cognito or Auth0 only at enterprise scale).
+- **Rejected Alternative**: *AWS Cognito User Pools*. Migrating now requires either forcing a 100% user password reset (AWS uses bcrypt with project-specific salts), building a complex migration Lambda hook, or rewriting client auth state management (`apps/web/src/lib/database.ts`). This introduces catastrophic user friction and high delivery risk for zero functional gain.
 - **Evaluation**:
-  - *Current Workload & Scale*: Supabase Auth issues standard RFC 7519 RS256/HS256 JWTs containing `sub`, `email`, and `user_metadata`.
-  - *Operational Decoupling*: The new ECS Fargate backend validates JWTs statelessly using the Supabase JWKS public endpoint. No network calls to Supabase are made per request. User session management remains uninterrupted.
+  - *Current Workload & Scale*: Amazon Cognito issues standard RFC 7519 RS256/HS256 JWTs containing `sub`, `email`, and `user_metadata`.
+  - *Operational Decoupling*: The new ECS Fargate backend validates JWTs statelessly using the AWS JWKS public endpoint. No network calls to AWS are made per request. User session management remains uninterrupted.
   - *Strategic Timing*: Identity migration will occur in Phase 5, after database and API compute are hardened and stable.
-- **Evidence**: Audit validates that client auth relies on `@supabase/supabase-js` session tokens, and backend middleware parses JWT claims via `verifyToken()`.
+- **Evidence**: Audit validates that client auth relies on `pg & @aws-sdk/client-s3` session tokens, and backend middleware parses JWT claims via `verifyToken()`.
 - **Confidence**: High.
 - **Unknowns**: Latency of initial JWKS retrieval on container startup and caching policy for public keys.
 
@@ -1764,15 +1764,15 @@ Every architectural conclusion adheres to the rigorous Evidence Standard:
 - **Confidence**: High.
 - **Unknowns**: Evaluating Valkey 7.2 vs Redis OSS 7.1 licensing and memory eviction policy under burst load (`volatile-lru` recommended).
 
-#### 6. Realtime Communication: Keep Supabase Realtime Temporarily, Target API Gateway WebSockets
+#### 6. Realtime Communication: Keep AWS WebSocket Realtime Temporarily, Target API Gateway WebSockets
 - **Single Decision**: **Keep Temporarily** (Phase 1–5), then **Replace During Migration (Phase 6)** with **Amazon API Gateway WebSockets + ECS/ElastiCache Pub/Sub**.
 - **Rejected Alternative**: *AWS AppSync (GraphQL)*. AppSync mandates rewriting the entire Floework REST API and PostgreSQL query layer into GraphQL schemas, VTL resolvers, and GraphQL client subscriptions. This is an enormous, high-risk refactor with negative engineering ROI.
 - **Evaluation**:
-  - *Current Workload & Scale*: Realtime table change broadcasting (tasks, messages, presence) via Supabase Realtime (Phoenix Channels reading Postgres WAL).
-  - *Operational Strategy*: During initial backend migration, client WebSockets remain pointed at Supabase Realtime. In Phase 6, after DB migration, realtime cutover transitions to API Gateway WebSockets: API Gateway handles connection pooling and TLS termination, while ElastiCache Redis Pub/Sub fans out events across ECS containers.
+  - *Current Workload & Scale*: Realtime table change broadcasting (tasks, messages, presence) via AWS WebSocket Realtime (Phoenix Channels reading Postgres WAL).
+  - *Operational Strategy*: During initial backend migration, client WebSockets remain pointed at AWS WebSocket Realtime. In Phase 6, after DB migration, realtime cutover transitions to API Gateway WebSockets: API Gateway handles connection pooling and TLS termination, while ElastiCache Redis Pub/Sub fans out events across ECS containers.
 - **Evidence**: Audit Step 2 Subsystem 6 confirms realtime presence and task change subscriptions are localized to specific React hooks (`usePresence`, `useTaskSubscription`).
 - **Confidence**: Medium.
-- **Unknowns**: Verifying whether Supabase Realtime can connect to an external self-hosted RDS PostgreSQL instance via logical replication (`wal2json`) during the interim period, or if Phase 6 WebSocket cutover must coincide directly with DB cutover.
+- **Unknowns**: Verifying whether AWS WebSocket Realtime can connect to an external self-hosted RDS PostgreSQL instance via logical replication (`wal2json`) during the interim period, or if Phase 6 WebSocket cutover must coincide directly with DB cutover.
 
 #### 7. Async & Event Streaming: Amazon SQS FIFO + Amazon EventBridge
 - **Single Decision**: **Replace During Migration** with **Amazon SQS FIFO + Amazon EventBridge**; completely decommission Kafka (`kafkajs`).
@@ -1786,14 +1786,14 @@ Every architectural conclusion adheres to the rigorous Evidence Standard:
 
 #### 8. Object Storage: Amazon S3 (Private Buckets + CloudFront OAC + Presigned URLs)
 - **Single Decision**: **Replace During Migration** with **Amazon S3 Private Buckets** fronted by CloudFront Origin Access Control (OAC) for public assets and **AWS SDK Presigned Put/Get URLs** for tenant attachments.
-- **Rejected Alternative**: *Public S3 Bucket with Object ACLs*. S3 public buckets or permissive bucket policies reproduce the exact data leakage vulnerability discovered in Supabase Storage (SEC-10).
+- **Rejected Alternative**: *Public S3 Bucket with Object ACLs*. S3 public buckets or permissive bucket policies reproduce the exact data leakage vulnerability discovered in Amazon S3 Storage (SEC-10).
 - **Evaluation**:
   - *Current Workload & Scale*: User avatars and task file attachments.
   - *Security & Tenant Isolation*: All S3 buckets are configured with `BlockPublicAcls = true` and `BlockPublicPolicy = true`. Private files are accessed exclusively via backend-generated Presigned URLs with 15-minute expiration, scoped strictly to `tenants/{workspace_id}/tasks/{task_id}/{file_id}`.
   - *Cost*: Standard S3 pricing ($0.023/GB/mo) plus lifecycle rules transitioning deleted task attachments to S3 Glacier Flexible Retrieval after 90 days.
-- **Evidence**: Audit Finding SEC-10 confirms Supabase Storage `avatars` bucket lost its RLS SELECT policy in migration 037, allowing unauthenticated public CDN reads.
+- **Evidence**: Audit Finding SEC-10 confirms Amazon S3 Storage `avatars` bucket lost its RLS SELECT policy in migration 037, allowing unauthenticated public CDN reads.
 - **Confidence**: High.
-- **Unknowns**: Object migration script throughput when exporting historical avatars from Supabase Storage API to S3.
+- **Unknowns**: Object migration script throughput when exporting historical avatars from Amazon S3 Storage API to S3.
 
 #### 9. Configuration & Secrets Management: AWS Systems Manager Parameter Store + Secrets Manager
 - **Single Decision**: **Replace During Migration** with **SSM Parameter Store (Standard, SecureString)** for application configuration and **AWS Secrets Manager** exclusively for database master credentials.
@@ -1912,7 +1912,7 @@ All modules share a unified PostgreSQL connection pool and in-VPC cache, elimina
 |  +------------------------+  | - X-Ray APM Traces     |  | [Fallback] AWS Bedrock (Claude 3.5) |  |
 |  | AWS Secrets Manager    |  | - Log Alarms & Metrics |  +-------------------------------------+  |
 |  | - RDS Master Password  |  +------------------------+  | Identity Provider                   |  |
-|  +------------------------+                              | [Retained] Supabase Auth (JWKS)     |  |
+|  +------------------------+                              | [Retained] Amazon Cognito (JWKS)     |  |
 +---------------------------------------------------------------------------------------------------+
 ```
 
@@ -1960,7 +1960,7 @@ flowchart TB
     end
 
     subgraph External_Services["External Services"]
-        SupaAuth["Supabase Auth (JWT Issuer / JWKS)"]
+        SupaAuth["Amazon Cognito (JWT Issuer / JWKS)"]
         GeminiAPI["Google Gemini API (Direct Primary)"]
         Bedrock["AWS Bedrock Claude (Circuit Fallback)"]
     end
@@ -2183,12 +2183,12 @@ sequenceDiagram
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Frontend Web Hosting** | Vercel Static Hosting | **Amazon S3 + CloudFront (OAC)** | **Replace During Migration** | Eliminates Vercel subscription margins, lowers bandwidth cost, provides unified Route 53/ACM edge integration. | **MIG-P1** |
 | **Backend Compute / API** | Vercel Serverless (`api/*.ts`) | **Amazon ECS Fargate (Fastify Monolith)** | **Replace During Migration** | Eliminates serverless cold starts, fixes SEC-05 (cross-instance rate limiter leaks), provides persistent DB connection pools. | **MIG-P0** |
-| **Database Engine** | Supabase Managed PostgreSQL | **Amazon RDS PostgreSQL 16** | **Replace During Migration** | Co-locates database in private VPC with backend, provides native Multi-AZ failover, eliminates external connection limits. | **MIG-P0** |
-| **Identity & Authentication** | Supabase Auth (GoTrue) | **Retain Supabase Auth (JWKS Verification)** | **Keep Temporarily** | Eliminates user password reset risk; backend validates JWTs statelessly via public keys; migrate to Cognito only at enterprise scale. | **MIG-P2** |
+| **Database Engine** | AWS Managed PostgreSQL | **Amazon RDS PostgreSQL 16** | **Replace During Migration** | Co-locates database in private VPC with backend, provides native Multi-AZ failover, eliminates external connection limits. | **MIG-P0** |
+| **Identity & Authentication** | Amazon Cognito (GoTrue) | **Retain Amazon Cognito (JWKS Verification)** | **Keep Temporarily** | Eliminates user password reset risk; backend validates JWTs statelessly via public keys; migrate to Cognito only at enterprise scale. | **MIG-P2** |
 | **Distributed Caching** | Upstash Redis (Public HTTPS) | **Amazon ElastiCache (Redis / Valkey)** | **Replace During Migration** | Eliminates NAT Gateway cross-cloud egress charges, drops cache latency from 25ms to < 1ms, fixes SEC-05 and SEC-11. | **MIG-P1** |
-| **Realtime WebSockets** | Supabase Realtime (WAL) | **API Gateway WebSockets + Redis PubSub** | **Keep Temporarily (Phase 1–5), Replace (Phase 6)** | Keeps live client subscriptions stable during DB migration; transitions to serverless WebSockets once DB is inside VPC. | **MIG-P2** |
+| **Realtime WebSockets** | AWS WebSocket Realtime (WAL) | **API Gateway WebSockets + Redis PubSub** | **Keep Temporarily (Phase 1–5), Replace (Phase 6)** | Keeps live client subscriptions stable during DB migration; transitions to serverless WebSockets once DB is inside VPC. | **MIG-P2** |
 | **Asynchronous Streaming** | Kafka Prototype (`kafkajs`) | **Amazon SQS FIFO + EventBridge** | **Replace During Migration** | Decommissions unauthenticated, non-functional Kafka prototype (SEC-03); avoids $200+/mo MSK overhead; provides native retries and DLQs. | **MIG-P0** |
-| **Object File Storage** | Supabase Storage (`avatars`) | **Amazon S3 (Private) + Presigned URLs** | **Replace During Migration** | Fixes SEC-10 (unauthenticated public bucket reads); enforces strict multi-tenant IAM prefixes and 15-minute expiring access URLs. | **MIG-P1** |
+| **Object File Storage** | Amazon S3 Storage (`avatars`) | **Amazon S3 (Private) + Presigned URLs** | **Replace During Migration** | Fixes SEC-10 (unauthenticated public bucket reads); enforces strict multi-tenant IAM prefixes and 15-minute expiring access URLs. | **MIG-P1** |
 | **Configuration & Secrets** | Plaintext Vercel Env Vars | **SSM Parameter Store + Secrets Manager** | **Replace During Migration** | Free encrypted storage for app parameters via SSM; Secrets Manager with automated rotation strictly for RDS admin credentials. | **MIG-P1** |
 | **Observability & APM** | None (`console.log` only) | **CloudWatch + ADOT + AWS X-Ray** | **Replace During Migration** | Delivers distributed request tracing, structured JSON logs, container memory metrics, and automated PagerDuty alarm triggers. | **MIG-P1** |
 | **AI Inference Pipeline** | Direct Google Gemini API | **Gemini Direct + AWS Bedrock Circuit Fallback** | **Keep Temporarily (Hybrid)** | Preserves existing prompt calibration and low token costs while eliminating single-provider downtime risk via Bedrock fallback. | **MIG-P2** |
@@ -2198,9 +2198,9 @@ sequenceDiagram
 ### 30.5 Step 4 — Database, Auth, Realtime Migration Strategy
 
 #### 1. Database Migration Strategy
-- **Schema Compatibility**: RDS PostgreSQL 16 is 100% wire-compatible with Supabase PostgreSQL 15/16. All 38 SQL migrations execute cleanly. The extensions `uuid-ossp`, `pgcrypto`, and `pg_stat_statements` are pre-installed via RDS parameter groups.
+- **Schema Compatibility**: RDS PostgreSQL 16 is 100% wire-compatible with Amazon RDS PostgreSQL 15/16. All 38 SQL migrations execute cleanly. The extensions `uuid-ossp`, `pgcrypto`, and `pg_stat_statements` are pre-installed via RDS parameter groups.
 - **Row-Level Security (RLS) Strategy**:
-  - *Current Reality*: Supabase relies heavily on PostgreSQL RLS policies that call `auth.uid()`.
+  - *Current Reality*: AWS relies heavily on PostgreSQL RLS policies that call `auth.uid()`.
   - *Target Architecture*: When compute moves to ECS Fargate, the backend connects using an application connection pool (`floework_app`). Connecting as an application role bypasses PostgreSQL RLS by default unless `SET LOCAL "request.jwt.claim.sub"` is manually injected before every statement.
   - *Strategic Decision*: Implement **Defense-in-Depth Isolation**:
     1. **Application Layer (Mandatory)**: All Fastify route handlers enforce `workspace_id` scoping in every SQL WHERE clause via a tenant-aware repository wrapper.
@@ -2210,8 +2210,8 @@ sequenceDiagram
   - Fix SEC-08 directly in migration: alter `toggle_task_star` to verify project membership before inserting.
 - **Data Migration Approach**:
   1. *Schema Initialization*: Replay migrations 001 through 038 on target RDS instance using Flyway or Node-pg-migrate.
-  2. *Initial Baseline Sync*: Execute a consistent snapshot dump via `pg_dump -Fc --no-owner --no-acl` from Supabase and restore to RDS using `pg_restore --single-transaction`.
-  3. *Delta Capture / Logical Replication*: For near-zero downtime, configure PostgreSQL Logical Replication from Supabase (Publisher) to RDS (Subscriber) using pglogical or AWS DMS (Database Migration Service).
+  2. *Initial Baseline Sync*: Execute a consistent snapshot dump via `pg_dump -Fc --no-owner --no-acl` from AWS and restore to RDS using `pg_restore --single-transaction`.
+  3. *Delta Capture / Logical Replication*: For near-zero downtime, configure PostgreSQL Logical Replication from AWS (Publisher) to RDS (Subscriber) using pglogical or AWS DMS (Database Migration Service).
 - **Validation Checklist**:
   - [ ] Row count parity verified across all 114 tables via MD5 hash comparison script.
   - [ ] Foreign key integrity verified with zero orphan records.
@@ -2224,25 +2224,25 @@ sequenceDiagram
   4. Detach logical replication subscriber and promote RDS to standalone primary.
   5. Route traffic to ECS Fargate backend.
   6. Disable maintenance mode.
-- **Rollback Strategy**: Maintain reverse logical replication from RDS back to Supabase during the first 48 hours of production execution. If critical database defects arise, flip DNS back to Vercel/Supabase with zero data loss.
+- **Rollback Strategy**: Maintain reverse logical replication from RDS back to AWS during the first 48 hours of production execution. If critical database defects arise, flip DNS back to Vercel/AWS with zero data loss.
 
 #### 2. Authentication Migration Strategy
-- **Current vs. Target**: Supabase Auth issues asymmetric RS256 JWTs. In the target state, Supabase Auth remains the external identity provider. The ECS Fargate backend independently fetches and caches Supabase's JWKS public keys, verifying tokens locally in < 1ms without calling Supabase network APIs.
+- **Current vs. Target**: Amazon Cognito issues asymmetric RS256 JWTs. In the target state, Amazon Cognito remains the external identity provider. The ECS Fargate backend independently fetches and caches AWS's JWKS public keys, verifying tokens locally in < 1ms without calling AWS network APIs.
 - **Preservation of Identity**:
   - User IDs (`sub` UUIDs) remain completely identical across databases.
   - Workspace memberships, roles (`owner`, `admin`, `member`), and permissions are stored in `workspace_members` in PostgreSQL and remain untouched.
   - User sessions remain active without forcing any password resets.
 - **Cutover Approach**: The ECS Fargate backend implements an identical JWT verification middleware. During cutover, client tokens pass transparently to the new backend.
-- **Rollback Strategy**: Because user identity state was never altered or exported, rolling back compute immediately restores auth operations to Supabase without session invalidation.
+- **Rollback Strategy**: Because user identity state was never altered or exported, rolling back compute immediately restores auth operations to AWS without session invalidation.
 
 #### 3. Realtime Migration Strategy
-- **Current vs. Target**: Current clients subscribe to Supabase Realtime channels via WebSocket. The target architecture replaces this with API Gateway WebSockets backed by ElastiCache Redis Pub/Sub.
+- **Current vs. Target**: Current clients subscribe to AWS WebSocket Realtime channels via WebSocket. The target architecture replaces this with API Gateway WebSockets backed by ElastiCache Redis Pub/Sub.
 - **Zero-Downtime Phased Cutover**:
-  - *Phase A (Interim)*: During DB migration, client browsers maintain WebSocket connections to Supabase Realtime.
-  - *Phase B (Dual-Broadcast)*: The ECS Fargate backend writes to RDS and broadcasts mutation events to both Supabase Realtime (via HTTP webhook) and ElastiCache Redis.
+  - *Phase A (Interim)*: During DB migration, client browsers maintain WebSocket connections to AWS WebSocket Realtime.
+  - *Phase B (Dual-Broadcast)*: The ECS Fargate backend writes to RDS and broadcasts mutation events to both AWS WebSocket Realtime (via HTTP webhook) and ElastiCache Redis.
   - *Phase C (Client Switch)*: Deploy an updated frontend build with a feature flag (`ENABLE_AWS_WEBSOCKET=true`) switching 10% of users to API Gateway WebSockets. Monitor disconnect rates and message latency.
-  - *Phase D (Final Cutover)*: Ramp feature flag to 100%. Decommission Supabase Realtime listeners.
-- **Rollback Strategy**: If API Gateway WebSocket connection errors exceed 1%, toggle the frontend feature flag back to `false` via remote config, immediately reverting clients to Supabase Realtime.
+  - *Phase D (Final Cutover)*: Ramp feature flag to 100%. Decommission AWS WebSocket Realtime listeners.
+- **Rollback Strategy**: If API Gateway WebSocket connection errors exceed 1%, toggle the frontend feature flag back to `false` via remote config, immediately reverting clients to AWS WebSocket Realtime.
 
 #### 4. Scope of Infrastructure as Code (IaC) Requirements
 *Note: Per session constraints, no Terraform or CloudFormation code is written here. The required module boundaries are specified below for Phase 2:*
@@ -2360,7 +2360,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 
 ##### 1. Task Management Depth (Subtasks, Hierarchies, Task States)
 - **Phase 1A Verified Status**: **Partial (Flat CRUD Only)**. The tasks schema supports title, description, priority (`low`, `medium`, `high`, `urgent`), status (`allocation`, `focus`, `resolution`, `outcome`), and due dates. Subtask rollups and parent-child hierarchies do **not** exist in schema or UI.
-- **File Evidence**: [`supabase/migrations/001_schema.sql:24-40`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L24-L40), [`api/tasks/index.ts:1-240`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L1-L240), [`apps/web/src/pages/BoardsPage.tsx:40-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/BoardsPage.tsx#L40-L120).
+- **File Evidence**: [`database/migrations/001_schema.sql:24-40`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L24-L40), [`api/tasks/index.ts:1-240`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L1-L240), [`apps/web/src/pages/BoardsPage.tsx:40-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/BoardsPage.tsx#L40-L120).
 - **Priority**: **PROD-P0**.
 - **Thesis Pillar Strengthened**: *Task Management Depth & Execution Intelligence*.
 - **Confidence**: **High**.
@@ -2368,11 +2368,11 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Required Action**: Add `parent_task_id` to `tasks` table with cascading completion rollups in PostgreSQL triggers.
 
 ##### 2. Task Dependency Engine vs. Execution Graph Visualization
-- **Phase 1A Verified Status**: **Partial (Visualization Built; Interactive Persistence Missing)**. The Execution Intelligence Graph visualization is **fully implemented** in [`ExecutionGraph.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx) using `@xyflow/react`, complete with 4 operational modes (`default`, `critical_path`, `blocker`, `density`) and blocker cascade calculations. Migration [`039_execution_graph.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/039_execution_graph.sql) defines `task_dependencies` with `relationship_type` (`blocks`, `depends_on`, `relates_to`). However:
+- **Phase 1A Verified Status**: **Partial (Visualization Built; Interactive Persistence Missing)**. The Execution Intelligence Graph visualization is **fully implemented** in [`ExecutionGraph.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx) using `@xyflow/react`, complete with 4 operational modes (`default`, `critical_path`, `blocker`, `density`) and blocker cascade calculations. Migration [`039_execution_graph.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/039_execution_graph.sql) defines `task_dependencies` with `relationship_type` (`blocks`, `depends_on`, `relates_to`). However:
   1. The UI `onConnect` callback ([`ExecutionGraph.tsx:215-227`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx#L215-L227)) only mutates local React Flow edge state in-memory; it does **not** persist connections to any backend API endpoint.
   2. There is no API route to create or delete task dependency edges.
   3. Server-side cycle detection (DAG cycle prevention) is completely absent.
-- **File Evidence**: [`apps/web/src/components/ExecutionGraph.tsx:1-258`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx#L1-L258), [`apps/web/src/components/GraphModes.tsx:1-50`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/GraphModes.tsx#L1-L50), [`supabase/migrations/039_execution_graph.sql:1-99`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/039_execution_graph.sql#L1-L99), [`apps/web/src/store/api.ts:50-80`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts#L50-L80).
+- **File Evidence**: [`apps/web/src/components/ExecutionGraph.tsx:1-258`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/ExecutionGraph.tsx#L1-L258), [`apps/web/src/components/GraphModes.tsx:1-50`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/GraphModes.tsx#L1-L50), [`database/migrations/039_execution_graph.sql:1-99`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/039_execution_graph.sql#L1-L99), [`apps/web/src/store/api.ts:50-80`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/store/api.ts#L50-L80).
 - **Priority**: **PROD-P0**.
 - **Thesis Pillar Strengthened**: *Dependency Intelligence & Execution Intelligence*.
 - **Confidence**: **High**.
@@ -2380,8 +2380,8 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Required Action**: Do **not** rebuild the graph visualization. Wire the existing `@xyflow/react` `onConnect` handler to a new `/api/v1/tasks/:id/dependencies` endpoint with transactional DAG cycle checking.
 
 ##### 3. Task Comments vs. Project Chat Messages & Activity Feeds
-- **Phase 1A Verified Status**: **Partial (Project Chat Exists; Task Comments 100% Absent)**. The database contains a `messages` table ([`036_nuclear_messaging_cleanup.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/036_nuclear_messaging_cleanup.sql)), which powers the project-level team chat box ([`ChatBox.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/Chat/ChatBox.tsx)). There is **no `comments` or `task_comments` table anywhere in the database**. Task-specific threaded commentary is completely unbuilt. Activity history is recorded in `audit_logs` via trigger, but no task-level activity timeline or audit feed UI exists.
-- **File Evidence**: [`supabase/migrations/036_nuclear_messaging_cleanup.sql:1-95`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/036_nuclear_messaging_cleanup.sql#L1-L95), [`apps/web/src/components/Chat/ChatBox.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/Chat/ChatBox.tsx#L1-L120), [`supabase/migrations/017_security_compliance.sql:35-80`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/017_security_compliance.sql#L35-L80).
+- **Phase 1A Verified Status**: **Partial (Project Chat Exists; Task Comments 100% Absent)**. The database contains a `messages` table ([`036_nuclear_messaging_cleanup.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/036_nuclear_messaging_cleanup.sql)), which powers the project-level team chat box ([`ChatBox.tsx`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/Chat/ChatBox.tsx)). There is **no `comments` or `task_comments` table anywhere in the database**. Task-specific threaded commentary is completely unbuilt. Activity history is recorded in `audit_logs` via trigger, but no task-level activity timeline or audit feed UI exists.
+- **File Evidence**: [`database/migrations/036_nuclear_messaging_cleanup.sql:1-95`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/036_nuclear_messaging_cleanup.sql#L1-L95), [`apps/web/src/components/Chat/ChatBox.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/components/Chat/ChatBox.tsx#L1-L120), [`database/migrations/017_security_compliance.sql:35-80`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/017_security_compliance.sql#L35-L80).
 - **Priority**: **PROD-P0**.
 - **Thesis Pillar Strengthened**: *Realtime Collaboration & Execution Intelligence*.
 - **Confidence**: **High**.
@@ -2398,8 +2398,8 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Required Action**: Sync filter state to URL query parameters (`?status=...&priority=...`), add multi-criteria search, and add a template cloning RPC for new workspace setup.
 
 ##### 5. Chat, User Mentions, In-App Notifications & Presence
-- **Phase 1A Verified Status**: **Partial (Presence Works; Notifications Broken; Mentions Missing)**. Supabase Realtime presence tracking works reliably via WebSocket (`usePresence.ts`). Project chat exists. However, user `@mentions` are not parsed, and the `alerts` notification table ([`015_notification_system.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/015_notification_system.sql)) is crippled by broken `/projects/:id` link paths that 404 on click (SEC-09). There is no in-app notification center (bell dropdown).
-- **File Evidence**: [`apps/web/src/lib/realtime.ts:1-85`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/lib/realtime.ts#L1-L85), [`supabase/migrations/015_notification_system.sql:1-60`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/015_notification_system.sql#L1-L60), finding SEC-09.
+- **Phase 1A Verified Status**: **Partial (Presence Works; Notifications Broken; Mentions Missing)**. AWS WebSocket Realtime presence tracking works reliably via WebSocket (`usePresence.ts`). Project chat exists. However, user `@mentions` are not parsed, and the `alerts` notification table ([`015_notification_system.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/015_notification_system.sql)) is crippled by broken `/projects/:id` link paths that 404 on click (SEC-09). There is no in-app notification center (bell dropdown).
+- **File Evidence**: [`apps/web/src/lib/realtime.ts:1-85`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/lib/realtime.ts#L1-L85), [`database/migrations/015_notification_system.sql:1-60`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/015_notification_system.sql#L1-L60), finding SEC-09.
 - **Priority**: **PROD-P1**.
 - **Thesis Pillar Strengthened**: *Realtime Collaboration & Human-Aware Focus*.
 - **Confidence**: **High**.
@@ -2416,8 +2416,8 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Required Action**: Integrate Amazon SES client in Fastify backend, replace `Math.random()` with `crypto.randomBytes(32)` (SEC-06), and dispatch HTML invite and assignment notification emails.
 
 ##### 7. Organizations, Workspaces, Roles & Granular Permissions (RBAC)
-- **Phase 1A Verified Status**: **Partial (Schema Supports Roles; API Handlers Bypass Authorization)**. Schema defines `workspaces` and `workspace_members` with roles (`owner`, `admin`, `member`) in [`001_schema.sql`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/001_schema.sql#L1-L20). However, API authorization is severely broken: `PATCH /api/tasks` has zero auth or membership checks, allowing unauthenticated cross-tenant task modifications via service role key (SEC-01); `GET /api/tasks` crashes due to a missing `requireProjectMember` import (SEC-02); and `toggle_task_star` RPC does not verify project membership (SEC-08).
-- **File Evidence**: [`api/tasks/index.ts:123-183`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L123-L183), [`api/_lib/auth.ts:1-60`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/auth.ts#L1-L60), [`supabase/migrations/038_starred_tasks.sql:1-30`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/038_starred_tasks.sql#L1-L30), findings SEC-01, SEC-02, SEC-08.
+- **Phase 1A Verified Status**: **Partial (Schema Supports Roles; API Handlers Bypass Authorization)**. Schema defines `workspaces` and `workspace_members` with roles (`owner`, `admin`, `member`) in [`001_schema.sql`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/001_schema.sql#L1-L20). However, API authorization is severely broken: `PATCH /api/tasks` has zero auth or membership checks, allowing unauthenticated cross-tenant task modifications via service role key (SEC-01); `GET /api/tasks` crashes due to a missing `requireProjectMember` import (SEC-02); and `toggle_task_star` RPC does not verify project membership (SEC-08).
+- **File Evidence**: [`api/tasks/index.ts:123-183`](file:///home/topfloorboss/Downloads/floework-main/api/tasks/index.ts#L123-L183), [`api/_lib/auth.ts:1-60`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/auth.ts#L1-L60), [`database/migrations/038_starred_tasks.sql:1-30`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/038_starred_tasks.sql#L1-L30), findings SEC-01, SEC-02, SEC-08.
 - **Priority**: **PROD-P0**.
 - **Thesis Pillar Strengthened**: *Tenant Isolation & Security Credibility*.
 - **Confidence**: **High**.
@@ -2453,7 +2453,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 
 ##### 11. Execution, Sprint & Focus Delivery Analytics
 - **Phase 1A Verified Status**: **Partial (SQL Engine Built; UI Surface Incomplete; Hardcoded Timezone)**. Database features sophisticated materialized views (`mv_focus_stability`) and focus slot scoring tables (`focus_stability_slots`). However, `mv_focus_stability` is hardcoded to `Asia/Kolkata` timezone (SEC-13), and the frontend analytics dashboard renders static mock charts rather than dynamic aggregated team velocity.
-- **File Evidence**: [`supabase/migrations/026_materialized_analytics.sql:1-70`](file:///home/topfloorboss/Downloads/floework-main/supabase/migrations/026_materialized_analytics.sql#L1-L70), [`apps/web/src/pages/FocusPage.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/FocusPage.tsx#L1-L120), finding SEC-13.
+- **File Evidence**: [`database/migrations/026_materialized_analytics.sql:1-70`](file:///home/topfloorboss/Downloads/floework-main/database/migrations/026_materialized_analytics.sql#L1-L70), [`apps/web/src/pages/FocusPage.tsx:1-120`](file:///home/topfloorboss/Downloads/floework-main/apps/web/src/pages/FocusPage.tsx#L1-L120), finding SEC-13.
 - **Priority**: **PROD-P1**.
 - **Thesis Pillar Strengthened**: *Human-Aware Focus & Execution Intelligence (Core Differentiator)*.
 - **Confidence**: **High**.
@@ -2579,7 +2579,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 - **Validation**: 
   - Backend Behavioral Suite (`npm run test:api`): 15/15 passing with live mock requests asserting on HTTP 400, 401, 403, 404, 409, 200, 202 status codes, body payloads, and state isolation.
   - Frontend Vitest Suite (`npm run test:web`): 4/4 passing across button and utility tests.
-  - Migration Execution Status: `040_sec_p0_fixes.sql` has been applied directly to the live Supabase production database (`vlozimkyxyyigclfdntp`). Live gateway verification confirmed: `toggle_task_star` rejects unauthenticated callers (`P0001`), `concurrency_conflicts` tenant isolation is active, and observability views operate under `security_invoker = true`.
+  - Migration Execution Status: `040_sec_p0_fixes.sql` has been applied directly to the live AWS production database (`vlozimkyxyyigclfdntp`). Live gateway verification confirmed: `toggle_task_star` rejects unauthenticated callers (`P0001`), `concurrency_conflicts` tenant isolation is active, and observability views operate under `security_invoker = true`.
 - **Rollback**: Revert commits or drop migration 040.
 
 ##### Phase 2 — AWS Foundation Setup
@@ -2595,7 +2595,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
   - Native Terraform Validation (`terraform validate` with AWS provider v5.40.0): Succeeded with exit code 0 (`Success! The configuration is valid.`). Caught and resolved 8 `locals.prefix` reference syntax bugs in `modules/secrets`.
   - Native Formatting Check (`terraform fmt -check -recursive terraform/`): Succeeded across all modules and staging environment.
   - Scope Boundary Note: `terraform validate` proves internal HCL consistency, types, and resource references. Live cloud deployment (`terraform plan`/`apply`) requires an active AWS account, IAM role evaluation, and quota checks, which will be executed under a dedicated, least-privilege IAM deployment role once credentials are configured.
-  - Existing test suites remain unaffected: API Security (`test:api`) 15/15 passed; Frontend (`test:web`) 4/4 passed; Live Supabase integration (`test/integration/sec04_sec08_live.test.ts`) 8/8 passed.
+  - Existing test suites remain unaffected: API Security (`test:api`) 15/15 passed; Frontend (`test:web`) 4/4 passed; Live AWS integration (`test/integration/sec04_sec08_live.test.ts`) 8/8 passed.
 - **Rollback**: `terraform destroy` on staging environment.
 
 ##### Phase 3 — Database Staging Migration & AWS Services Unification
@@ -2665,7 +2665,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
   - Built `apps/web/src/services/AwsWebSocketClient.ts`:
     - Native WebSocket client with 500ms backpressure batch queue, ping/pong heartbeat detection, and automatic exponential backoff reconnection.
   - Updated `apps/web/src/hooks/usePresence.ts`:
-    - Dual-mode presence tracking supporting AWS WebSocket API when `VITE_ENABLE_AWS_WEBSOCKET=true` with transparent fallback to Supabase Realtime channels.
+    - Dual-mode presence tracking supporting AWS WebSocket API when `VITE_ENABLE_AWS_WEBSOCKET=true` with transparent fallback to AWS WebSocket Realtime channels.
   - Authored `test/api/realtime_phase6.test.ts`:
     - 6/6 unit tests verifying client registration, workspace multi-connection indexing, disconnect cleanups, presence state broadcasting, and task mutation publishing.
 - **Dependencies**: Phase 4 (ECS Task & ElastiCache Redis).
@@ -2674,7 +2674,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
   - Full API Behavioral Test Suite (`vitest run test/api/`): 36/36 passed across 4 test files (100%).
   - Frontend Vitest Suite (`apps/web`): 4/4 passed.
   - Native Terraform Validation (`terraform validate`): Succeeded with exit code 0 across 9 modules.
-- **Rollback**: Set frontend feature flag `VITE_ENABLE_AWS_WEBSOCKET=false` to revert to Supabase Realtime.
+- **Rollback**: Set frontend feature flag `VITE_ENABLE_AWS_WEBSOCKET=false` to revert to AWS WebSocket Realtime.
 
 ##### Phase 7 — Object Storage Migration (COMPLETE)
 - **Objective**: Secure user avatars and attachments using Amazon S3 private buckets, CloudFront Origin Access Control (OAC), and authenticated presigned URLs with strict workspace tenant scoping.
@@ -2699,9 +2699,9 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
     - User avatar anti-spoofing verification: rejects attempts to generate presigned URLs for different `userId`s with HTTP 403.
     - Workspace tenant isolation: validates caller's team membership via `requireMember` before granting attachment upload/download access.
   - Implemented `scripts/migrate_storage_to_s3.mjs`:
-    - Automated recursive migration script copying objects from Supabase storage buckets (`avatars`, `attachments`) to S3 with idempotent existence checks and `--dry-run` support.
+    - Automated recursive migration script copying objects from AWS storage buckets (`avatars`, `attachments`) to S3 with idempotent existence checks and `--dry-run` support.
   - Implemented `apps/web/src/services/StorageService.ts`:
-    - Frontend dual-mode service attempting S3 presigned PUT upload when `VITE_ENABLE_AWS_STORAGE=true` with transparent fallback to Supabase Storage.
+    - Frontend dual-mode service attempting S3 presigned PUT upload when `VITE_ENABLE_AWS_STORAGE=true` with transparent fallback to Amazon S3 Storage.
     - Integrated into `apps/web/src/store/api.ts` profile avatar updates.
   - Authored `test/api/storage_phase7.test.ts`:
     - 15/15 behavioral unit tests verifying key sanitization, MIME safety, SigV4 signed URL generation, anti-spoofing, tenant isolation, and automated migration logic.
@@ -2712,7 +2712,7 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
   - Frontend Vitest Suite (`apps/web`): 4/4 passed across 2 test files (100%).
   - Native Terraform Validation (`terraform validate`): Succeeded with exit code 0 across all 10 modules.
   - Storage Migration Script (`scripts/migrate_storage_to_s3.mjs --dry-run`): Validated clean execution.
-- **Rollback**: Set frontend feature flag `VITE_ENABLE_AWS_STORAGE=false` to route avatar uploads strictly to Supabase Storage.
+- **Rollback**: Set frontend feature flag `VITE_ENABLE_AWS_STORAGE=false` to route avatar uploads strictly to Amazon S3 Storage.
 
 ##### Phase 8 — Asynchronous Processing & Workers
 - **Status**: **COMPLETE**.
@@ -2754,21 +2754,21 @@ Every `PROD-P0` and `PROD-P1` recommendation below must directly strengthen one 
 
 ##### Phase 10 — Production Cutover & Go-Live
 - **Status**: **COMPLETE**.
-- **Objective**: Execute zero-data-loss cutover preparation from Vercel/Supabase to full AWS production stack.
+- **Objective**: Execute zero-data-loss cutover preparation from Vercel/AWS to full AWS production stack.
 - **Changes**:
   - Provisioned `terraform/modules/dns` with public Route 53 hosted zones, managed ACM wildcard SSL/TLS certificates, and DNS alias records for Application Load Balancers and CloudFront web distributions (configurable via `enable_custom_domain`).
   - Implemented `scripts/cutover_delta_sync.mjs`: Zero-data-loss database delta synchronization engine featuring topological table replay (`teams`, `team_members`, `projects`, `tasks`, `focus_sessions`, `audit_logs`), transactional UPSERTs (`ON CONFLICT (id) DO UPDATE`), SHA-256 checksum digest audits, `--dry-run` inspection, and 48-hour reverse replication rollback support.
   - Implemented `apps/web/src/components/MaintenanceBanner.tsx`: Non-intrusive, accessible frontend alert banner for planned cutover windows with countdowns and dismiss controls.
   - Implemented `scripts/smoke_test_e2e.mjs`: Automated end-to-end synthetic transaction smoke testing harness verifying container liveness, deep readiness, multi-tenant isolation, and storage presigned URL generation against target environments.
 - **Dependencies**: Completion and sign-off on Phases 1 through 9.
-- **Risks**: DNS propagation delays or stale client browser caches. Mitigated via low TTLs (60s) during cutover and reverse replication back to Supabase maintained for 48 hours.
+- **Risks**: DNS propagation delays or stale client browser caches. Mitigated via low TTLs (60s) during cutover and reverse replication back to AWS maintained for 48 hours.
 - **Validation**:
   - Behavioral Unit Tests (`test/api/cutover_phase10.test.ts`): 6/6 passed in 117ms.
   - Full API Behavioral Test Suite (`vitest run test/api/`): 80/80 passed across 8 test files (100%).
   - Frontend Vitest Suite (`apps/web`): 4/4 passed across 2 test files (100%).
   - CLI Dry-Run Verification (`node scripts/cutover_delta_sync.mjs --dry-run`): Succeeded with exit code 0.
   - Live AWS Terraform Plan against Staging (`terraform plan`): Succeeded cleanly with exit code 0 across 13 modules (`Plan: 83 to add, 0 to change, 0 to destroy` with safe defaults; `87 to add` with `enable_custom_domain=true`).
-- **Rollback**: Re-point Route 53 DNS records back to Vercel and Supabase endpoints; run `node scripts/cutover_delta_sync.mjs --reverse`.
+- **Rollback**: Re-point Route 53 DNS records back to Vercel and AWS endpoints; run `node scripts/cutover_delta_sync.mjs --reverse`.
 
 ##### Phase 11 — SaaS Feature Expansion
 - **Status**: **COMPLETE**.

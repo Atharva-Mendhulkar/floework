@@ -1,72 +1,62 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "../../lib/supabase";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { CognitoAuthService, CognitoUser } from "@/services/CognitoAuthService";
 import { resetStore } from "@/store";
 
-interface User {
-    id: string;
-    email: string;
-    name: string;
-    role: "admin" | "member";
-    avatarUrl?: string;
-}
+export interface User extends CognitoUser {}
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (token: string, userData: User) => void;
-    logout: () => void;
+    login: (tokenOrEmail: string, passwordOrUserData?: any) => Promise<void> | void;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-function mapSupabaseUser(su: SupabaseUser): User {
-    return {
-        id: su.id,
-        email: su.email || "",
-        name: su.user_metadata?.full_name || su.email?.split("@")[0] || "User",
-        role: "admin",
-        avatarUrl: su.user_metadata?.avatar_url,
-    };
-}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check existing session
-        supabase.auth.getSession().then(({ data }) => {
-            if (data.session?.user) {
-                setUser(mapSupabaseUser(data.session.user));
-            }
-            setIsLoading(false);
-        });
-
-        // Listen for auth state changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) {
-                setUser(mapSupabaseUser(session.user));
+        // Check existing Cognito session
+        const session = CognitoAuthService.getSession();
+        if (session?.user) {
+            // Check if token expired or needs refresh
+            if (session.expiresAt < Date.now()) {
+                CognitoAuthService.refreshSession()
+                    .then((refreshed) => {
+                        setUser(refreshed?.user || null);
+                    })
+                    .catch(() => {
+                        setUser(null);
+                    })
+                    .finally(() => {
+                        setIsLoading(false);
+                    });
             } else {
-                setUser(null);
-                if (event === 'SIGNED_OUT') {
-                    resetStore();
-                }
+                setUser(session.user);
+                setIsLoading(false);
             }
-        });
-
-        return () => subscription.unsubscribe();
+        } else {
+            setIsLoading(false);
+        }
     }, []);
 
-    const login = (_token: string, userData: User) => {
-        // Kept for compatibility — Supabase handles session persistence internally
-        setUser(userData);
+    const login = async (tokenOrEmail: string, passwordOrUserData?: any) => {
+        if (typeof passwordOrUserData === 'string') {
+            // Standard email + password login via Amazon Cognito
+            const session = await CognitoAuthService.signIn(tokenOrEmail, passwordOrUserData);
+            setUser(session.user);
+        } else if (passwordOrUserData && typeof passwordOrUserData === 'object') {
+            // Compatibility setter
+            setUser(passwordOrUserData);
+        }
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
-        resetStore(); // Explicit reset
+        await CognitoAuthService.signOut();
+        resetStore();
         setUser(null);
     };
 

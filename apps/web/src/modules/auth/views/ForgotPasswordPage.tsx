@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { CognitoAuthService } from "@/services/CognitoAuthService";
 
 export const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("");
@@ -16,14 +16,11 @@ export const ForgotPasswordPage = () => {
 
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password`,
-            });
-            if (error) throw error;
+            await CognitoAuthService.forgotPassword(email);
             setSent(true);
-            toast.success("Password reset link sent — check your email.");
+            toast.success("Password recovery instructions sent to your verified email.");
         } catch (error: any) {
-            toast.error(error.message || "Failed to send reset email");
+            toast.error(error.message || "Failed to initiate password recovery");
         } finally {
             setIsLoading(false);
         }
@@ -34,10 +31,13 @@ export const ForgotPasswordPage = () => {
             <div className="w-full max-w-md bg-surface p-8 rounded-2xl shadow-card">
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-foreground">Reset Password</h1>
-                    <p className="text-sm text-text-muted mt-2">Enter your email and we'll send you a reset link</p>
+                    <p className="text-sm text-text-muted mt-2">Enter your email and Amazon Cognito will send recovery instructions</p>
                 </div>
                 {sent ? (
-                    <p className="text-center text-sm text-emerald-600">Check your inbox for the reset link.</p>
+                    <div className="space-y-4 text-center">
+                        <p className="text-sm text-emerald-600 font-medium">Check your inbox for the password reset code.</p>
+                        <a href="/reset-password" className="inline-block text-sm text-focus hover:underline font-medium">Enter reset code</a>
+                    </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
@@ -45,7 +45,7 @@ export const ForgotPasswordPage = () => {
                             <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
                         </div>
                         <Button type="submit" className="w-full bg-focus text-focus-foreground hover:bg-focus/90" disabled={isLoading}>
-                            {isLoading ? "Sending..." : "Send Reset Link"}
+                            {isLoading ? "Sending..." : "Send Reset Instructions"}
                         </Button>
                     </form>
                 )}

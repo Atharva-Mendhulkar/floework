@@ -52,25 +52,6 @@ variable "enable_multi_az_nat" {
   default     = false
 }
 
-variable "supabase_url" {
-  description = "Supabase project endpoint URL"
-  type        = string
-  default     = "https://vlozimkyxyyigclfdntp.supabase.co"
-}
-
-variable "supabase_anon_key" {
-  description = "Supabase publishable anon key"
-  type        = string
-  default     = ""
-}
-
-variable "supabase_service_role_key" {
-  description = "Supabase administrative service role key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "gemini_api_key" {
   description = "Google Gemini API key for narrative synthesis"
   type        = string
@@ -184,5 +165,20 @@ variable "enable_ci_cd_oidc" {
   default     = true
 }
 
+variable "monthly_budget_amount" {
+  description = "Monthly budget limit in USD for staging environment"
+  type        = number
+  default     = 50
+}
 
+variable "enable_cost_anomaly_detection" {
+  description = "Set to true to provision AWS Cost Anomaly Monitor and SNS alert subscription"
+  type        = bool
+  default     = true
+}
 
+variable "anomaly_threshold_amount" {
+  description = "Absolute dollar impact threshold to trigger cost anomaly notifications"
+  type        = number
+  default     = 10
+}

@@ -100,9 +100,6 @@ module "secrets" {
   project_name              = var.project_name
   environment               = var.environment
   kms_key_id                = module.security.kms_key_id
-  supabase_url              = var.supabase_url
-  supabase_anon_key         = var.supabase_anon_key
-  supabase_service_role_key = var.supabase_service_role_key
   gemini_api_key            = var.gemini_api_key
   jwt_secret                = var.jwt_secret
   upstash_redis_rest_url    = var.upstash_redis_rest_url
@@ -258,6 +255,23 @@ module "observability" {
 }
 
 # ==============================================================================
+# Module: Frontend (Phase 16 React Web App S3 Hosting & CloudFront CDN)
+# ==============================================================================
+
+module "frontend" {
+  source = "../../modules/frontend"
+
+  project_name         = var.project_name
+  environment          = var.environment
+  aws_region           = var.aws_region
+  kms_key_arn          = module.security.kms_key_arn
+  enable_custom_domain = var.enable_custom_domain
+  custom_domain_name   = var.custom_domain_name
+  acm_certificate_arn  = module.dns.certificate_arn
+  tags                 = var.tags
+}
+
+# ==============================================================================
 # Module: DNS (Phase 10 Route 53 DNS Routing & ACM Certificate Preparation)
 # ==============================================================================
 
@@ -270,7 +284,7 @@ module "dns" {
   enable_custom_domain   = var.enable_custom_domain
   alb_dns_name           = module.alb.alb_dns_name
   alb_zone_id            = module.alb.alb_zone_id
-  cloudfront_domain_name = ""
+  cloudfront_domain_name = module.frontend.cloudfront_domain_name
   tags                   = var.tags
 }
 
@@ -297,17 +311,30 @@ module "email" {
 module "ci_cd" {
   source = "../../modules/ci_cd"
 
-  project_name           = var.project_name
-  environment            = var.environment
-  github_repo            = var.github_repo
-  kms_key_arn            = module.security.kms_key_arn
-  enable_oidc_provider   = var.enable_ci_cd_oidc
-  ecs_execution_role_arn = module.security.ecs_execution_role_arn
-  ecs_task_role_arn      = module.security.ecs_task_role_arn
-  tags                   = var.tags
+  project_name                = var.project_name
+  environment                 = var.environment
+  github_repo                 = var.github_repo
+  kms_key_arn                 = module.security.kms_key_arn
+  enable_oidc_provider        = var.enable_ci_cd_oidc
+  ecs_execution_role_arn      = module.security.ecs_execution_role_arn
+  ecs_task_role_arn           = module.security.ecs_task_role_arn
+  frontend_bucket_arn         = module.frontend.s3_bucket_arn
+  cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
+  tags                        = var.tags
 }
 
+# ==============================================================================
+# Module: FinOps (Phase 21 Cost Governance, AWS Budgets & Anomaly Detection)
+# ==============================================================================
 
+module "finops" {
+  source = "../../modules/finops"
 
-
-
+  project_name                  = var.project_name
+  environment                   = var.environment
+  monthly_budget_amount         = var.monthly_budget_amount
+  sns_alert_topic_arn           = module.observability.sns_alerts_topic_arn
+  enable_cost_anomaly_detection = var.enable_cost_anomaly_detection
+  anomaly_threshold_amount      = var.anomaly_threshold_amount
+  tags                          = var.tags
+}
