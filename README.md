@@ -7,7 +7,7 @@
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
 [![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-217%2F217%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
+[![Tests Passing](https://img.shields.io/badge/Tests-229%2F229%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
 [![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
@@ -149,6 +149,39 @@ flowchart TD
 - Server-side 3-color topological DFS (`UNVISITED`, `VISITING`, `VISITED`) rejects self-loops and circular dependencies (`A -> B -> A` or transitive `A -> B -> C -> A`) with `HTTP 400 Circular dependency detected`.
 - Features real-time downstream blocker cascade calculation and critical path identification.
 
+### 7. FinOps & Continuous Cost Optimization Governance
+- Declarative cost control layer managed via `terraform/modules/finops/` with multi-tier **AWS Budgets** (50%, 80%, 100% actual + 100% forecasted) routing alerts to the SNS operational bus.
+- **AWS Cost Anomaly Detection** running dimensional service monitors with $10 (staging) / $20 (production) root-cause impact triggers.
+- Automated FinOps CLI audit engine ([`scripts/finops_cost_audit.mjs`](scripts/finops_cost_audit.mjs)) evaluating idle resources, unattached storage, NAT Gateway consolidation, and baseline run-rates:
+
+```text
+$ node scripts/finops_cost_audit.mjs --multi-az-nat
+
+Flowework AWS FinOps Audit
+==========================
+
+Environment: staging
+
+NAT Gateways:              2
+RDS instances:             1
+ECS services:              2
+ElastiCache clusters:      1
+Unattached EBS volumes:    0
+Unassociated EIPs:         0
+
+Potential optimizations:
+- NAT Gateway consolidation: HIGH
+- Redis idle utilization:    MEDIUM
+- RDS sizing review:         MEDIUM
+- S3 storage lifecycle tiering: LOW
+
+Budget:
+Current monthly budget:     $50.00 USD
+Alert thresholds:           50 / 80 / 100%
+Estimated monthly run-rate: $166.13 (332% of budget)
+Cost Anomaly Monitor:       ACTIVE ($10.00 threshold -> SNS)
+```
+
 ---
 
 ## Monorepo Directory Structure
@@ -190,8 +223,10 @@ floework/
 │   ├── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
 │   ├── DISASTER_RECOVERY_RUNBOOK.md  # Multi-AZ failover, PITR restoration & cross-region DR
 │   ├── SECURITY_AND_COMPLIANCE.md    # CIS Benchmark, SOC 2 Type II controls & audit policies
-│   └── CHAOS_AND_RESILIENCY_PLAYBOOK.md # Fault injection, SLO error budgets & GameDay drills
+│   ├── CHAOS_AND_RESILIENCY_PLAYBOOK.md # Fault injection, SLO error budgets & GameDay drills
+│   └── FINOPS_AND_COST_OPTIMIZATION.md # Cloud spend control, AWS Budgets & idle cost governance
 ├── scripts/
+│   ├── finops_cost_audit.mjs         # Automated cloud spend, idle resource & budget audit engine
 │   ├── chaos_resiliency_test.mjs     # Automated chaos engineering & latency SLA engine
 │   ├── security_compliance_audit.mjs # Automated CIS Benchmark v3.0 audit engine
 │   ├── dr_backup_restore.mjs         # Automated disaster recovery validation & PITR engine
@@ -205,8 +240,8 @@ floework/
 │   └── migrations/                   # PostgreSQL schema migrations (42 files: 000 through 040)
 ├── terraform/                        # Infrastructure as Code (HashiCorp Terraform v1.9.5)
 │   ├── environments/
-│   │   ├── staging/                  # Staging composition (16 modules wired together)
-│   │   └── production/               # Production HA composition (18 modules, multi-AZ, WAF v2, compliance)
+│   │   ├── staging/                  # Staging composition (17 modules wired together)
+│   │   └── production/               # Production HA composition (19 modules, multi-AZ, WAF v2, compliance, finops)
 │   └── modules/
 │       ├── alb/                      # Application Load Balancer & target groups
 │       ├── auth/                     # Amazon Cognito User Pool & SPA client
@@ -217,6 +252,7 @@ floework/
 │       ├── database/                 # Amazon RDS PostgreSQL 16 Multi-AZ instance
 │       ├── dns/                      # Route 53 public zone, alias records & ACM SSL
 │       ├── email/                    # Amazon SES verified identity & sending policies
+│       ├── finops/                   # AWS Budgets (50/80/100%), Cost Anomaly Detection & SNS alerts
 │       ├── frontend/                 # S3 private static hosting & CloudFront CDN with OAC and SPA routing
 │       ├── networking/               # Multi-AZ VPC, subnets, route tables & NAT gateway
 │       ├── observability/            # CloudWatch metric alarms & Amazon SNS alert bus
@@ -227,7 +263,7 @@ floework/
 │       ├── storage/                  # Amazon S3 private storage bucket & CloudFront OAC
 │       └── waf/                      # Regional AWS WAF v2 Web ACL & Layer 7 rate limiting
 ├── test/
-│   └── api/                          # Comprehensive API behavioral test suite (112 tests)
+│   └── api/                          # Comprehensive API behavioral test suite (225 tests)
 ├── workers/
 │   └── sqs-worker.ts                 # Resilient SQS FIFO background processing worker
 ├── Dockerfile                        # Multi-stage hardened Node 20 Alpine container
@@ -262,12 +298,13 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/production_phase18  │ WAF v2, Prod HA & DR       │ 16 tests    │ ✓ Passed     │
 │ test/api/compliance_phase19  │ CIS Benchmark & CloudTrail │ 17 tests    │ ✓ Passed     │
 │ test/api/resiliency_phase20  │ Chaos, Fallback & SLOs     │ 13 tests    │ ✓ Passed     │
+│ test/api/finops_phase21      │ Cost Budgets & Anomaly     │ 12 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 217 tests   │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 229 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ Terraform Staging Validation │ 16 Infrastructure Modules  │ 103 to add  │ Clean Plan   │
-│ Terraform Production Valid.  │ 18 Infrastructure Modules  │ 122 to add  │ Clean Plan   │
+│ Terraform Staging Validation │ 17 Infrastructure Modules  │ 106 to add  │ Clean Plan   │
+│ Terraform Production Valid.  │ 19 Infrastructure Modules  │ 125 to add  │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
 
 
@@ -347,6 +384,8 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 | `npm run compliance:dry-run` | Rehearse security compliance evaluation in simulated dry-run mode |
 | `npm run chaos:test` | Run automated chaos fault injection and latency percentile SLA suite |
 | `npm run chaos:dry-run` | Rehearse chaos engineering scenarios in simulated dry-run mode |
+| `npm run finops:audit` | Run automated cloud spend, idle resource & budget compliance audit |
+| `npm run finops:dry-run` | Rehearse FinOps cost evaluation in simulated dry-run mode |
 | `npm run migrate:db` | Execute pending PostgreSQL migrations with transactional tracking |
 | `npm run migrate:status` | Inspect applied vs pending migration status across all 42 migrations |
 | `npm run migrate:dry-run` | Preview pending migrations without applying changes |
@@ -419,6 +458,8 @@ terraform -chdir=terraform/environments/staging plan -no-color
   - Multi-region AWS CloudTrail with cryptographic log file integrity validation, dedicated 365-day compliance S3 audit bucket, AWS Config continuous resource recording & managed rules, automated CIS AWS Foundations Benchmark audit engine (100% score), and SOC 2 Type II trust mapping (`scripts/security_compliance_audit.mjs`, `docs/SECURITY_AND_COMPLIANCE.md`).
 - [x] **Phase 20: Chaos Engineering, Automated Resiliency Testing & Service Level Objective (SLO) Verification Harness**
   - 5 chaos fault injection scenarios (Redis partition, Bedrock circuit breaker, transient DB retry with exponential backoff, SQS poison pill DLQ isolation, concurrency burst), mathematical latency percentile engine (p50/p90/p95/p99), and operational GameDay playbook (`scripts/chaos_resiliency_test.mjs`, `docs/CHAOS_AND_RESILIENCY_PLAYBOOK.md`).
+- [x] **Phase 21: FinOps, AWS Budgets & Continuous Cost Optimization Governance**
+  - Declarative cost control layer with multi-tier AWS Budgets (50%, 80%, 100% actual + forecasted), AWS Cost Anomaly Detection with SNS operational alert bus, S3 Intelligent-Tiering and Glacier IR lifecycle transitions, automated FinOps audit engine (`scripts/finops_cost_audit.mjs`), and comprehensive cost governance playbook (`docs/FINOPS_AND_COST_OPTIMIZATION.md`).
 
 ---
 

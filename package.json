@@ -46,6 +46,8 @@
     "compliance:dry-run": "node scripts/security_compliance_audit.mjs --dry-run",
     "chaos:test": "node scripts/chaos_resiliency_test.mjs",
     "chaos:dry-run": "node scripts/chaos_resiliency_test.mjs --dry-run",
+    "finops:audit": "node scripts/finops_cost_audit.mjs",
+    "finops:dry-run": "node scripts/finops_cost_audit.mjs --dry-run",
     "migrate:s3": "node scripts/migrate_storage_to_s3.mjs",
     "migrate:db": "node scripts/run_migrations.mjs",
     "migrate:status": "node scripts/run_migrations.mjs --status",

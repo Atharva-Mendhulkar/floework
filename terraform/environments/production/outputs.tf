@@ -272,3 +272,32 @@ output "compliance_config_rules" {
   description = "List of active AWS Config continuous compliance rules"
   value       = module.compliance.config_rules
 }
+
+# ------------------------------------------------------------------------------
+# FinOps & Cost Governance Outputs (AWS Budgets & Cost Anomaly Detection)
+# ------------------------------------------------------------------------------
+
+output "finops_budget_id" {
+  description = "ID of the AWS Cost Budget"
+  value       = module.finops.budget_id
+}
+
+output "finops_budget_name" {
+  description = "Name of the AWS Cost Budget"
+  value       = module.finops.budget_name
+}
+
+output "finops_budget_limit_amount" {
+  description = "Configured monthly budget limit amount in USD"
+  value       = module.finops.budget_limit_amount
+}
+
+output "finops_anomaly_monitor_arn" {
+  description = "ARN of the AWS Cost Anomaly Monitor"
+  value       = module.finops.anomaly_monitor_arn
+}
+
+output "finops_anomaly_subscription_arn" {
+  description = "ARN of the AWS Cost Anomaly Alert Subscription"
+  value       = module.finops.anomaly_subscription_arn
+}

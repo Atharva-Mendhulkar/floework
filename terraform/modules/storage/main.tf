@@ -59,18 +59,31 @@ resource "aws_s3_bucket_cors_configuration" "storage" {
   }
 }
 
-# 5. Lifecycle configuration to purge incomplete multipart uploads
+# 5. Lifecycle configuration to purge incomplete multipart uploads and optimize storage cost
 resource "aws_s3_bucket_lifecycle_configuration" "storage" {
   bucket = aws_s3_bucket.storage.id
 
   rule {
-    id     = "abort-incomplete-multipart-uploads"
+    id     = "cost-optimization-and-cleanup"
     status = "Enabled"
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
 
+    # FinOps: Automatically transition active media objects to Intelligent-Tiering after 30 days
+    transition {
+      days          = 30
+      storage_class = "INTELLIGENT_TIERING"
+    }
+
+    # FinOps: Transition superseded noncurrent versions to Glacier Instant Retrieval after 30 days
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "GLACIER_IR"
+    }
+
+    # FinOps: Automatically expire noncurrent versions after 90 days to prevent storage bloat
     noncurrent_version_expiration {
       noncurrent_days = 90
     }

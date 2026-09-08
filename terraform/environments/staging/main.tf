@@ -326,8 +326,18 @@ module "ci_cd" {
   tags                        = var.tags
 }
 
+# ==============================================================================
+# Module: FinOps (Phase 21 Cost Governance, AWS Budgets & Anomaly Detection)
+# ==============================================================================
 
+module "finops" {
+  source = "../../modules/finops"
 
-
-
-
+  project_name                  = var.project_name
+  environment                   = var.environment
+  monthly_budget_amount         = var.monthly_budget_amount
+  sns_alert_topic_arn           = module.observability.sns_alerts_topic_arn
+  enable_cost_anomaly_detection = var.enable_cost_anomaly_detection
+  anomaly_threshold_amount      = var.anomaly_threshold_amount
+  tags                          = var.tags
+}

@@ -184,5 +184,20 @@ variable "enable_ci_cd_oidc" {
   default     = true
 }
 
+variable "monthly_budget_amount" {
+  description = "Monthly budget limit in USD for staging environment"
+  type        = number
+  default     = 50
+}
 
+variable "enable_cost_anomaly_detection" {
+  description = "Set to true to provision AWS Cost Anomaly Monitor and SNS alert subscription"
+  type        = bool
+  default     = true
+}
 
+variable "anomaly_threshold_amount" {
+  description = "Absolute dollar impact threshold to trigger cost anomaly notifications"
+  type        = number
+  default     = 10
+}

@@ -275,3 +275,27 @@ variable "tags" {
     ManagedBy = "terraform"
   }
 }
+
+variable "monthly_budget_amount" {
+  description = "Monthly budget limit in USD for production environment"
+  type        = number
+  default     = 200
+}
+
+variable "enable_cost_anomaly_detection" {
+  description = "Set to true to provision AWS Cost Anomaly Monitor and SNS alert subscription"
+  type        = bool
+  default     = true
+}
+
+variable "anomaly_threshold_amount" {
+  description = "Absolute dollar impact threshold to trigger cost anomaly notifications"
+  type        = number
+  default     = 20
+}
+
+variable "notification_emails" {
+  description = "Optional list of subscriber email addresses for budget alerts"
+  type        = list(string)
+  default     = []
+}
