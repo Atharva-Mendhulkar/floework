@@ -25,6 +25,7 @@ const queryClient = new QueryClient();
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const PhilosophyPage = lazy(() => import("./pages/PhilosophyPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const DesignPage = lazy(() => import("./pages/DesignPage"));
 const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
@@ -65,6 +66,7 @@ const App = () => (
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/philosophy" element={<PhilosophyPage />} />
                     <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/design" element={<DesignPage />} />
                     <Route path="/features" element={<FeaturesPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />
