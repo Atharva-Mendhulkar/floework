@@ -37,7 +37,7 @@ export const LoginPage = () => {
             <div className="w-full max-w-md bg-surface p-8 rounded-2xl shadow-card">
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-foreground">Welcome to floework</h1>
-                    <p className="text-sm text-text-muted mt-2">Sign in with Amazon Cognito to sync your focus sessions</p>
+                    <p className="text-sm text-text-muted mt-2">Log in to enter your focus and resume your flow</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">

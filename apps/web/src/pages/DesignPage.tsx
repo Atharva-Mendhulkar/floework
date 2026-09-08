@@ -53,7 +53,7 @@ const DesignPage = () => {
           </div>
           <h1 className="text-[40px] sm:text-[56px] md:text-[72px] font-semibold tracking-tight leading-[1.05] text-foreground mb-6">
             Crafting <br />
-            <span className="font-bold text-xl tracking-tight text-foreground">floework<span className="text-[#007dff]">.</span></span>
+            <span className="font-bold text-foreground">floework<span className="text-[#007dff]">.</span></span>
           </h1>
           <p className="text-lg md:text-xl text-slate-500 max-w-[600px] leading-relaxed font-medium">
             From logomark to interface - every design decision in floework is intentional.
@@ -93,8 +93,8 @@ const DesignPage = () => {
 
             {/* Favicon / Icon */}
             <div className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 flex flex-col items-center justify-center min-h-[220px] hover:shadow-lg hover:border-slate-300 transition-all duration-300">
-              <div className="w-20 h-20 rounded-2xl bg-[#007dff] flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                <span className="font-bold text-3xl text-white">f<span className="text-blue-200">.</span></span>
+              <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition-transform duration-300 p-2">
+                <img src="/favicon.svg" alt="floework favicon" className="w-full h-full object-contain rounded-xl" />
               </div>
               <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Favicon / App Icon</span>
             </div>

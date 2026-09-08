@@ -23,7 +23,7 @@ export const RegisterPage = () => {
         setIsLoading(true);
         try {
             await CognitoAuthService.signUp(email, password, name);
-            toast.success("Account created successfully with Amazon Cognito! You can now sign in.");
+            toast.success("Account created successfully! You can now sign in.");
             navigate("/login");
         } catch (error: any) {
             toast.error(error.message || "Registration failed");

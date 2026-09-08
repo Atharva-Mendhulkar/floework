@@ -72,6 +72,12 @@ export class CognitoAuthService {
    */
   static async signIn(email: string, password: string): Promise<CognitoSession> {
     try {
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder && !import.meta.env.VITE_COGNITO_USER_POOL_ID) {
+        console.info('[CognitoAuthService] Demo/offline mode activated (placeholder Cognito credentials)')
+        return this.createMockSession(email)
+      }
+
       const result = await this.callCognito('InitiateAuth', {
         AuthFlow: 'USER_PASSWORD_AUTH',
         ClientId: this.clientId,
@@ -84,9 +90,9 @@ export class CognitoAuthService {
       const auth = result.AuthenticationResult
       return this.handleAuthResult(auth, email)
     } catch (err: any) {
-      // In local dev/mock without live Cognito pool, provide seamless offline session
-      if (import.meta.env.DEV && (!import.meta.env.VITE_COGNITO_USER_POOL_ID || err.message.includes('ResourceNotFoundException') || err.message.includes('Failed to fetch'))) {
-        console.info('[CognitoAuthService] Offline/dev fallback mode activated')
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder || err.message?.includes('ResourceNotFoundException') || err.message?.includes('Failed to fetch')) {
+        console.info('[CognitoAuthService] Offline/demo fallback mode activated')
         return this.createMockSession(email)
       }
       throw err
@@ -98,6 +104,11 @@ export class CognitoAuthService {
    */
   static async signUp(email: string, password: string, name?: string): Promise<{ userSub: string }> {
     try {
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder && !import.meta.env.VITE_COGNITO_USER_POOL_ID) {
+        return { userSub: 'usr-demo-' + Math.random().toString(36).substring(2, 9) }
+      }
+
       const attributes = [{ Name: 'email', Value: email }]
       if (name) {
         attributes.push({ Name: 'name', Value: name })
@@ -112,8 +123,9 @@ export class CognitoAuthService {
 
       return { userSub: result.UserSub }
     } catch (err: any) {
-      if (import.meta.env.DEV && (!import.meta.env.VITE_COGNITO_USER_POOL_ID || err.message.includes('ResourceNotFoundException') || err.message.includes('Failed to fetch'))) {
-        return { userSub: 'usr-mock-' + Math.random().toString(36).substring(2, 9) }
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder || err.message?.includes('ResourceNotFoundException') || err.message?.includes('Failed to fetch')) {
+        return { userSub: 'usr-demo-' + Math.random().toString(36).substring(2, 9) }
       }
       throw err
     }
@@ -124,12 +136,15 @@ export class CognitoAuthService {
    */
   static async forgotPassword(email: string): Promise<void> {
     try {
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder) return
+
       await this.callCognito('ForgotPassword', {
         ClientId: this.clientId,
         Username: email
       })
     } catch (err: any) {
-      if (import.meta.env.DEV) return
+      if (err.message?.includes('ResourceNotFoundException') || err.message?.includes('Failed to fetch')) return
       throw err
     }
   }
@@ -139,6 +154,9 @@ export class CognitoAuthService {
    */
   static async confirmForgotPassword(email: string, code: string, newPassword: string): Promise<void> {
     try {
+      const isPlaceholder = !this.clientId || this.clientId.includes('EXAMPLE') || !import.meta.env.VITE_COGNITO_USER_POOL_ID
+      if (isPlaceholder) return
+
       await this.callCognito('ConfirmForgotPassword', {
         ClientId: this.clientId,
         Username: email,
@@ -146,7 +164,7 @@ export class CognitoAuthService {
         Password: newPassword
       })
     } catch (err: any) {
-      if (import.meta.env.DEV) return
+      if (err.message?.includes('ResourceNotFoundException') || err.message?.includes('Failed to fetch')) return
       throw err
     }
   }
