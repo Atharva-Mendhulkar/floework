@@ -339,6 +339,21 @@ output "dns_api_record" {
   value       = module.dns.api_dns_record
 }
 
+output "dns_web_record" {
+  description = "Web frontend apex domain alias DNS record FQDN"
+  value       = module.dns.web_dns_record
+}
+
+output "dns_certificate_arn" {
+  description = "ARN of the managed ACM SSL/TLS certificate"
+  value       = module.dns.certificate_arn
+}
+
+output "dns_name_servers" {
+  description = "Name servers for the public Route 53 hosted zone"
+  value       = module.dns.name_servers
+}
+
 # ==============================================================================
 # Email Outputs (Phase 11 Amazon SES Transactional Email)
 # ==============================================================================

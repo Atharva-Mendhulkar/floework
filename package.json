@@ -38,6 +38,8 @@
     "test:web": "cd apps/web && vitest run",
     "smoke": "node scripts/smoke_test_e2e.mjs",
     "sync": "node scripts/cutover_delta_sync.mjs",
+    "cutover": "node scripts/production_cutover.mjs",
+    "cutover:dry-run": "node scripts/production_cutover.mjs --dry-run",
     "migrate:s3": "node scripts/migrate_storage_to_s3.mjs",
     "migrate:db": "node scripts/run_migrations.mjs",
     "migrate:status": "node scripts/run_migrations.mjs --status",

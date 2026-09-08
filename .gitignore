@@ -61,5 +61,5 @@ override.tf.json
 *_override.tf.json
 *.tfplan
 tfplan
-
-
+# Runtime Reports
+*_audit_report.json

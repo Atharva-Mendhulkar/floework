@@ -7,7 +7,7 @@
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
 [![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-153%2F153%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
+[![Tests Passing](https://img.shields.io/badge/Tests-171%2F171%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
 [![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
@@ -160,7 +160,8 @@ floework/
 │       ├── ci.yml                    # Automated quality gate (99 tests across Node 20 & 22)
 │       ├── terraform-ci.yml          # IaC formatting check, validation & speculative plan
 │       ├── docker-ecr.yml            # Docker Buildx, Trivy CVE scan & Amazon ECR publish
-│       └── deploy-frontend.yml       # React SPA build, S3 asset sync & CloudFront CDN invalidation
+│       ├── deploy-frontend.yml       # React SPA build, S3 asset sync & CloudFront CDN invalidation
+│       └── production-cutover.yml    # Automated cutover, synthetic validation & rollback pipeline
 ├── api/                              # Fastify Modular Monolith Application
 │   ├── _lib/                         # Shared core libraries & AWS adapters
 │   │   ├── auth.ts                   # Stateless JWT auth guard with request memoization
@@ -185,11 +186,14 @@ floework/
 │       ├── src/components/           # UI components & MaintenanceBanner
 │       ├── src/services/             # AWS WebSocket & S3 Storage dual-mode services
 │       └── src/store/                # Redux state & API client layer
+├── docs/
+│   └── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
 ├── scripts/
+│   ├── production_cutover.mjs        # 6-stage production cutover orchestrator & rollback
 │   ├── run_migrations.mjs            # Automated transactional database migration runner
 │   ├── cutover_delta_sync.mjs        # Zero-data-loss delta sync engine with --reverse
 │   ├── migrate_storage_to_s3.mjs     # Automated S3 asset migration utility
-│   ├── smoke_test_e2e.mjs            # Synthetic end-to-end smoke testing harness
+│   ├── smoke_test_e2e.mjs            # Synthetic end-to-end multi-surface smoke tester
 │   └── seed_edges.mjs                # Dependency graph seeding script
 ├── database/
 │   └── migrations/                   # PostgreSQL schema migrations (42 files: 000 through 040)
@@ -245,9 +249,10 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/migrations_runner   │ Checksums, Shim & Runner   │ 15 tests    │ ✓ Passed     │
 │ test/api/compute_phase15     │ ECS Fargate, Worker & CD   │ 22 tests    │ ✓ Passed     │
 │ test/api/frontend_phase16    │ S3, CloudFront OAC & SPA   │ 17 tests    │ ✓ Passed     │
+│ test/api/cutover_phase17     │ Live Verification & DNS    │ 18 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 153 tests   │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 171 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
 │ Terraform Staging Validation │ 16 Infrastructure Modules  │ 103 to add  │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
@@ -317,8 +322,10 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 | `npm run start` | Start the modular monolith Fastify API server locally |
 | `npm run worker` | Launch the Amazon SQS FIFO background processing worker |
 | `npm run build` | Build the production React SPA bundle into `apps/web/dist/` |
-| `npm run smoke` | Execute synthetic end-to-end smoke tests against API endpoints |
+| `npm run smoke` | Execute synthetic end-to-end smoke tests against API & CDN endpoints |
 | `npm run sync` | Run zero-data-loss database delta synchronization |
+| `npm run cutover` | Execute automated 6-stage production cutover and DNS switchover |
+| `npm run cutover:dry-run` | Rehearse production cutover sequence in simulated dry-run mode |
 | `npm run migrate:db` | Execute pending PostgreSQL migrations with transactional tracking |
 | `npm run migrate:status` | Inspect applied vs pending migration status across all 42 migrations |
 | `npm run migrate:dry-run` | Preview pending migrations without applying changes |
@@ -375,6 +382,16 @@ terraform -chdir=terraform/environments/staging plan -no-color
   - Amazon SES transactional email dispatch, server-side 3-color topological DAG cycle detection, and Stripe billing webhooks.
 - [x] **Phase 12: Automated CI/CD Pipelines & AWS OIDC Federation**
   - GitHub Actions automated quality gates, keyless AWS OIDC authentication, Trivy security scanning, and Amazon ECR publishing.
+- [x] **Phase 13: Automated Transactional Database Migration Runner**
+  - 42 schema migrations, zero-version drift checksum tracking, and zero-downtime execution (`scripts/run_migrations.mjs`).
+- [x] **Phase 14: Zero-Data-Loss Live Database Cutover & Delta Sync Engine**
+  - Topological table dependency replay across 7 multi-tenant tables, UPSERT idempotency, and 48-hour reverse replication safety (`scripts/cutover_delta_sync.mjs`).
+- [x] **Phase 15: Production ECS Fargate Task Definition, Worker Pool & Continuous Deployment**
+  - High-availability ECS Fargate services, CPU/RAM target tracking auto-scalers, CloudWatch container logging, and automated rolling CD workflows (`deploy-ecs.yml`).
+- [x] **Phase 16: Frontend Static Hosting with Amazon S3, CloudFront OAC, SPA Routing & CDN CI/CD**
+  - S3 private static hosting, CloudFront Origin Access Control, custom error response SPA routing (403/404 -> 200 `/index.html`), and automated cache invalidation pipeline (`deploy-frontend.yml`).
+- [x] **Phase 17: Production Cutover Checklist, Live Environment Verification & DNS Cutover Automation**
+  - Multi-surface synthetic smoke testing across API and CloudFront edge CDN, automated Route 53 DNS switchover orchestrator, automated 48-hour rollback engine with reverse delta replication, and ACM certificate automated DNS validation (`scripts/production_cutover.mjs`, `docs/PRODUCTION_CUTOVER_RUNBOOK.md`, `production-cutover.yml`).
 
 ---
 
