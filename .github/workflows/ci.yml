@@ -63,6 +63,9 @@ jobs:
       - name: Verify FinOps & Cost Governance (--dry-run)
         run: npm run finops:dry-run
 
+      - name: Verify Production Launch Readiness (--dry-run)
+        run: npm run readiness:dry-run
+
   frontend-tests:
     name: Frontend React Vitest & Production Build
     runs-on: ubuntu-latest
