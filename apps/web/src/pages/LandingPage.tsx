@@ -6,29 +6,55 @@ import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCaus
 
 import Reveal from "@/components/Reveal";
 
-// ─── Floating Cursor Avatar Component
-function FloatingAvatar({ img, delay, top, left, right, bottom, anim, rotate, color }: any) {
+function FloatingAvatar({
+    img,
+    delay,
+    top,
+    left,
+    right,
+    bottom,
+    anim,
+    rotate,
+    color,
+}: any) {
     return (
         <div
-            className={`absolute z-10 hidden sm:flex pointer-events-none`}
+            className="absolute z-10 hidden sm:flex pointer-events-none"
             style={{
-                top, left, right, bottom,
+                top,
+                left,
+                right,
+                bottom,
                 animation: `${anim} 5s ease-in-out infinite`,
                 animationDelay: delay,
             }}
         >
-            <div className="relative">
-                <div className="w-14 h-14 rounded-full border-4 border-background shadow-xl overflow-hidden bg-background">
-                    <img src={img} alt="User" className="w-full h-full object-cover" />
-                </div>
-
-                {/* Cursor Pointer SVG */}
+            <div className="relative w-[104px] h-[104px]">
+                {/* Mascot + its baked-in colored circle */}
+                <img
+                    src={img}
+                    alt="floework teammate"
+                    className="w-full h-full object-contain"
+                />
+                {/* Floating cursor arrow */}
                 <div
-                    className="absolute -bottom-2 -right-3 w-6 h-6 drop-shadow-md"
-                    style={{ transform: `rotate(${rotate}deg)` }}
+                    className="absolute -bottom-1 -right-3 w-7 h-7 drop-shadow-md"
+                    style={{
+                        transform: `rotate(${rotate}deg)`,
+                    }}
                 >
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z" fill={color || "hsl(var(--focus))"} stroke="hsl(var(--background))" strokeWidth="2" strokeLinejoin="round" />
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
+                            fill={color}
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                        />
                     </svg>
                 </div>
             </div>
@@ -170,15 +196,46 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* ─── Floating Avatars */}
                 {/* Top Left */}
-                <FloatingAvatar color="#3b82f6" img="/assets/one.png" delay="0s" anim="swayC" rotate={-45} top="18%" left="12%" />
+                <FloatingAvatar
+                    img="/assets/one.png"
+                    delay="0s"
+                    anim="swayC"
+                    rotate={-45}
+                    color="#3b82f6"
+                    top="15%"
+                    left="8%"
+                />
                 {/* Top Right */}
-                <FloatingAvatar color="#10b981" img="/assets/two.png" delay="1s" anim="swayA" rotate={45} top="20%" right="12%" />
+                <FloatingAvatar
+                    img="/assets/two.png"
+                    delay="1s"
+                    anim="swayA"
+                    rotate={45}
+                    color="#10b981"
+                    top="16%"
+                    right="8%"
+                />
                 {/* Bottom Left */}
-                <FloatingAvatar color="#8b5cf6" img="/assets/three.png" delay="0.5s" anim="swayB" rotate={-110} bottom="10%" left="18%" />
+                <FloatingAvatar
+                    img="/assets/three.png"
+                    delay="0.5s"
+                    anim="swayB"
+                    rotate={-110}
+                    color="#8b5cf6"
+                    bottom="11%"
+                    left="12%"
+                />
                 {/* Bottom Right */}
-                <FloatingAvatar color="#f43f5e" img="/assets/four.png" delay="1.5s" anim="swayC" rotate={110} bottom="15%" right="18%" />
+                <FloatingAvatar
+                    img="/assets/four.png"
+                    delay="1.5s"
+                    anim="swayC"
+                    rotate={110}
+                    color="#f43f5e"
+                    bottom="13%"
+                    right="12%"
+                />
             </div>
 
             {/* ExecutionCausalityStrip — title + systems-diagram strip */}
