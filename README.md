@@ -6,11 +6,13 @@
 [![CI Quality Gates](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/ci.yml)
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-99%2F99%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
-[![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
+[![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
+[![Tests Passing](https://img.shields.io/badge/Tests-153%2F153%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
+[![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+
 
 </div>
 
@@ -157,7 +159,8 @@ floework/
 │   └── workflows/
 │       ├── ci.yml                    # Automated quality gate (99 tests across Node 20 & 22)
 │       ├── terraform-ci.yml          # IaC formatting check, validation & speculative plan
-│       └── docker-ecr.yml            # Docker Buildx, Trivy CVE scan & Amazon ECR publish
+│       ├── docker-ecr.yml            # Docker Buildx, Trivy CVE scan & Amazon ECR publish
+│       └── deploy-frontend.yml       # React SPA build, S3 asset sync & CloudFront CDN invalidation
 ├── api/                              # Fastify Modular Monolith Application
 │   ├── _lib/                         # Shared core libraries & AWS adapters
 │   │   ├── auth.ts                   # Stateless JWT auth guard with request memoization
@@ -192,7 +195,7 @@ floework/
 │   └── migrations/                   # PostgreSQL schema migrations (42 files: 000 through 040)
 ├── terraform/                        # Infrastructure as Code (HashiCorp Terraform v1.9.5)
 │   ├── environments/
-│   │   └── staging/                  # Staging composition (15 modules wired together)
+│   │   └── staging/                  # Staging composition (16 modules wired together)
 │   └── modules/
 │       ├── alb/                      # Application Load Balancer & target groups
 │       ├── auth/                     # Amazon Cognito User Pool & SPA client
@@ -202,6 +205,7 @@ floework/
 │       ├── database/                 # Amazon RDS PostgreSQL 16 Multi-AZ instance
 │       ├── dns/                      # Route 53 public zone, alias records & ACM SSL
 │       ├── email/                    # Amazon SES verified identity & sending policies
+│       ├── frontend/                 # S3 private static hosting & CloudFront CDN with OAC and SPA routing
 │       ├── networking/               # Multi-AZ VPC, subnets, route tables & NAT gateway
 │       ├── observability/            # CloudWatch metric alarms & Amazon SNS alert bus
 │       ├── queue/                    # Amazon SQS FIFO queues, DLQs & IAM policies
@@ -210,7 +214,7 @@ floework/
 │       ├── security/                 # KMS Customer Managed Key (CMK) & security groups
 │       └── storage/                  # Amazon S3 private storage bucket & CloudFront OAC
 ├── test/
-│   └── api/                          # Comprehensive API behavioral test suite (95 tests)
+│   └── api/                          # Comprehensive API behavioral test suite (112 tests)
 ├── workers/
 │   └── sqs-worker.ts                 # Resilient SQS FIFO background processing worker
 ├── Dockerfile                        # Multi-stage hardened Node 20 Alpine container
@@ -240,12 +244,14 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/saas_phase11        │ SES Email, DAG & Stripe    │ 15 tests    │ ✓ Passed     │
 │ test/api/migrations_runner   │ Checksums, Shim & Runner   │ 15 tests    │ ✓ Passed     │
 │ test/api/compute_phase15     │ ECS Fargate, Worker & CD   │ 22 tests    │ ✓ Passed     │
+│ test/api/frontend_phase16    │ S3, CloudFront OAC & SPA   │ 17 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 136 tests   │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 153 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ Terraform Staging Validation │ 15 Infrastructure Modules  │ 96 to add   │ Clean Plan   │
+│ Terraform Staging Validation │ 16 Infrastructure Modules  │ 103 to add  │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
+
 ```
 
 ---

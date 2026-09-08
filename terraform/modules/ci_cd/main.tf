@@ -245,3 +245,41 @@ resource "aws_iam_role_policy" "ecs_deploy" {
     )
   })
 }
+
+# Least-privilege IAM Policy: Frontend Static Assets S3 Sync & CloudFront Invalidation
+resource "aws_iam_role_policy" "frontend_deploy" {
+  count = var.frontend_bucket_arn != "" && var.cloudfront_distribution_arn != "" ? 1 : 0
+
+  name = "${var.project_name}-${var.environment}-frontend-deploy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "FrontendS3Deployment"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          var.frontend_bucket_arn,
+          "${var.frontend_bucket_arn}/*"
+        ]
+      },
+      {
+        Sid    = "CloudFrontCacheInvalidation"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation",
+          "cloudfront:GetInvalidation"
+        ]
+        Resource = var.cloudfront_distribution_arn
+      }
+    ]
+  })
+}
+

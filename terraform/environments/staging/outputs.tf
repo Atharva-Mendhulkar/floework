@@ -372,6 +372,31 @@ output "ecr_repository_arn" {
   value       = module.ci_cd.ecr_repository_arn
 }
 
+# ==============================================================================
+# Frontend Outputs (Phase 16 React Web App S3 Hosting & CloudFront CDN)
+# ==============================================================================
+
+output "frontend_s3_bucket_name" {
+  description = "Name of the S3 bucket hosting frontend static assets"
+  value       = module.frontend.s3_bucket_name
+}
+
+output "frontend_s3_bucket_arn" {
+  description = "ARN of the S3 bucket hosting frontend static assets"
+  value       = module.frontend.s3_bucket_arn
+}
+
+output "frontend_cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution serving frontend traffic"
+  value       = module.frontend.cloudfront_distribution_id
+}
+
+output "frontend_cloudfront_domain_name" {
+  description = "Canonical domain name of the frontend CloudFront CDN"
+  value       = module.frontend.cloudfront_domain_name
+}
+
+
 
 
 
