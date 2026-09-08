@@ -52,25 +52,6 @@ variable "enable_multi_az_nat" {
   default     = false
 }
 
-variable "supabase_url" {
-  description = "Supabase project endpoint URL"
-  type        = string
-  default     = "https://vlozimkyxyyigclfdntp.supabase.co"
-}
-
-variable "supabase_anon_key" {
-  description = "Supabase publishable anon key"
-  type        = string
-  default     = ""
-}
-
-variable "supabase_service_role_key" {
-  description = "Supabase administrative service role key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "gemini_api_key" {
   description = "Google Gemini API key for narrative synthesis"
   type        = string

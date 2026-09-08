@@ -1,4 +1,4 @@
--- supabase/migrations/030_profiles_team_visibility.sql
+-- database/migrations/030_profiles_team_visibility.sql
 
 -- Expand profile visibility so team members can see each other's basic info
 -- Required for chat (author names) and task assignees.

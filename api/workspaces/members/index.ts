@@ -1,38 +1,43 @@
-import { createClient } from '@supabase/supabase-js'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+// api/workspaces/members/index.ts
+// ==============================================================================
+// Amazon RDS PostgreSQL Native Workspace Members API
+// Lists members with joined profile details, updates member roles, and removes members.
+// ==============================================================================
 
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { validateBody, MemberUpdateSchema } from '../../_lib/validate'
 import { requireMember, requireAdmin, logAudit } from '../../_lib/auth'
 import { rateLimit } from '../../_lib/rateLimit'
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
-)
+import { query } from '../../_lib/db'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { id: workspaceId, userId } = req.query
 
-  if (!workspaceId) return res.status(400).json({ error: 'Workspace ID required' })
-
-  // 1. List Members
-  if (req.method === 'GET') {
-    if (!await requireMember(req, res, workspaceId as string)) return
-
-    const { data, error } = await supabase
-      .from('team_members')
-      .select('*, profiles(full_name, avatar_url)')
-      .eq('team_id', workspaceId as string)
-
-    if (error) return res.status(500).json({ error: error.message })
-    return res.status(200).json(data)
+  if (!workspaceId) {
+    return res.status(400).json({ error: 'Workspace ID required' })
   }
 
-  // 2. Update Member Role (Admin Only)
+  // 1. List Members (GET)
+  if (req.method === 'GET') {
+    if (!(await requireMember(req, res, workspaceId as string))) return
+
+    const membersRes = await query(
+      `SELECT tm.*, p.full_name, p.avatar_url, p.email
+       FROM team_members tm
+       LEFT JOIN profiles p ON tm.user_id = p.id
+       WHERE tm.team_id = $1
+       ORDER BY tm.created_at ASC`,
+      [workspaceId as string]
+    )
+
+    return res.status(200).json(membersRes.rows || [])
+  }
+
+  // 2. Update Member Role (PATCH - Admin Only)
   if (req.method === 'PATCH') {
     if (!rateLimit(req, res, { windowMs: 60000, max: 20 })) return
     if (!userId) return res.status(400).json({ error: 'User ID required' })
-    
+
     const adminUser = await requireAdmin(req, res, workspaceId as string)
     if (!adminUser) return
 
@@ -41,21 +46,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { role } = validatedBody
 
-    const { data, error } = await supabase
-      .from('team_members')
-      .update({ role })
-      .match({ team_id: workspaceId, user_id: userId })
-      .select()
-      .single()
+    const updateRes = await query(
+      `UPDATE team_members
+       SET role = $1
+       WHERE team_id = $2 AND user_id = $3
+       RETURNING *`,
+      [role, workspaceId as string, userId as string]
+    )
 
-    if (error) return res.status(400).json({ error: error.message })
+    const updatedMember = updateRes.rows?.[0]
+    if (!updatedMember) {
+      return res.status(404).json({ error: 'Member not found' })
+    }
 
-    await logAudit(workspaceId as string, adminUser.id, 'MEMBER_ROLE_UPDATE', 'team_members', userId as string, { role, workspaceId })
+    await logAudit(
+      workspaceId as string,
+      adminUser.id,
+      'MEMBER_ROLE_UPDATE',
+      'team_members',
+      userId as string,
+      { role, workspaceId }
+    )
 
-    return res.status(200).json(data)
+    return res.status(200).json(updatedMember)
   }
 
-  // 3. Remove Member (Admin Only)
+  // 3. Remove Member (DELETE - Admin Only)
   if (req.method === 'DELETE') {
     if (!rateLimit(req, res, { windowMs: 60000, max: 20 })) return
     if (!userId) return res.status(400).json({ error: 'User ID required' })
@@ -63,14 +79,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const adminUser = await requireAdmin(req, res, workspaceId as string)
     if (!adminUser) return
 
-    const { error } = await supabase
-      .from('team_members')
-      .delete()
-      .match({ team_id: workspaceId, user_id: userId })
+    const deleteRes = await query(
+      'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2 RETURNING user_id',
+      [workspaceId as string, userId as string]
+    )
 
-    if (error) return res.status(400).json({ error: error.message })
+    if (deleteRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Member not found' })
+    }
 
-    await logAudit(workspaceId as string, adminUser.id, 'MEMBER_REMOVE', 'team_members', userId as string, { workspaceId })
+    await logAudit(
+      workspaceId as string,
+      adminUser.id,
+      'MEMBER_REMOVE',
+      'team_members',
+      userId as string,
+      { workspaceId }
+    )
 
     return res.status(204).end()
   }

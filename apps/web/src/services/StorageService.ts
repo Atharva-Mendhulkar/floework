@@ -1,11 +1,8 @@
 // apps/web/src/services/StorageService.ts
 // ==============================================================================
-// Dual-Mode Object Storage Service
-// Direct binary upload to Amazon S3 via authenticated presigned URLs,
-// with graceful fallback to Supabase Storage.
+// Pure Amazon S3 Object Storage Service
+// Direct binary uploads to Amazon S3 via authenticated SigV4 presigned URLs.
 // ==============================================================================
-
-import { supabase } from '../lib/supabase'
 
 export interface StorageUploadResult {
   publicUrl: string
@@ -17,83 +14,57 @@ export class StorageService {
   private static apiUrl = import.meta.env.VITE_API_URL || ''
 
   /**
-   * Uploads user avatar image via S3 Presigned URL (AWS Mode) or Supabase Storage (Fallback)
+   * Uploads user avatar image directly to Amazon S3 via authenticated presigned URL
    */
   static async uploadAvatar(
     file: File,
     userId: string,
     token?: string
   ): Promise<StorageUploadResult> {
-    const isAwsStorageEnabled = import.meta.env.VITE_ENABLE_AWS_STORAGE === 'true'
-
-    // 1. AWS Mode: S3 Presigned PUT URL
-    if (isAwsStorageEnabled && token) {
-      try {
-        const presignedEndpoint = `${this.apiUrl}/api/v1/storage/presigned-url`
-        const presignedRes = await fetch(presignedEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            action: 'upload',
-            type: 'avatar',
-            filename: file.name,
-            contentType: file.type || 'image/png',
-            userId
-          })
-        })
-
-        if (presignedRes.ok) {
-          const { uploadUrl, key, publicUrl } = await presignedRes.json()
-
-          // Direct binary PUT to S3
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': file.type || 'image/png'
-            },
-            body: file
-          })
-
-          if (uploadRes.ok) {
-            return {
-              publicUrl: `${publicUrl}?t=${Date.now()}`,
-              key
-            }
-          }
-          console.warn('[StorageService] S3 direct upload failed, attempting Supabase fallback...')
-        }
-      } catch (awsErr) {
-        console.warn('[StorageService] AWS Presigned upload error, attempting Supabase fallback...', awsErr)
-      }
+    if (!token) {
+      return { publicUrl: '', error: 'Authentication token required for S3 upload' }
     }
 
-    // 2. Fallback Mode: Supabase Storage
     try {
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${userId}/avatar.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type,
-          cacheControl: '3600'
+      const presignedEndpoint = `${this.apiUrl}/api/v1/storage/presigned-url`
+      const presignedRes = await fetch(presignedEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'upload',
+          type: 'avatar',
+          filename: file.name,
+          contentType: file.type || 'image/png',
+          userId
         })
+      })
 
-      if (uploadError) {
-        console.error('[StorageService] Supabase avatar upload error:', uploadError)
-        return { publicUrl: '', error: uploadError.message }
+      if (!presignedRes.ok) {
+        const errJson = await presignedRes.json().catch(() => ({}))
+        return { publicUrl: '', error: errJson.error || 'Failed to acquire S3 upload signature' }
       }
 
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      const { uploadUrl, key, publicUrl } = await presignedRes.json()
+
+      // Direct binary PUT to Amazon S3
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type || 'image/png'
+        },
+        body: file
+      })
+
+      if (!uploadRes.ok) {
+        return { publicUrl: '', error: `S3 direct binary upload failed (${uploadRes.status})` }
+      }
 
       return {
-        publicUrl: `${urlData.publicUrl}?t=${Date.now()}`
+        publicUrl: `${publicUrl}?t=${Date.now()}`,
+        key
       }
     } catch (err: any) {
       return { publicUrl: '', error: err.message || 'Avatar upload failed' }
@@ -101,7 +72,7 @@ export class StorageService {
   }
 
   /**
-   * Uploads workspace or task attachment via S3 Presigned URL
+   * Uploads workspace or task attachment directly to Amazon S3 via authenticated presigned URL
    */
   static async uploadAttachment(
     file: File,
@@ -127,11 +98,12 @@ export class StorageService {
 
       if (!presignedRes.ok) {
         const errJson = await presignedRes.json().catch(() => ({}))
-        return { publicUrl: '', error: errJson.error || 'Failed to obtain presigned URL' }
+        return { publicUrl: '', error: errJson.error || 'Failed to obtain S3 presigned URL' }
       }
 
       const { uploadUrl, key, publicUrl } = await presignedRes.json()
 
+      // Direct binary PUT to Amazon S3
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: {

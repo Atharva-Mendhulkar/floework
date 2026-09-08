@@ -1,4 +1,4 @@
--- supabase/migrations/037_concurrency_conflicts_metadata.sql
+-- database/migrations/037_concurrency_conflicts_metadata.sql
 -- Add metadata column to concurrency_conflicts to store rich context for audit logs
 
 ALTER TABLE public.concurrency_conflicts 

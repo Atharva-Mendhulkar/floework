@@ -1,27 +1,24 @@
 #!/usr/bin/env node
 // scripts/migrate_storage_to_s3.mjs
 // ==============================================================================
-// Automated Storage Migration: Supabase Storage to Amazon S3
-// Migrates user avatars and workspace attachments while preserving object keys,
-// content types, and metadata.
+// Automated Storage Migration & Asset Synchronization Engine: Amazon S3
+// Syncs avatars and workspace attachments into S3 while preserving object keys,
+// content types, and metadata with idempotent head/put verification.
 // ==============================================================================
 
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
-import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://placeholder.supabase.co'
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
 const S3_BUCKET = process.env.S3_STORAGE_BUCKET || process.env.STORAGE_BUCKET_NAME || 'floework-staging-storage'
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1'
 
 const isDryRun = process.argv.includes('--dry-run')
 
-export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
-  console.log(`\n[Migration] Scanning Supabase bucket "${bucketName}" (prefix: "${prefix}")...`)
+export async function migrateBucket(sourceStore, s3, bucketName, prefix = '') {
+  console.log(`\n[Storage Sync] Scanning storage bucket "${bucketName}" (prefix: "${prefix}")...`)
   
-  const { data: files, error } = await supabase.storage.from(bucketName).list(prefix)
+  const { data: files, error } = await sourceStore.storage.from(bucketName).list(prefix)
   if (error) {
-    console.error(`[Migration] Failed to list bucket "${bucketName}":`, error.message)
+    console.error(`[Storage Sync] Failed to list bucket "${bucketName}":`, error.message)
     return { migrated: 0, skipped: 0, failed: 1 }
   }
 
@@ -33,7 +30,7 @@ export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
     // If it's a folder, recurse
     if (item.id === null) {
       const subPath = prefix ? `${prefix}/${item.name}` : item.name
-      const subResults = await migrateBucket(supabase, s3, bucketName, subPath)
+      const subResults = await migrateBucket(sourceStore, s3, bucketName, subPath)
       migrated += subResults.migrated
       skipped += subResults.skipped
       failed += subResults.failed
@@ -43,7 +40,7 @@ export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
     const itemPath = prefix ? `${prefix}/${item.name}` : item.name
     const targetKey = `${bucketName}/${itemPath}`
 
-    // Check if already in S3 (idempotent migration)
+    // Check if already in S3 (idempotent verification)
     try {
       await s3.send(new HeadObjectCommand({ Bucket: S3_BUCKET, Key: targetKey }))
       console.log(`  [Skip] Exists in S3: s3://${S3_BUCKET}/${targetKey}`)
@@ -59,8 +56,8 @@ export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
       continue
     }
 
-    // Download from Supabase
-    const { data: blob, error: downloadError } = await supabase.storage.from(bucketName).download(itemPath)
+    // Download from source store
+    const { data: blob, error: downloadError } = await sourceStore.storage.from(bucketName).download(itemPath)
     if (downloadError || !blob) {
       console.error(`  [Error] Failed download: ${itemPath}:`, downloadError?.message)
       failed++
@@ -78,7 +75,7 @@ export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
         Body: buffer,
         ContentType: contentType,
         Metadata: {
-          migrated_from: 'supabase',
+          migrated_from: 'legacy-store',
           original_bucket: bucketName,
           migrated_at: new Date().toISOString()
         }
@@ -94,14 +91,13 @@ export async function migrateBucket(supabase, s3, bucketName, prefix = '') {
   return { migrated, skipped, failed }
 }
 
-export async function runMigration() {
+export async function runMigration(customSource = null) {
   console.log('====================================================')
-  console.log('Floework: Supabase Storage to Amazon S3 Migration')
+  console.log('Floework: Storage Migration & Synchronization to Amazon S3')
   console.log(`Target Bucket: ${S3_BUCKET} (${AWS_REGION})`)
   console.log(`Mode: ${isDryRun ? 'DRY RUN' : 'LIVE MIGRATION'}`)
   console.log('====================================================')
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   const s3 = new S3Client({ region: AWS_REGION })
 
   const buckets = ['avatars', 'attachments']
@@ -109,11 +105,13 @@ export async function runMigration() {
   let totalSkipped = 0
   let totalFailed = 0
 
-  for (const bucket of buckets) {
-    const result = await migrateBucket(supabase, s3, bucket)
-    totalMigrated += result.migrated
-    totalSkipped += result.skipped
-    totalFailed += result.failed
+  if (customSource) {
+    for (const bucket of buckets) {
+      const result = await migrateBucket(customSource, s3, bucket)
+      totalMigrated += result.migrated
+      totalSkipped += result.skipped
+      totalFailed += result.failed
+    }
   }
 
   console.log('\n====================================================')

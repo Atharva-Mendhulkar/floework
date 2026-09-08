@@ -1,4 +1,4 @@
--- supabase/migrations/20240003_indexes.sql
+-- database/migrations/20240003_indexes.sql
 
 -- FlowBoard: primary query pattern is tasks by project + sprint
 CREATE INDEX IF NOT EXISTS idx_tasks_project_id  ON public.tasks(project_id);

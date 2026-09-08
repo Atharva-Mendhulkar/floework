@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Set mock environment variables before imports
-process.env.SUPABASE_URL = 'https://mock-supabase.test';
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-service-role-key';
 process.env.NODE_ENV = 'test';
 
 // Helper to create mock VercelRequest & VercelResponse
@@ -93,117 +90,121 @@ const mockDb = {
   concurrency_conflicts: [] as any[],
 };
 
-// Mock Supabase createClient
-vi.mock('@supabase/supabase-js', () => {
-  return {
-    createClient: () => ({
-      auth: {
-        getUser: vi.fn(async (token: string) => {
-          if (mockDb.users.has(token)) {
-            return { data: { user: mockDb.users.get(token) }, error: null };
-          }
-          return { data: { user: null }, error: { message: 'Invalid token' } };
-        }),
-      },
-      from: (table: string) => {
-        let filters: Record<string, any> = {};
-        let updatePayload: any = null;
-        let insertPayload: any = null;
-        let selectColumns: string = '*';
-        let isSingle = false;
+import { setMockQueryHandler } from '../../api/_lib/db';
+import { setMockUserResolver } from '../../api/_lib/auth';
 
-        const builder: any = {
-          select(cols = '*') {
-            selectColumns = cols;
-            return builder;
-          },
-          eq(column: string, value: any) {
-            filters[column] = value;
-            return builder;
-          },
-          order() {
-            return builder;
-          },
-          update(payload: any) {
-            updatePayload = payload;
-            return builder;
-          },
-          insert(payload: any) {
-            insertPayload = payload;
-            return builder;
-          },
-          single() {
-            isSingle = true;
-            return builder.execute();
-          },
-          then(resolve: any, reject: any) {
-            return builder.execute().then(resolve, reject);
-          },
-          execute: async () => {
-            if (insertPayload) {
-              if (table === 'concurrency_conflicts') {
-                mockDb.concurrency_conflicts.push(insertPayload);
-                return { data: insertPayload, error: null };
-              }
-              if (table === 'tasks') {
-                const newTask = { id: 'task-new', ...insertPayload, version: 1 };
-                mockDb.tasks.set(newTask.id, newTask);
-                return { data: newTask, error: null };
-              }
-            }
+setMockUserResolver(async (token: string) => {
+  if (mockDb.users.has(token)) {
+    const user = mockDb.users.get(token)!;
+    return {
+      id: user.id,
+      email: user.email,
+      role: 'authenticated',
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    };
+  }
+  return null;
+});
 
-            if (updatePayload && table === 'tasks') {
-              const taskId = filters['id'];
-              const task = mockDb.tasks.get(taskId);
-              if (!task) {
-                return { data: null, error: { message: 'Not found', code: '404' } };
-              }
-              // Check OCC version
-              if (filters['version'] !== undefined && filters['version'] !== task.version) {
-                // Version mismatch -> PGRST116 (0 rows returned)
-                return { data: null, error: { message: 'Version mismatch', code: 'PGRST116' } };
-              }
-              const updated = { ...task, ...updatePayload, version: task.version + 1 };
-              mockDb.tasks.set(taskId, updated);
-              return { data: updated, error: null };
-            }
+setMockQueryHandler(async (sql: string, params: any[] = []) => {
+  const lower = sql.toLowerCase();
 
-            if (table === 'tasks') {
-              if (filters['id']) {
-                const task = mockDb.tasks.get(filters['id']);
-                if (!task) return { data: null, error: { message: 'Not found', code: 'PGRST116' } };
-                return { data: task, error: null };
-              }
-              if (filters['project_id']) {
-                const tasks = Array.from(mockDb.tasks.values()).filter(t => t.project_id === filters['project_id']);
-                return { data: tasks, error: null };
-              }
-            }
+  // 1. Projects lookup: SELECT team_id FROM projects WHERE id = $1
+  if (lower.includes('from projects') || lower.includes('from public.projects')) {
+    const id = params[0];
+    const p = mockDb.projects.get(id);
+    if (!p) return { rows: [], rowCount: 0 };
+    return { rows: [p], rowCount: 1 };
+  }
 
-            if (table === 'projects') {
-              const p = mockDb.projects.get(filters['id']);
-              if (!p) return { data: null, error: { message: 'Project not found' } };
-              return { data: p, error: null };
-            }
+  // 2. Team members lookup: SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2
+  if (lower.includes('from team_members') || lower.includes('from public.team_members')) {
+    const [teamId, userId] = params;
+    const key = `${teamId}:${userId}`;
+    const m = mockDb.team_members.get(key);
+    if (!m) return { rows: [], rowCount: 0 };
+    return { rows: [m], rowCount: 1 };
+  }
 
-            if (table === 'team_members') {
-              const key = `${filters['team_id']}:${filters['user_id']}`;
-              const m = mockDb.team_members.get(key);
-              if (!m) return { data: null, error: { message: 'Member not found' } };
-              if (filters['role'] && m.role !== filters['role']) {
-                return { data: null, error: { message: 'Role mismatch' } };
-              }
-              return { data: m, error: null };
-            }
+  // 3. Concurrency conflicts insert
+  if (lower.includes('insert into concurrency_conflicts') || lower.includes('insert into public.concurrency_conflicts')) {
+    const conflict = {
+      entity_type: params[0],
+      entity_id: params[1],
+      team_id: params[2],
+      client_version: params[3],
+      server_version: params[4],
+      user_id: params[5],
+      metadata: params[6],
+    };
+    mockDb.concurrency_conflicts.push(conflict);
+    return { rows: [conflict], rowCount: 1 };
+  }
 
-            return { data: [], error: null };
-          },
-        };
+  // 4. Tasks insert
+  if (lower.includes('insert into tasks') || lower.includes('insert into public.tasks')) {
+    const newTask = {
+      id: 'task-new',
+      title: params[0],
+      description: params[1],
+      project_id: params[2],
+      status: params[3] || 'backlog',
+      priority: params[4] || 'M',
+      due_date: params[5],
+      assignee_id: params[6],
+      sprint_id: params[7],
+      version: 1,
+    };
+    mockDb.tasks.set(newTask.id, newTask);
+    return { rows: [newTask], rowCount: 1 };
+  }
 
-        return builder;
-      },
-    }),
-  };
+  // 5. Tasks update with OCC
+  if (lower.includes('update tasks') || lower.includes('update public.tasks')) {
+    const id = params.find(p => typeof p === 'string' && mockDb.tasks.has(p));
+    const task = id ? mockDb.tasks.get(id) : null;
+    if (!task) return { rows: [], rowCount: 0 };
+
+    if (lower.includes('and version =')) {
+      const clientVersion = params[params.length - 1];
+      if (typeof clientVersion === 'number' && task.version !== clientVersion) {
+        return { rows: [], rowCount: 0 };
+      }
+    }
+
+    task.version = task.version + 1;
+    for (const val of params) {
+      if (typeof val === 'string' && ['in_progress', 'review', 'done', 'backlog'].includes(val)) {
+        (task as any).status = val;
+      } else if (typeof val === 'string' && val !== id && val.length > 0 && !val.includes('-') && !val.includes(' ')) {
+        (task as any).title = val;
+      } else if (typeof val === 'string' && val === 'Legitimate Update') {
+        (task as any).title = val;
+      }
+    }
+    mockDb.tasks.set(task.id, task);
+    return { rows: [task], rowCount: 1 };
+  }
+
+  // 6. Tasks select
+  if (lower.includes('from tasks') || lower.includes('from public.tasks')) {
+    if (lower.includes('where id = $1')) {
+      const id = params[0];
+      const task = mockDb.tasks.get(id);
+      if (!task) return { rows: [], rowCount: 0 };
+      return { rows: [task], rowCount: 1 };
+    }
+    if (lower.includes('project_id = $1')) {
+      const projectId = params[0];
+      const tasks = Array.from(mockDb.tasks.values()).filter(t => t.project_id === projectId);
+      return { rows: tasks, rowCount: tasks.length };
+    }
+  }
+
+  return { rows: [], rowCount: 0 };
 });
 
 // Import the actual handlers under test

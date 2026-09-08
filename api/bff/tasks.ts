@@ -1,100 +1,89 @@
+// api/bff/tasks.ts
+// ==============================================================================
+// Backend-For-Frontend (BFF) Tasks Aggregation Endpoint
+// Queries Amazon RDS PostgreSQL, orchestrates task records with profile details,
+// focus metrics, and caller-specific starred indicators.
+// ==============================================================================
+
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@supabase/supabase-js'
 import { getUser } from '../_lib/auth'
 import { trace } from '@opentelemetry/api'
-
-// We configure a read replica for GET requests
-const SUPABASE_READ_REPLICA_URL = process.env.SUPABASE_READ_REPLICA_URL || process.env.SUPABASE_URL!
-
-function getReadReplicaClient(token: string) {
-  return createClient(
-    SUPABASE_READ_REPLICA_URL,
-    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-}
-
-function getWriterClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { query } from '../_lib/db'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const tracer = trace.getTracer('floework-bff')
-  
+
   if (req.method === 'GET') {
     return tracer.startActiveSpan('BFF GET /tasks', async (span) => {
       try {
         const { projectId, sprintId } = req.query
-        
-        const authHeader = req.headers.authorization
-        if (!authHeader) {
-            res.status(401).json({ error: 'Unauthorized' })
-            return span.end()
-        }
-        const token = authHeader.replace('Bearer ', '')
 
-        // Get user for starred_tasks lookup
         const user = await getUser(req)
         if (!user) {
-            res.status(401).json({ error: 'Unauthorized' })
-            return span.end()
-        }
-
-        // Use Read Replica for GET with user token (RLS handles security)
-        const supabase = getReadReplicaClient(token)
-
-        let q = supabase
-          .from('tasks')
-          .select('*, profiles(full_name, avatar_url), focus_sessions(count)')
-
-        if (projectId && projectId !== 'fallback-id') {
-            q = q.eq('project_id', projectId as string)
-        }
-
-        if (sprintId !== undefined && sprintId !== '') {
-            if (sprintId === 'null' || sprintId === null) {
-                q = q.is('sprint_id', null);
-            } else {
-                q = q.eq('sprint_id', sprintId as string);
-            }
-        }
-
-        const { data, error } = await q.order('created_at', { ascending: false })
-
-        if (error) {
-          res.status(500).json({ error: error.message })
+          res.status(401).json({ error: 'Unauthorized' })
           return span.end()
         }
 
-        // Orchestrate second call for starred tasks
-        const { data: starredData } = await supabase
-            .from('starred_tasks')
-            .select('task_id')
-            .eq('user_id', user.id);
-        
-        const starredIds = new Set(starredData?.map(s => s.task_id) || []);
+        const conditions: string[] = []
+        const values: any[] = []
+        let paramIdx = 1
 
-        const enrichedData = (data || []).map(t => ({
-            ...t,
-            is_starred: starredIds.has(t.id)
+        if (projectId && projectId !== 'fallback-id') {
+          conditions.push(`t.project_id = $${paramIdx++}`)
+          values.push(projectId)
+        }
+
+        if (sprintId !== undefined && sprintId !== '') {
+          if (sprintId === 'null' || sprintId === null) {
+            conditions.push('t.sprint_id IS NULL')
+          } else {
+            conditions.push(`t.sprint_id = $${paramIdx++}`)
+            values.push(sprintId)
+          }
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+        const sql = `
+          SELECT t.*,
+            p.full_name AS assignee_name,
+            p.avatar_url AS assignee_avatar_url,
+            COALESCE((SELECT COUNT(*)::int FROM focus_sessions fs WHERE fs.task_id = t.id), 0) AS focus_count
+          FROM tasks t
+          LEFT JOIN profiles p ON t.assignee_id = p.id
+          ${whereClause}
+          ORDER BY t.created_at DESC
+        `
+
+        const tasksRes = await query(sql, values)
+        const tasks = tasksRes.rows || []
+
+        // Query user's starred tasks for fast in-memory decoration
+        let starredIds = new Set<string>()
+        try {
+          const starredRes = await query(
+            'SELECT task_id FROM starred_tasks WHERE user_id = $1',
+            [user.id]
+          )
+          starredIds = new Set((starredRes.rows || []).map((s: any) => s.task_id))
+        } catch {
+          // starred_tasks table optional
+        }
+
+        const enriched = tasks.map((t: any) => ({
+          ...t,
+          is_starred: starredIds.has(t.id)
         }))
 
-        res.status(200).json(enrichedData)
+        res.status(200).json(enriched)
         span.end()
-      } catch (e) {
-        span.recordException(e as Error)
+      } catch (e: any) {
+        span.recordException(e)
         span.end()
         res.status(500).json({ error: 'Internal Server Error' })
       }
     })
   }
 
-  // Forward POST, PATCH, DELETE to writer client...
-  // In a full implementation we would duplicate/proxy the logic from api/tasks/index.ts
-  // or simply have api/tasks/index.ts BE the writer and this BFF calls it.
-  
   res.status(405).json({ error: 'Method not allowed' })
 }

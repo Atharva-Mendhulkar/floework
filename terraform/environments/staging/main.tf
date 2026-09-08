@@ -100,9 +100,6 @@ module "secrets" {
   project_name              = var.project_name
   environment               = var.environment
   kms_key_id                = module.security.kms_key_id
-  supabase_url              = var.supabase_url
-  supabase_anon_key         = var.supabase_anon_key
-  supabase_service_role_key = var.supabase_service_role_key
   gemini_api_key            = var.gemini_api_key
   jwt_secret                = var.jwt_secret
   upstash_redis_rest_url    = var.upstash_redis_rest_url

@@ -16,9 +16,6 @@ private_data_subnet_cidrs = ["10.0.20.0/24", "10.0.21.0/24"]
 enable_multi_az_nat       = false # false for single NAT (cost optimization for staging)
 
 # Application Secrets (Stored in SSM Parameter Store with KMS encryption)
-supabase_url              = "https://vlozimkyxyyigclfdntp.supabase.co"
-supabase_anon_key         = "sb_publishable_..."
-supabase_service_role_key = "sb_secret_..."
 gemini_api_key            = "AIzaSy..."
 jwt_secret                = "your-256-bit-secret-here"
 upstash_redis_rest_url    = "https://your-redis.upstash.io"

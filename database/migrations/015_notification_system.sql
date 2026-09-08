@@ -78,5 +78,4 @@ CREATE TRIGGER tr_new_message_alert
     AFTER INSERT ON public.messages
     FOR EACH ROW EXECUTE FUNCTION public.log_workspace_activity();
 
--- 6. Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.alerts;
+-- 6. Realtime broadcast handled via AWS API Gateway WebSockets & Redis PubSub

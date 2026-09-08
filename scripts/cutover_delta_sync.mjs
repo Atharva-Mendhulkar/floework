@@ -2,7 +2,7 @@
 // scripts/cutover_delta_sync.mjs
 // ==============================================================================
 // Floework Production Cutover & Delta Synchronization Engine
-// Replays database deltas from source (Supabase) to destination (RDS PostgreSQL)
+// Replays database deltas between staging and production PostgreSQL instances
 // with zero data loss, transactional UPSERT semantics, and reverse replication support.
 // ==============================================================================
 

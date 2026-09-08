@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useGetMessagesQuery, usePostMessageMutation, useGetProjectsQuery, api } from "@/store/api";
-import { supabase } from "@/lib/supabase";
+import { AwsWebSocketClient } from "@/services/AwsWebSocketClient";
+import { CognitoAuthService } from "@/services/CognitoAuthService";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
 import { Send, ChevronDown, User } from "lucide-react";
@@ -53,7 +54,7 @@ export default function MessagesPage() {
 
     const { data: response, isLoading } = useGetMessagesQuery(projectId!, { skip: !projectId });
     const [postMessage, { isLoading: isPosting }] = usePostMessageMutation();
-    const isConnected = true; // Supabase handles connection state internally
+    const isConnected = true;
     const dispatch = useDispatch<AppDispatch>();
 
     const messages = response?.data || [];
@@ -65,49 +66,26 @@ export default function MessagesPage() {
     useEffect(() => {
         if (!projectId) return;
 
-        // Subscribe to New Messages via Supabase Realtime
-        const channel = supabase
-            .channel(`project-chat-${projectId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
-                    filter: `project_id=eq.${projectId}`
-                },
-                async (payload) => {
-                    // Fetch profile info for the new message author
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('full_name, avatar_url')
-                        .eq('id', payload.new.user_id)
-                        .single();
+        const wsUrl = import.meta.env.VITE_WS_URL || 'wss://realtime.floework.dev';
+        const token = CognitoAuthService.getToken() || '';
+        const client = new AwsWebSocketClient(wsUrl, token);
+        client.connect();
 
-                    const enrichedMessage = {
-                        id: payload.new.id,
-                        content: payload.new.content,
-                        createdAt: payload.new.created_at,
-                        author: {
-                            id: payload.new.user_id,
-                            name: profile?.full_name || 'Unknown',
-                            avatarUrl: profile?.avatar_url
+        const unsubscribe = client.subscribe(`project-chat-${projectId}`, (payload: any) => {
+            if (payload?.id && payload?.content) {
+                dispatch(
+                    api.util.updateQueryData("getMessages", projectId, (draft) => {
+                        if (!draft.data.find((m: any) => m.id === payload.id)) {
+                            draft.data.push(payload);
                         }
-                    };
-
-                    dispatch(
-                        api.util.updateQueryData("getMessages", projectId, (draft) => {
-                            if (!draft.data.find((m: any) => m.id === enrichedMessage.id)) {
-                                draft.data.push(enrichedMessage);
-                            }
-                        })
-                    );
-                }
-            )
-            .subscribe();
+                    })
+                );
+            }
+        });
 
         return () => {
-            supabase.removeChannel(channel);
+            unsubscribe();
+            client.disconnect();
         };
     }, [dispatch, projectId]);
 

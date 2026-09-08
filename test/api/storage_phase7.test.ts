@@ -31,38 +31,26 @@ mockMemberships.set('ws-team-alpha', new Set(['usr-alice', 'usr-admin']))
 // ws-team-beta has usr-bob
 mockMemberships.set('ws-team-beta', new Set(['usr-bob']))
 
-// Mock Supabase Admin for membership queries
-vi.mock('@supabase/supabase-js', () => {
-  return {
-    createClient: () => ({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null })
-      },
-      from: (table: string) => {
-        let teamId: string | null = null
-        let userId: string | null = null
+import { setMockQueryHandler } from '../../api/_lib/db'
 
-        const builder: any = {
-          select: () => builder,
-          eq: (col: string, val: any) => {
-            if (col === 'team_id') teamId = val
-            if (col === 'user_id') userId = val
-            return builder
-          },
-          single: async () => {
-            if (table === 'team_members') {
-              if (teamId && userId && mockMemberships.get(teamId)?.has(userId)) {
-                return { data: { role: 'member' }, error: null }
-              }
-              return { data: null, error: { message: 'Not a member' } }
-            }
-            return { data: null, error: { message: 'Not found' } }
-          }
+beforeEach(() => {
+  setMockQueryHandler(async (sql: string, params?: any[]) => {
+    if (sql.includes('team_members')) {
+      const teamId = params?.[0]
+      const userId = params?.[1]
+      if (teamId && userId && mockMemberships.get(teamId)?.has(userId)) {
+        return {
+          rows: [{ team_id: teamId, user_id: userId, role: 'member', created_at: new Date().toISOString() }],
+          rowCount: 1,
+          command: 'SELECT',
+          oid: 0,
+          fields: []
         }
-        return builder
       }
-    })
-  }
+      return { rows: [], rowCount: 0, command: 'SELECT', oid: 0, fields: [] }
+    }
+    return { rows: [], rowCount: 0, command: 'SELECT', oid: 0, fields: [] }
+  })
 })
 
 // Import handler after mocks
@@ -299,8 +287,8 @@ describe('Phase 7: Object Storage Migration & Presigned URL Engine', () => {
   })
 
   describe('3. Automated Storage Migration Engine (scripts/migrate_storage_to_s3.mjs)', () => {
-    it('scans Supabase storage bucket, skips existing objects, and migrates missing files to S3', async () => {
-      const mockSupabaseStorage = {
+    it('scans storage bucket, skips existing objects, and migrates missing files to S3', async () => {
+      const mockSourceStorage = {
         storage: {
           from: () => ({
             list: async () => ({
@@ -340,7 +328,7 @@ describe('Phase 7: Object Storage Migration & Presigned URL Engine', () => {
       }
 
       const { migrateBucket } = await import('../../scripts/migrate_storage_to_s3.mjs')
-      const result = await migrateBucket(mockSupabaseStorage as any, mockS3 as any, 'avatars')
+      const result = await migrateBucket(mockSourceStorage as any, mockS3 as any, 'avatars')
 
       expect(result.migrated).toBe(1)
       expect(result.skipped).toBe(1)

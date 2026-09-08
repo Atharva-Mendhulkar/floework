@@ -3,7 +3,7 @@
 # Configuration
 API_URL="https://floework.vercel.app/api/tasks"
 PROJECT_ID="d5b480c4-ce88-4a96-aeae-7386b436a8ac"
-AUTH_TOKEN=$(grep NEXT_PUBLIC_SUPABASE_ANON_KEY .env.local | cut -d'=' -f2)
+AUTH_TOKEN=${AUTH_TOKEN:-$(grep -s COGNITO_ID_TOKEN .env.local | cut -d'=' -f2 || echo "test-auth-token")}
 
 echo "--- Scenario A.1: Task Status Update Conflict ---"
 echo "Injecting 2s delay via header..."

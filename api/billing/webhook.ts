@@ -1,18 +1,14 @@
 // api/billing/webhook.ts
 // ==============================================================================
 // Stripe Billing & Subscription Webhook Handler
-// Manages subscription tier synchronizations, billing audits, and plan transitions.
+// Manages subscription tier synchronizations, billing audits, and plan transitions
+// backed by Amazon RDS PostgreSQL.
 // ==============================================================================
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { logger } from '../_lib/logger'
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
-)
+import { query } from '../_lib/db'
 
 export interface StripeEvent {
   id: string
@@ -31,7 +27,6 @@ export function verifyStripeSignature(
   secret?: string
 ): boolean {
   if (!secret) {
-    // If webhook secret is not configured (e.g. in test), pass with warning
     return true
   }
 
@@ -97,18 +92,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const teamId = obj.metadata?.team_id
-        const status = obj.status // active, past_due, canceled
+        const status = obj.status
         const planTier = obj.items?.data?.[0]?.price?.lookup_key || obj.metadata?.plan_tier || 'pro'
 
         if (teamId) {
-          await supabase
-            .from('teams')
-            .update({
-              subscription_status: status,
-              subscription_tier: planTier,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', teamId)
+          await query(
+            `UPDATE teams
+             SET subscription_status = $1,
+                 subscription_tier = $2,
+                 updated_at = NOW()
+             WHERE id = $3`,
+            [status, planTier, teamId]
+          )
         }
         break
       }
@@ -116,14 +111,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'customer.subscription.deleted': {
         const teamId = obj.metadata?.team_id
         if (teamId) {
-          await supabase
-            .from('teams')
-            .update({
-              subscription_status: 'canceled',
-              subscription_tier: 'free',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', teamId)
+          await query(
+            `UPDATE teams
+             SET subscription_status = 'canceled',
+                 subscription_tier = 'free',
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [teamId]
+          )
         }
         break
       }

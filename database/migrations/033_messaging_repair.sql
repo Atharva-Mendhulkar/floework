@@ -1,4 +1,4 @@
--- supabase/migrations/033_messaging_repair.sql
+-- database/migrations/033_messaging_repair.sql
 
 -- 1. Explicitly name the foreign key so PostgREST can resolve the 'author' alias
 ALTER TABLE public.messages 

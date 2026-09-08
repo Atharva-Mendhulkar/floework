@@ -1,80 +1,55 @@
+// apps/web/src/hooks/usePresence.ts
+// ==============================================================================
+// AWS Native Presence Tracking Hook
+// Communicates via Amazon API Gateway WebSockets to broadcast user availability
+// and focus session status with real-time peer aggregation.
+// ==============================================================================
+
 import { useEffect, useState, useRef } from 'react'
-import { supabase } from '../lib/supabase'
 import { AwsWebSocketClient } from '../services/AwsWebSocketClient'
+import { CognitoAuthService } from '../services/CognitoAuthService'
 
 type PresenceState = Record<string, { userId: string; status: 'in_focus' | 'available'; taskId?: string }[]>
 
 export function usePresence(teamId: string, currentUserId: string) {
   const [presenceState, setPresenceState] = useState<PresenceState>({})
-  const [channel, setChannel] = useState<any>(null)
   const awsClientRef = useRef<AwsWebSocketClient | null>(null)
 
-  const isAwsEnabled = import.meta.env.VITE_ENABLE_AWS_WEBSOCKET === 'true' && !!import.meta.env.VITE_WS_URL
-
   useEffect(() => {
-    // Mode A: AWS WebSocket Realtime
-    if (isAwsEnabled) {
-      const wsUrl = import.meta.env.VITE_WS_URL as string
-      const token = localStorage.getItem('auth_token') || ''
-      const client = new AwsWebSocketClient(wsUrl, token)
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://realtime.floework.dev'
+    const token = CognitoAuthService.getToken() || ''
+    const client = new AwsWebSocketClient(wsUrl, token)
 
-      client.connect()
-      client.trackPresence(teamId, 'available')
+    client.connect()
+    client.trackPresence(teamId, 'available')
 
-      const unsubscribe = client.subscribe('presence', (data: any) => {
-        if (data?.userId) {
-          setPresenceState((prev) => ({
-            ...prev,
-            [data.userId]: [{ userId: data.userId, status: data.status, taskId: data.taskId }]
-          }))
-        }
-      })
-
-      awsClientRef.current = client
-
-      return () => {
-        unsubscribe()
-        client.disconnect()
-        awsClientRef.current = null
+    const unsubscribe = client.subscribe('presence', (data: any) => {
+      if (data?.userId) {
+        setPresenceState((prev) => ({
+          ...prev,
+          [data.userId]: [{ userId: data.userId, status: data.status, taskId: data.taskId }]
+        }))
       }
-    }
-
-    // Mode B: Supabase Realtime Fallback
-    const newChannel = supabase.channel(`presence:team:${teamId}`, {
-      config: { presence: { key: currentUserId } }
     })
 
-    newChannel
-      .on('presence', { event: 'sync' }, () => {
-        setPresenceState(newChannel.presenceState<{ status: 'in_focus' | 'available'; taskId?: string }>())
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await newChannel.track({ userId: currentUserId, status: 'available' })
-        }
-      })
-
-    setChannel(newChannel)
+    awsClientRef.current = client
 
     return () => {
-      supabase.removeChannel(newChannel)
+      unsubscribe()
+      client.disconnect()
+      awsClientRef.current = null
     }
-  }, [teamId, currentUserId, isAwsEnabled])
+  }, [teamId, currentUserId])
 
-  // Call this when a focus session starts
   const setInFocus = (taskId: string) => {
-    if (isAwsEnabled && awsClientRef.current) {
+    if (awsClientRef.current) {
       awsClientRef.current.trackPresence(teamId, 'in_focus', taskId)
-    } else if (channel) {
-      channel.track({ userId: currentUserId, status: 'in_focus', taskId })
     }
   }
 
   const setAvailable = () => {
-    if (isAwsEnabled && awsClientRef.current) {
+    if (awsClientRef.current) {
       awsClientRef.current.trackPresence(teamId, 'available')
-    } else if (channel) {
-      channel.track({ userId: currentUserId, status: 'available' })
     }
   }
 

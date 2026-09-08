@@ -2,7 +2,7 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
--- Users (mirrors Supabase Auth, extended with profile data)
+-- Users (mirrors identity auth, extended with profile data)
 create table public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   full_name   text,

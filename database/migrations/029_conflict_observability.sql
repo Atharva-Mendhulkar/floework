@@ -1,4 +1,4 @@
--- supabase/migrations/029_conflict_observability.sql
+-- database/migrations/029_conflict_observability.sql
 
 -- Create a view for aggregated conflict signals
 CREATE OR REPLACE VIEW public.conflict_stats AS

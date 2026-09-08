@@ -6,9 +6,8 @@
 // ==============================================================================
 
 import crypto from 'crypto'
-import type { User } from '@supabase/supabase-js'
 
-export interface VerifiedUser extends User {
+export interface VerifiedUser {
   id: string
   email?: string
   workspace_id?: string
@@ -171,7 +170,7 @@ export async function verifyToken(token: string): Promise<VerifiedUser | null> {
 
   // Path B: HS256 (JWT_SECRET)
   if (!isValidSignature && header.alg === 'HS256') {
-    const secret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET
+    const secret = process.env.JWT_SECRET
     if (secret) {
       isValidSignature = verifyHS256(signingInput, signature, secret)
     }

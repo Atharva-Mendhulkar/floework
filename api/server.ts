@@ -110,7 +110,7 @@ async function dispatchRoute(
 
   // Deep Readiness Probe (Container startup & downstream dependencies)
   if (pathname === '/health/ready') {
-    const isDbConfigured = Boolean(process.env.DATABASE_URL || process.env.SUPABASE_URL)
+    const isDbConfigured = Boolean(process.env.DATABASE_URL || process.env.PGHOST)
     const isQueueConfigured = Boolean(process.env.FOCUS_COMPLETION_QUEUE_URL || process.env.AWS_REGION)
 
     const ready = isDbConfigured && isQueueConfigured

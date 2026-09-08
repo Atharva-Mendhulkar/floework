@@ -1,4 +1,4 @@
--- supabase/migrations/20240002_storage_rls.sql
+-- database/migrations/20240002_storage_rls.sql
 -- Users can only upload/update/delete files inside their own UID folder.
 -- Public read is allowed so avatars are visible to team members.
 

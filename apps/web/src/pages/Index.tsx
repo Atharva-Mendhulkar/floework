@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useAppSelector } from "@/store/hooks";
-import { supabase } from "@/lib/supabase";
+import { AwsWebSocketClient } from "@/services/AwsWebSocketClient";
+import { CognitoAuthService } from "@/services/CognitoAuthService";
 import { api } from "@/store/api";
 import SidebarNavigation from "@/components/SidebarNavigation";
 import TopHeader from "@/components/TopHeader";
@@ -60,34 +61,23 @@ const Index = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // 1. Subscribe to Focus Session changes (Insert/Update/Delete)
-    const focusChannel = supabase
-      .channel('dashboard-focus-sync')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'focus_sessions' },
-        () => {
-          // Trigger a re-fetch of all focus-related data
-          dispatch(api.util.invalidateTags(['FocusSession']));
-        }
-      )
-      .subscribe();
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://realtime.floework.dev';
+    const token = CognitoAuthService.getToken() || '';
+    const client = new AwsWebSocketClient(wsUrl, token);
+    client.connect();
 
-    // 2. Subscribe to Task changes (for "Tasks Done" stat)
-    const taskChannel = supabase
-      .channel('dashboard-task-sync')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
-        () => {
-          dispatch(api.util.invalidateTags(['Task']));
-        }
-      )
-      .subscribe();
+    const unsubFocus = client.subscribe('focus_sessions', () => {
+      dispatch(api.util.invalidateTags(['FocusSession']));
+    });
+
+    const unsubTasks = client.subscribe('tasks', () => {
+      dispatch(api.util.invalidateTags(['Task']));
+    });
 
     return () => {
-      supabase.removeChannel(focusChannel);
-      supabase.removeChannel(taskChannel);
+      unsubFocus();
+      unsubTasks();
+      client.disconnect();
     };
   }, [dispatch]);
 

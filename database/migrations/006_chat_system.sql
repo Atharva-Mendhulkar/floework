@@ -36,9 +36,7 @@ CREATE POLICY "Users can send messages to their projects" ON public.messages
         )
     );
 
--- 4. Enable Realtime
--- Add messages to the realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+-- 4. Realtime broadcast handled via AWS API Gateway WebSockets & Redis PubSub
 
 -- OPTIONAL: Index for performance
 CREATE INDEX IF NOT EXISTS idx_messages_project_id ON public.messages(project_id);
