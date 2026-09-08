@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "spectrum-ui": {
+      "command": "/usr/lib/chatgpt/resources/cua_node/bin/npx",
+      "args": ["-y", "@spectrumui/mcp"],
+      "env": {
+        "PATH": "/usr/lib/chatgpt/resources/cua_node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    }
+  },
+  "servers": {
+    "spectrum-ui": {
+      "type": "stdio",
+      "command": "/usr/lib/chatgpt/resources/cua_node/bin/npx",
+      "args": ["-y", "@spectrumui/mcp"],
+      "env": {
+        "PATH": "/usr/lib/chatgpt/resources/cua_node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    }
+  }
+}
