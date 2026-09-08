@@ -248,3 +248,27 @@ output "ecr_repository_url" {
   description = "Amazon ECR repository URL for production API container images"
   value       = module.ci_cd.ecr_repository_url
 }
+
+# ------------------------------------------------------------------------------
+# Compliance & Governance Outputs (AWS CloudTrail & AWS Config)
+# ------------------------------------------------------------------------------
+
+output "compliance_audit_bucket_id" {
+  description = "Name of the dedicated S3 compliance audit bucket"
+  value       = module.compliance.audit_bucket_id
+}
+
+output "compliance_cloudtrail_arn" {
+  description = "ARN of the production multi-region CloudTrail"
+  value       = module.compliance.cloudtrail_arn
+}
+
+output "compliance_config_recorder_id" {
+  description = "ID of the AWS Config configuration recorder"
+  value       = module.compliance.config_recorder_id
+}
+
+output "compliance_config_rules" {
+  description = "List of active AWS Config continuous compliance rules"
+  value       = module.compliance.config_rules
+}

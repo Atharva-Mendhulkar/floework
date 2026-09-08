@@ -344,3 +344,18 @@ module "ci_cd" {
   cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
   tags                        = var.tags
 }
+
+# ==============================================================================
+# Module: Compliance (AWS CloudTrail, S3 Audit Bucket, AWS Config Evaluation)
+# ==============================================================================
+
+module "compliance" {
+  source = "../../modules/compliance"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  kms_key_arn       = module.security.kms_key_arn
+  enable_cloudtrail = var.enable_compliance_logging
+  enable_config     = var.enable_config_evaluation
+  tags              = var.tags
+}

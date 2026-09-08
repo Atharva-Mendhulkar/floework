@@ -42,6 +42,8 @@
     "cutover:dry-run": "node scripts/production_cutover.mjs --dry-run",
     "dr:test": "node scripts/dr_backup_restore.mjs",
     "dr:dry-run": "node scripts/dr_backup_restore.mjs --dry-run",
+    "compliance:audit": "node scripts/security_compliance_audit.mjs",
+    "compliance:dry-run": "node scripts/security_compliance_audit.mjs --dry-run",
     "migrate:s3": "node scripts/migrate_storage_to_s3.mjs",
     "migrate:db": "node scripts/run_migrations.mjs",
     "migrate:status": "node scripts/run_migrations.mjs --status",

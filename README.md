@@ -7,7 +7,7 @@
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
 [![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-187%2F187%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
+[![Tests Passing](https://img.shields.io/badge/Tests-204%2F204%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
 [![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
@@ -188,8 +188,10 @@ floework/
 │       └── src/store/                # Redux state & API client layer
 ├── docs/
 │   ├── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
-│   └── DISASTER_RECOVERY_RUNBOOK.md  # Multi-AZ failover, PITR restoration & cross-region DR
+│   ├── DISASTER_RECOVERY_RUNBOOK.md  # Multi-AZ failover, PITR restoration & cross-region DR
+│   └── SECURITY_AND_COMPLIANCE.md    # CIS Benchmark, SOC 2 Type II controls & audit policies
 ├── scripts/
+│   ├── security_compliance_audit.mjs # Automated CIS Benchmark v3.0 audit engine
 │   ├── dr_backup_restore.mjs         # Automated disaster recovery validation & PITR engine
 │   ├── production_cutover.mjs        # 6-stage production cutover orchestrator & rollback
 │   ├── run_migrations.mjs            # Automated transactional database migration runner
@@ -202,12 +204,13 @@ floework/
 ├── terraform/                        # Infrastructure as Code (HashiCorp Terraform v1.9.5)
 │   ├── environments/
 │   │   ├── staging/                  # Staging composition (16 modules wired together)
-│   │   └── production/               # Production HA composition (17 modules, multi-AZ, WAF v2)
+│   │   └── production/               # Production HA composition (18 modules, multi-AZ, WAF v2, compliance)
 │   └── modules/
 │       ├── alb/                      # Application Load Balancer & target groups
 │       ├── auth/                     # Amazon Cognito User Pool & SPA client
 │       ├── cache/                    # Amazon ElastiCache Redis replication group
 │       ├── ci_cd/                    # GitHub Actions OIDC provider, IAM deployment roles & ECR
+│       ├── compliance/               # AWS CloudTrail, S3 compliance audit bucket & AWS Config
 │       ├── compute/                  # ECS Fargate cluster, API & SQS worker services, migration task & auto-scaling
 │       ├── database/                 # Amazon RDS PostgreSQL 16 Multi-AZ instance
 │       ├── dns/                      # Route 53 public zone, alias records & ACM SSL
@@ -255,13 +258,15 @@ Every module, endpoint, and architectural invariant is verified by automated tes
 │ test/api/frontend_phase16    │ S3, CloudFront OAC & SPA   │ 17 tests    │ ✓ Passed     │
 │ test/api/cutover_phase17     │ Live Verification & DNS    │ 18 tests    │ ✓ Passed     │
 │ test/api/production_phase18  │ WAF v2, Prod HA & DR       │ 16 tests    │ ✓ Passed     │
+│ test/api/compliance_phase19  │ CIS Benchmark & CloudTrail │ 17 tests    │ ✓ Passed     │
 │ apps/web (Frontend Tests)    │ React Components & Hooks   │ 4 tests     │ ✓ Passed     │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
-│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 187 tests   │ 100% Passed  │
+│ TOTAL AUTOMATED TESTS        │ Full Monorepo Coverage     │ 204 tests   │ 100% Passed  │
 ├──────────────────────────────┼────────────────────────────┼─────────────┼──────────────┤
 │ Terraform Staging Validation │ 16 Infrastructure Modules  │ 103 to add  │ Clean Plan   │
-│ Terraform Production Valid.  │ 17 Infrastructure Modules  │ 110 to add  │ Clean Plan   │
+│ Terraform Production Valid.  │ 18 Infrastructure Modules  │ 122 to add  │ Clean Plan   │
 └──────────────────────────────┴────────────────────────────┴─────────────┴──────────────┘
+
 
 ```
 
@@ -334,6 +339,8 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 | `npm run cutover:dry-run` | Rehearse production cutover sequence in simulated dry-run mode |
 | `npm run dr:test` | Run automated disaster recovery readiness and SLA compliance audit |
 | `npm run dr:dry-run` | Rehearse disaster recovery evaluation in simulated dry-run mode |
+| `npm run compliance:audit` | Run automated CIS AWS Foundations Benchmark compliance audit |
+| `npm run compliance:dry-run` | Rehearse security compliance evaluation in simulated dry-run mode |
 | `npm run migrate:db` | Execute pending PostgreSQL migrations with transactional tracking |
 | `npm run migrate:status` | Inspect applied vs pending migration status across all 42 migrations |
 | `npm run migrate:dry-run` | Preview pending migrations without applying changes |
@@ -364,7 +371,7 @@ terraform -chdir=terraform/environments/staging plan -no-color
 
 ---
 
-## Architectural Roadmap (All 12 Phases Completed)
+## Architectural Roadmap (All 19 Phases Completed)
 
 - [x] **Phase 1: P0 Security & Concurrency Correctness**
   - OCC version checks, anti-spoofing guards, and 256-bit cryptographic invite tokens.
@@ -402,6 +409,8 @@ terraform -chdir=terraform/environments/staging plan -no-color
   - Multi-surface synthetic smoke testing across API and CloudFront edge CDN, automated Route 53 DNS switchover orchestrator, automated 48-hour rollback engine with reverse delta replication, and ACM certificate automated DNS validation (`scripts/production_cutover.mjs`, `docs/PRODUCTION_CUTOVER_RUNBOOK.md`, `production-cutover.yml`).
 - [x] **Phase 18: Production Infrastructure Hardening, AWS WAF v2 Perimeter Defense, Multi-AZ High Availability & Disaster Recovery Runbook**
   - Regional AWS WAF v2 Web ACL associated with ALB (OWASP Top 10, IP reputation, rate limiting), 17-module production composition (`terraform/environments/production`), multi-AZ redundant NAT Gateways, RDS PostgreSQL 16 Multi-AZ standby with 30-day retention and deletion protection, Redis HA failover, and automated Disaster Recovery validation (`scripts/dr_backup_restore.mjs`, `docs/DISASTER_RECOVERY_RUNBOOK.md`).
+- [x] **Phase 19: Enterprise Security Governance, AWS CloudTrail, AWS Config Continuous Compliance & Automated CIS Benchmark Auditing**
+  - Multi-region AWS CloudTrail with cryptographic log file integrity validation, dedicated 365-day compliance S3 audit bucket, AWS Config continuous resource recording & managed rules, automated CIS AWS Foundations Benchmark audit engine (100% score), and SOC 2 Type II trust mapping (`scripts/security_compliance_audit.mjs`, `docs/SECURITY_AND_COMPLIANCE.md`).
 
 ---
 

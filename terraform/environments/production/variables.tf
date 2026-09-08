@@ -256,6 +256,18 @@ variable "upstash_redis_rest_token" {
   default     = ""
 }
 
+variable "enable_compliance_logging" {
+  description = "Enable AWS CloudTrail and S3 compliance audit log storage"
+  type        = bool
+  default     = true
+}
+
+variable "enable_config_evaluation" {
+  description = "Enable AWS Config continuous resource recording and compliance rules"
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "Default resource tags"
   default = {
