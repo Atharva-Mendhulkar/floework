@@ -1,5 +1,3 @@
-import SidebarNavigation from "@/components/SidebarNavigation";
-import TopHeader from "@/components/TopHeader";
 import FlowBoard from "@/components/FlowBoard";
 import TaskDetailPanel from "@/components/TaskDetailPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -8,6 +6,7 @@ import type { TaskNode } from "@/data/mockData";
 import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation, useGetTasksQuery } from "@/store/api";
 import { useState, lazy, Suspense } from "react";
 import { X, Sparkles, Loader2 } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const ExecutionGraph = lazy(() => import("@/components/ExecutionGraph").then(m => ({ default: m.ExecutionGraph })));
 
@@ -39,51 +38,52 @@ const BoardsPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-background p-3 gap-3">
-            <SidebarNavigation />
-            <div className="flex flex-col flex-1 gap-3 min-w-0">
-                <TopHeader />
-                <main className="flex-1 overflow-y-auto flex flex-col gap-3">
-                    {showBanner && (
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in zoom-in duration-300">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-indigo-100/80 flex items-center justify-center">
-                                    <Sparkles size={18} className="text-indigo-500" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-indigo-900">Welcome to Floework</p>
-                                    <p className="text-xs text-indigo-700/80 max-w-xl">
-                                        We've seeded your workspace with sample tasks so you can test the Execution Graph. 
-                                        When you're ready, clear them out and replace with your real work.
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={handleClearSamples}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
-                                >
-                                    Clear samples
-                                </button>
-                                <button onClick={() => setBannerDismissed(true)} className="p-2 hover:bg-indigo-100 rounded-xl text-indigo-400 hover:text-indigo-600 transition-colors">
-                                    <X size={16} />
-                                </button>
-                            </div>
+        <div className="flex flex-col gap-3">
+            {showBanner && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in zoom-in duration-300">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100/80 flex items-center justify-center">
+                            <Sparkles size={18} className="text-indigo-500" />
                         </div>
-                    )}
-                    <FlowBoard onTaskClick={handleTaskClick} />
-                    
-                    {/* Execution Graph Layer inserted below Kanban */}
-                    <div className="mt-4 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
                         <div>
-                            <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
-                            <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
+                            <p className="text-sm font-semibold text-indigo-900">Welcome to Floework</p>
+                            <p className="text-xs text-indigo-700/80 max-w-xl">
+                                We've seeded your workspace with sample tasks so you can test the Execution Graph. 
+                                When you're ready, clear them out and replace with your real work.
+                            </p>
                         </div>
-                        <Suspense fallback={<div className="h-[600px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80"><Loader2 className="animate-spin text-slate-400" /></div>}>
-                            <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
-                        </Suspense>
                     </div>
-                </main>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleClearSamples}
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                        >
+                            Clear samples
+                        </button>
+                        <button onClick={() => setBannerDismissed(true)} className="p-2 hover:bg-indigo-100 rounded-xl text-indigo-400 hover:text-indigo-600 transition-colors">
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+            <FlowBoard onTaskClick={handleTaskClick} />
+            
+            {/* Execution Graph Layer inserted below Kanban */}
+            <div className="mt-4 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
+                <div>
+                    <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
+                    <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
+                </div>
+                <ErrorBoundary fallback={
+                    <div className="h-[200px] flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80 text-slate-500 text-sm gap-2">
+                        <span>Unable to display execution graph right now.</span>
+                        <button onClick={() => window.location.reload()} className="text-xs text-[#007dff] hover:underline">Reload graph</button>
+                    </div>
+                }>
+                    <Suspense fallback={<div className="h-[600px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80"><Loader2 className="animate-spin text-slate-400" /></div>}>
+                        <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
+                    </Suspense>
+                </ErrorBoundary>
             </div>
             <TaskDetailPanel task={selectedTask} onClose={() => handleTaskClick(null)} />
         </div>

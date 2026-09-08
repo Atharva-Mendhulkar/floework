@@ -95,20 +95,27 @@ export const ExecutionGraph = ({ tasks, onTaskClick }: ExecutionGraphProps) => {
       inDegree[e.target] = (inDegree[e.target] || 0) + 1;
     });
 
-    // 2. Compute Longest Path for 'critical_path'
+    // 2. Compute Longest Path for 'critical_path' (with cycle protection)
     const longestPathLengths: Record<string, number> = {};
     const taskStatus = new Map(tasks.map(t => [t.id, t.status]));
+    const visitedInCurrentPath = new Set<string>();
     
-    // Simple topological distance for pending/in-progress tasks
-    // (Assuming no cycles for this demo logic)
     const computePath = (nodeId: string): number => {
       if (taskStatus.get(nodeId) === 'done') return 0;
       if (longestPathLengths[nodeId] !== undefined) return longestPathLengths[nodeId];
+      if (visitedInCurrentPath.has(nodeId)) return 0; // Prevent cycle recursion
       
+      visitedInCurrentPath.add(nodeId);
       const outgoing = graphEdges.filter(e => e.source === nodeId);
-      if (outgoing.length === 0) return 1;
+      if (outgoing.length === 0) {
+        visitedInCurrentPath.delete(nodeId);
+        longestPathLengths[nodeId] = 1;
+        return 1;
+      }
       
-      const maxChild = Math.max(...outgoing.map(e => computePath(e.target)));
+      const childLengths = outgoing.map(e => computePath(e.target));
+      const maxChild = childLengths.length > 0 ? Math.max(0, ...childLengths) : 0;
+      visitedInCurrentPath.delete(nodeId);
       longestPathLengths[nodeId] = maxChild + 1;
       return longestPathLengths[nodeId];
     };

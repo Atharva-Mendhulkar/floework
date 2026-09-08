@@ -4,8 +4,6 @@ import { useAppSelector } from "@/store/hooks";
 import { AwsWebSocketClient } from "@/services/AwsWebSocketClient";
 import { CognitoAuthService } from "@/services/CognitoAuthService";
 import { api } from "@/store/api";
-import SidebarNavigation from "@/components/SidebarNavigation";
-import TopHeader from "@/components/TopHeader";
 import ActivityTable from "@/components/ActivityTable";
 import ProductivityChart from "@/components/ProductivityChart";
 import { useAuth } from "@/modules/auth/AuthContext";
@@ -83,14 +81,8 @@ const Index = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex h-screen bg-background p-3 gap-3">
-      <SidebarNavigation />
-
-      <div className="flex flex-col flex-1 gap-3 min-w-0">
-        <TopHeader />
-
-        <main className="flex-1 overflow-y-auto flex flex-col gap-5 p-2 lg:p-4">
-          <div className="flex items-center justify-between">
+    <div className="flex-1 overflow-y-auto flex flex-col gap-5 p-2 lg:p-4">
+      <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
                 Welcome back, {user?.name?.split(' ')[0] || 'User'}!
@@ -231,8 +223,6 @@ const Index = () => {
               )}
             </div>
           </div>
-        </main>
-      </div>
     </div>
   );
 };

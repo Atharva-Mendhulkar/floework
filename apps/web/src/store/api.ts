@@ -954,13 +954,13 @@ export const api = createApi({
         getSharedNarrative: builder.query<any, string>({
             queryFn: async () => ({ data: { success: true, content: 'Productivity narrative snapshot' } }),
         }),
-        getAiDisplacementQuery: builder.query<any, void>({
+        getAiDisplacement: builder.query<any, void>({
             queryFn: async () => ({ data: { success: true, metric: 0.15 } }),
         }),
-        getHasRealTasksQuery: builder.query<any, void>({
+        getHasRealTasks: builder.query<any, void>({
             queryFn: async () => ({ data: { hasRealTasks: true } }),
         }),
-        deleteSampleTasksMutation: builder.mutation<any, void>({
+        deleteSampleTasks: builder.mutation<any, void>({
             queryFn: async () => {
                 saveStoredTasks([]);
                 return { data: { success: true } };

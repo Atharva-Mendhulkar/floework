@@ -3,7 +3,7 @@ import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
 import { UserAvatar } from "./UserAvatar";
 import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
-import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, api } from "@/store/api";
+import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, useGetProjectSprintsQuery, api } from "@/store/api";
 import { toast } from "sonner";
 import { useMemo, useEffect, useState } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
@@ -25,9 +25,12 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const activeSprintId = useAppSelector((state) => state.dashboard.activeSprintId);
   const { data: usersRes } = useGetUsersQuery();
   const team = usersRes?.data || [];
+
+  const { data: projectsRes } = useGetProjectsQuery();
+  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
   
   const { data: response, isLoading, error } = useGetTasksQuery({ 
-    projectId: activeProjectId || undefined, 
+    projectId: effectiveProjectId || undefined, 
     sprintId: activeSprintId 
   });
   
@@ -40,16 +43,13 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
-  const { data: sprintsRes } = api.endpoints.getProjectSprints.useQueryState(activeProjectId!, { skip: !activeProjectId });
+  const { data: sprintsRes } = useGetProjectSprintsQuery(effectiveProjectId || '', { skip: !effectiveProjectId });
   const activeSprint = sprintsRes?.data?.find((s: any) => s.id === activeSprintId);
-
-  const { data: projectsRes } = useGetProjectsQuery();
-  const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;
 
   // Use Realtime synchronization
   const { status: realtimeStatus } = useTaskRealtime(effectiveProjectId);
 
-  const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId, { skip: !activeProjectId });
+  const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId!, { skip: !effectiveProjectId });
   const prediction = predictionRes?.data;
 
   /* Re-group tasks into phase columns + filter by searchQuery */
@@ -140,22 +140,22 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           {prediction && (
             <div
               className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border shadow-sm group relative cursor-help
-                ${prediction.deliveryProbability >= 80
+                {(prediction.deliveryProbability ?? 85) >= 80
                   ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  : prediction.deliveryProbability >= 50
+                  : (prediction.deliveryProbability ?? 85) >= 50
                     ? "bg-amber-50 border-amber-200 text-amber-700"
                     : "bg-red-50 border-red-200 text-red-700"
                 }`}
             >
-              {prediction.deliveryProbability >= 80 ? (
+              {(prediction.deliveryProbability ?? 85) >= 80 ? (
                 <TrendingUp size={14} className="text-emerald-500" />
-              ) : prediction.deliveryProbability >= 50 ? (
+              ) : (prediction.deliveryProbability ?? 85) >= 50 ? (
                 <AlertCircle size={14} className="text-amber-500" />
               ) : (
                 <TrendingDown size={14} className="text-red-500" />
               )}
               <span className="text-[12px] font-bold tracking-tight">
-                {prediction.deliveryProbability}% Predictability
+                {prediction.deliveryProbability ?? 85}% Predictability
               </span>
 
               {/* Tooltip for factors */}

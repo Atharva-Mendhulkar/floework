@@ -33,20 +33,22 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Protected Pages (Lazy)
-const Index = lazy(() => import("./pages/Index"));
-const BoardsPage = lazy(() => import("./pages/BoardsPage"));
-const FocusPage = lazy(() => import("./pages/FocusPage"));
-const NarrativePage = lazy(() => import("@/pages/NarrativePage"));
-const SharedNarrativePage = lazy(() => import("@/pages/SharedNarrativePage"));
-const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+// Protected Pages (Eagerly loaded for instant 0ms tab transitions)
+import Index from "./pages/Index";
+import BoardsPage from "./pages/BoardsPage";
+import FocusPage from "./pages/FocusPage";
+import NarrativePage from "@/pages/NarrativePage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import StarredPage from "./pages/StarredPage";
+import MessagesPage from "./pages/MessagesPage";
+import ProfilePage from "./pages/ProfilePage";
+import AlertsPage from "./pages/AlertsPage";
+import BillingPage from "./pages/BillingPage";
+import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
+
+// Other Protected/Shared Pages (Lazy)
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
-const StarredPage = lazy(() => import("./pages/StarredPage"));
-const MessagesPage = lazy(() => import("./pages/MessagesPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const AlertsPage = lazy(() => import("./pages/AlertsPage"));
-const BillingPage = lazy(() => import("./pages/BillingPage"));
-const WorkspaceSettingsPage = lazy(() => import("./pages/WorkspaceSettingsPage"));
+const SharedNarrativePage = lazy(() => import("@/pages/SharedNarrativePage"));
 
 const App = () => (
   <ErrorBoundary>
@@ -85,17 +87,20 @@ const App = () => (
                       {/* Onboarding Flow */}
                       <Route path="/onboarding" element={<OnboardingPage />} />
 
-                      <Route path="/dashboard" element={<Index />} />
-                      <Route path="/boards" element={<BoardsPage />} />
-                      <Route path="/focus" element={<DashboardLayout><FocusPage /></DashboardLayout>} />
-                      <Route path="/narrative" element={<DashboardLayout><NarrativePage /></DashboardLayout>} />
-                      <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
-                      <Route path="/starred" element={<DashboardLayout><StarredPage /></DashboardLayout>} />
-                      <Route path="/messages" element={<DashboardLayout><MessagesPage /></DashboardLayout>} />
-                      <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
-                      <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
-                      <Route path="/billing" element={<DashboardLayout><BillingPage /></DashboardLayout>} />
-                      <Route path="/workspace/settings" element={<DashboardLayout><WorkspaceSettingsPage /></DashboardLayout>} />
+                      {/* Persistent Dashboard Layout — zero unmount delay, instant page transitions */}
+                      <Route element={<DashboardLayout />}>
+                        <Route path="/dashboard" element={<Index />} />
+                        <Route path="/boards" element={<BoardsPage />} />
+                        <Route path="/focus" element={<FocusPage />} />
+                        <Route path="/narrative" element={<NarrativePage />} />
+                        <Route path="/analytics" element={<AnalyticsPage />} />
+                        <Route path="/starred" element={<StarredPage />} />
+                        <Route path="/messages" element={<MessagesPage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/alerts" element={<AlertsPage />} />
+                        <Route path="/billing" element={<BillingPage />} />
+                        <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />
+                      </Route>
                     </Route>
 
                     {/* Fallback */}

@@ -10,20 +10,22 @@ import type { RootState } from "@/store";
 
 // Execution Signal thresholds or styles can be applied here based on node data
 const TaskCustomNode = ({ data, selected }: NodeProps) => {
-  const task = data.task as TaskNode;
-  const onTaskClick = data.onTaskClick as (task: TaskNode) => void;
+  const task = data?.task as TaskNode;
+  const onTaskClick = data?.onTaskClick as (task: TaskNode) => void;
 
   const { socket } = useSocket();
   const lockedTasks = useSelector((state: RootState) => state.project.lockedTasks);
-  const isLocked = !!lockedTasks[task.id];
+  const isLocked = !!(task && lockedTasks[task.id]);
   const [toggleStar] = useToggleTaskStarMutation();
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-     if (task.isSample && task.title === 'Review authentication flow' && !localStorage.getItem('floework_onboarding_v1_complete')) {
+     if (task?.isSample && task?.title === 'Review authentication flow' && !localStorage.getItem('floework_onboarding_v1_complete')) {
          setShowTooltip(true);
      }
   }, [task]);
+
+  if (!task) return null;
 
   const dismissTooltip = (e: React.MouseEvent) => {
       e.stopPropagation();

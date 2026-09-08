@@ -2,9 +2,11 @@ import { useGetTasksQuery, useToggleTaskStarMutation } from "@/store/api";
 import { Star, AlertCircle, StarOff } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
+import { useAppSelector } from "@/store/hooks";
 
 export default function StarredPage() {
-    const { data: response, isLoading, error } = useGetTasksQuery(undefined);
+    const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
+    const { data: response, isLoading, error } = useGetTasksQuery({ projectId: activeProjectId || undefined });
     const [toggleStar, { isLoading: isToggling }] = useToggleTaskStarMutation();
     const { can } = useRole();
 

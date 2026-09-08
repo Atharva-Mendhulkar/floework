@@ -25,22 +25,28 @@ function FloatingAvatar({
                 left,
                 right,
                 bottom,
-                animation: `${anim} 5s ease-in-out infinite`,
-                animationDelay: delay,
             }}
         >
             <div className="relative w-[104px] h-[104px]">
 
-                {/* Mascot image */}
-                <img
-                    src={img}
-                    alt="floework teammate"
-                    className="w-full h-full object-contain"
-                    loading="eager"
-                    decoding="async"
-                />
+                {/* Mascot image - subtly floats inside the static frame */}
+                <div
+                    className="w-full h-full"
+                    style={{
+                        animation: `${anim} 5s ease-in-out infinite`,
+                        animationDelay: delay,
+                    }}
+                >
+                    <img
+                        src={img}
+                        alt="floework teammate"
+                        className="w-full h-full object-contain"
+                        loading="eager"
+                        decoding="async"
+                    />
+                </div>
 
-                {/* Circular ring ON TOP of the image */}
+                {/* Circular ring ON TOP of the image - STATIC, NOT MOVING */}
                 <div
                     className="absolute inset-[3px] rounded-full pointer-events-none"
                     style={{
@@ -49,7 +55,7 @@ function FloatingAvatar({
                     }}
                 />
 
-                {/* Cursor arrow, kept close to the circle */}
+                {/* Cursor arrow, kept close to the static circle */}
                 <div
                     className="absolute bottom-[2px] right-[-2px] w-6 h-6 drop-shadow-md"
                     style={{
