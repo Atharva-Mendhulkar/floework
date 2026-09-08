@@ -34,7 +34,10 @@ jobs:
       - name: Install Monorepo Dependencies
         run: npm ci
 
-      - name: Run 110-Test API Behavioral Suite
+      - name: Compile Web Application Bundle
+        run: npm --prefix apps/web run build
+
+      - name: Run API Behavioral Suite
         run: ./node_modules/.bin/vitest run test/api/
         env:
           NODE_ENV: test
@@ -47,6 +50,12 @@ jobs:
 
       - name: Verify Database Migrations (--dry-run)
         run: npm run migrate:dry-run
+
+      - name: Verify Disaster Recovery Readiness (--dry-run)
+        run: npm run dr:dry-run
+
+      - name: Verify Security & Compliance Audit (--dry-run)
+        run: npm run compliance:dry-run
 
   frontend-tests:
     name: Frontend React Vitest & Production Build
