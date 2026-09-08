@@ -4,7 +4,7 @@
 > ### **Production Launch Readiness: CERTIFIED BY CONFIGURATION AND VALIDATION**  
 > **Final Architectural Status:** All 22 Engineering Phases Completed, Verified & Certified  
 > **Automated Monorepo Test Matrix:** **240 / 240 Tests Passing (100% Pass Rate: 236 Backend API Tests + 4 Frontend Component Tests)**  
-> **Compliance & Security Benchmark:** CIS AWS Foundations Benchmark v3.0 (100% Pass Rate - 21/21 Checks)  
+> **Security Compliance Benchmark:** Automated Assessment against CIS AWS Foundations Benchmark v3.0 (100% Pass Rate - 21/21 Checks)  
 > **Infrastructure as Code (IaC):** HashiCorp Terraform (17 Modules in Staging, 19 Modules in Production)  
 > **Operational Stance:** Feature Complete & Engineering Frozen — Shifted to Portfolio Packaging & System Design Defense
 
@@ -71,7 +71,7 @@ To maintain defensible engineering credibility and distinguish simulated vs live
 | | `OBS-02` | Pino Structured JSON Correlation Logger (`X-Trace-Id`) | **`VALIDATED`** | [`api/_lib/logger.ts`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/logger.ts), distributed tracing across container boundaries |
 | **9. CI/CD Automation** | `CICD-01` | Multi-Node Quality Gates (240 Tests on Node 20 & 22) | **`VALIDATED`** | [`.github/workflows/ci.yml`](file:///home/topfloorboss/Downloads/floework-main/.github/workflows/ci.yml), 100% test pass rate |
 | | `CICD-02` | Automated Container CVE Scanning with Trivy | **`VALIDATED`** | [`.github/workflows/docker-ecr.yml`](file:///home/topfloorboss/Downloads/floework-main/.github/workflows/docker-ecr.yml), zero CRITICAL vulnerabilities |
-| **10. Disaster Recovery (DR)**| `DR-01` | Automated Point-in-Time Recovery Engine (RPO < 5m) | **`FAILURE_TESTED`** | [`scripts/dr_backup_restore.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/dr_backup_restore.mjs), [`docs/DISASTER_RECOVERY_RUNBOOK.md`](file:///home/topfloorboss/Downloads/floework-main/docs/DISASTER_RECOVERY_RUNBOOK.md) |
+| **10. Disaster Recovery (DR)**| `DR-01` | Automated Point-in-Time Recovery Engine (RPO Target < 5m) | **`FAILURE_TESTED`** | [`scripts/dr_backup_restore.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/dr_backup_restore.mjs), [`docs/DISASTER_RECOVERY_RUNBOOK.md`](file:///home/topfloorboss/Downloads/floework-main/docs/DISASTER_RECOVERY_RUNBOOK.md) |
 | | `DR-02` | Chaos Engineering & Latency Percentile SLA Engine | **`FAILURE_TESTED`** | [`scripts/chaos_resiliency_test.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/chaos_resiliency_test.mjs), p50/p90/p95/p99 evaluation |
 | **11. FinOps Governance** | `FIN-01` | Multi-Tier AWS Budgets & Anomaly Detection Monitor | **`AWS_VALIDATED`** | [`terraform/modules/finops/`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/finops/), 50/80/100% alerts to SNS |
 | | `FIN-02` | FinOps Cost Audit Engine & Hibernation Runbook | **`VALIDATED`** | [`scripts/finops_cost_audit.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/finops_cost_audit.mjs), [`docs/FINOPS_AND_COST_OPTIMIZATION.md`](file:///home/topfloorboss/Downloads/floework-main/docs/FINOPS_AND_COST_OPTIMIZATION.md) |
@@ -86,13 +86,13 @@ Detailed standard operating procedures are maintained in [`docs/DAY_2_OPERATIONS
 2. **Automated 48-Hour Rollback Procedure**: Reverse delta synchronization (`scripts/cutover_delta_sync.mjs --reverse`) and Route 53 DNS fallback.
 3. **Zero-Downtime Database Schema Migrations**: Expand/Contract pattern across 42 transactional PostgreSQL migrations.
 4. **ECS Fargate Task Crash & Auto-Restart Recovery**: CloudWatch alarm auto-recovery and task rollback procedures.
-5. **RDS PostgreSQL Multi-AZ Failover & Reconnection**: Automatic standby promotion (< 120s) with exponential client reconnection.
+5. **RDS PostgreSQL Multi-AZ Failover & Reconnection**: Automatic standby promotion (target < 120s) with exponential client reconnection.
 6. **SQS FIFO Queue Backlog & DLQ Redrive**: Redriving isolated poison pills and scaling worker concurrency.
 7. **ElastiCache Redis Failover & Fallback**: Automatic failover with graceful degradation to container in-memory LRU cache.
 8. **High HTTP 5xx Error Surge Containment**: Layer-7 WAF IP throttling, ECS auto-scaling, and upstream circuit breakers.
 9. **AWS Cost Spike & Anomaly Containment**: Cost Anomaly Detection triage, idle NAT/RDS identification, and hibernation triggers.
 10. **SSM Parameter & Secret Rotation**: 90-day cryptographic secret rotation and zero-downtime rolling reload.
-11. **Disaster Recovery Point-in-Time Restoration**: PITR snapshot restoration achieving RTO < 15m and RPO < 5m.
+11. **Disaster Recovery Point-in-Time Restoration**: PITR snapshot restoration rehearsed against RTO target < 15m and RPO target < 5m.
 
 ---
 
@@ -125,12 +125,12 @@ Postmortem
 
 ## 5. Backup and Recovery Certification
 
-| System Tier | Primary Asset | Backup Mechanism | Storage Location | Encryption Key | RPO Target | RTO Target | Validation Evidence |
+| System Tier | Primary Asset | Backup Mechanism | Storage Location | Encryption Key | RPO Target (Design SLA) | RTO Target (Design SLA) | Validation Evidence |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Relational Database** | RDS PostgreSQL 16 | Automated daily snapshots + Continuous WAL archiving | AWS S3 (AWS Managed) | KMS CMK (`aws_kms_key.main`) | **< 5 min** | **< 15 min** | [`scripts/dr_backup_restore.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/dr_backup_restore.mjs) (PITR verified) |
-| **Object Storage** | User Uploads & Media | S3 Bucket Versioning + 90-day noncurrent retention | AWS S3 Multi-AZ | KMS CMK (`aws_kms_key.main`) | **0 min (Real-time)** | **< 5 min** | Version recovery verified in [`test/api/storage_phase7.test.ts`](file:///home/topfloorboss/Downloads/floework-main/test/api/storage_phase7.test.ts) |
-| **Audit Compliance** | CloudTrail & Config Logs | Multi-region trail with SHA-256 log file validation | Dedicated S3 Audit Bucket | S3 Managed / KMS CMK | **< 15 min** | **< 10 min** | [`scripts/security_compliance_audit.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/security_compliance_audit.mjs) (100% score) |
-| **Realtime State** | WebSocket Registry | DynamoDB with TTL expiration (`expiresAt`) | AWS DynamoDB Multi-AZ | AWS Owned KMS Key | **Stateless** | **< 1 min** | Auto-purging stale connections verified in [`test/api/realtime_phase6.test.ts`](file:///home/topfloorboss/Downloads/floework-main/test/api/realtime_phase6.test.ts) |
+| **Relational Database** | RDS PostgreSQL 16 | Automated daily snapshots + Continuous WAL archiving | AWS S3 (AWS Managed) | KMS CMK (`aws_kms_key.main`) | **< 5 min (Target)** | **< 15 min (Target)** | [`scripts/dr_backup_restore.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/dr_backup_restore.mjs) (PITR validation passed) |
+| **Object Storage** | User Uploads & Media | S3 Bucket Versioning + 90-day noncurrent retention | AWS S3 Multi-AZ | KMS CMK (`aws_kms_key.main`) | **0 min (Real-time Target)** | **< 5 min (Target)** | Version recovery verified in [`test/api/storage_phase7.test.ts`](file:///home/topfloorboss/Downloads/floework-main/test/api/storage_phase7.test.ts) |
+| **Audit Compliance** | CloudTrail & Config Logs | Multi-region trail with SHA-256 log file validation | Dedicated S3 Audit Bucket | S3 Managed / KMS CMK | **< 15 min (Target)** | **< 10 min (Target)** | [`scripts/security_compliance_audit.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/security_compliance_audit.mjs) (100% score) |
+| **Realtime State** | WebSocket Registry | DynamoDB with TTL expiration (`expiresAt`) | AWS DynamoDB Multi-AZ | AWS Owned KMS Key | **Stateless** | **< 1 min (Target)** | Auto-purging stale connections verified in [`test/api/realtime_phase6.test.ts`](file:///home/topfloorboss/Downloads/floework-main/test/api/realtime_phase6.test.ts) |
 
 ---
 
@@ -325,12 +325,12 @@ sequenceDiagram
 
 | Failure Scenario | Fault Detection Mechanism | Immediate Containment Action | Automated / Manual Recovery Path | Recovery Target |
 | :--- | :--- | :--- | :--- | :--- |
-| **ECS Task Memory Spike / Crash** | CloudWatch Alarm `ecs_cpu_high` or target health failure | ALB drains failing container and stops routing ingress | ECS auto-healing restarts task up to `desired_count`; rollback to prior task definition if in crash loop | **< 60 seconds** |
-| **RDS Primary Instance Node Crash** | Loss of database heartbeat, CloudWatch RDS alarm | CNAME switches automatically to synchronous standby | Standby promoted in secondary AZ; `pg-pool` retries with exponential backoff reconnect | **< 120 seconds** |
-| **ElastiCache Redis Outage / Partition** | Redis connection error (`ECONNREFUSED` / timeout) | Application detects partition and isolates Redis socket | Sliding-window rate limiter falls back immediately to container in-memory LRU cache; zero HTTP 500s | **0 ms (Instant)** |
-| **Bedrock AI API Throttling or Outage** | Opossum circuit breaker trips on 50% failures or > 8s latency | Circuit breaker opens, shedding downstream AI calls | Application immediately returns deterministic heuristic narrative fallback; resets after 30s | **0 ms (Instant)** |
-| **Malformed SQS Message (Poison Pill)** | Worker JSON parse error or processing exception | Worker catches error, logs structured trace, increments DLQ counter | Message retries up to 3 times, then routes automatically to `DLQ.fifo`; worker never crashes | **< 15 seconds** |
-| **Multi-AZ Availability Zone Failure** | CloudWatch ALB unHealthyHostCount alarm in degraded AZ | Route 53 and ALB route all traffic to healthy AZ | Redundant Fargate tasks, NAT Gateways, and RDS standby active in surviving AZ maintain 100% uptime | **< 30 seconds** |
+| **ECS Task Memory Spike / Crash** | CloudWatch Alarm `ecs_cpu_high` or target health failure | ALB drains failing container and stops routing ingress | ECS auto-healing restarts task up to `desired_count`; rollback to prior task definition if in crash loop | **< 60 seconds (Target)** |
+| **RDS Primary Instance Node Crash** | Loss of database heartbeat, CloudWatch RDS alarm | CNAME switches automatically to synchronous standby | Standby promoted in secondary AZ (target < 120s); `pg-pool` retries with exponential backoff reconnect | **< 120 seconds (Target)** |
+| **ElastiCache Redis Outage / Partition** | Redis connection error (`ECONNREFUSED` / timeout) | Application detects partition and isolates Redis socket | Sliding-window rate limiter falls back immediately to container in-memory LRU cache; zero HTTP 500s | **0 ms (Instant Fallback)** |
+| **Bedrock AI API Throttling or Outage** | Opossum circuit breaker trips on 50% failures or > 8s latency | Circuit breaker opens, shedding downstream AI calls | Application immediately returns deterministic heuristic narrative fallback; resets after 30s | **0 ms (Instant Fallback)** |
+| **Malformed SQS Message (Poison Pill)** | Worker JSON parse error or processing exception | Worker catches error, logs structured trace, increments DLQ counter | Message retries up to 3 times, then routes automatically to `DLQ.fifo`; worker never crashes | **< 15 seconds (Target)** |
+| **Multi-AZ Availability Zone Failure** | CloudWatch ALB unHealthyHostCount alarm in degraded AZ | Route 53 and ALB route all traffic to healthy AZ | Redundant Fargate tasks, NAT Gateways, and RDS standby active in surviving AZ maintain 100% uptime | **< 30 seconds (Target)** |
 
 ### 8.5 Major Architectural Tradeoffs Registry
 
