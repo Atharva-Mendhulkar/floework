@@ -144,9 +144,25 @@ const CurrentNarrativeCard = () => {
             className="w-full h-48 text-[14px] leading-relaxed text-slate-800 bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[160px] resize-y"
           />
         ) : (
-          <p className="text-[14px] leading-relaxed text-slate-700 whitespace-pre-wrap">
-            {editBody}
-          </p>
+          <div className="space-y-4">
+            <p className="text-[14px] leading-relaxed text-slate-700 whitespace-pre-wrap">
+              {editBody}
+            </p>
+
+            {narrative.highlights && narrative.highlights.length > 0 && (
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Key Execution Highlights</p>
+                <div className="flex flex-col gap-1.5">
+                  {narrative.highlights.map((item: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-2 text-[12px] text-slate-600">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -154,9 +170,87 @@ const CurrentNarrativeCard = () => {
 };
 
 const PastNarrativesAccordion = () => {
-    return(
-        <div></div> // Empty to simulate feature pending completeness based off instructions.
-    );
+  const { data: pastRes, isLoading } = useGetNarrativesQuery();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const narratives = pastRes?.data || [];
+
+  if (isLoading) {
+    return <div className="h-32 bg-slate-50 animate-pulse rounded-2xl border border-slate-100" />;
+  }
+
+  if (narratives.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+        <Clock size={16} className="text-slate-400" />
+        Past Weekly Summaries
+      </h3>
+      <div className="flex flex-col gap-3">
+        {narratives.map((item: any) => {
+          const isOpen = openId === item.id;
+          return (
+            <div 
+              key={item.id} 
+              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs transition-all hover:border-slate-300"
+            >
+              <button
+                onClick={() => setOpenId(isOpen ? null : item.id)}
+                className="w-full px-5 py-3.5 flex items-center justify-between text-left bg-slate-50/50 hover:bg-slate-50 transition-colors"
+              >
+                <div>
+                  <span className="text-[13px] font-semibold text-slate-800">{item.weekLabel}</span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {item.generatedAt ? new Date(item.generatedAt).toLocaleDateString() : 'Historical archive'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                    {isOpen ? 'Collapse' : 'Expand'}
+                  </span>
+                </div>
+              </button>
+              {isOpen && (
+                <div className="p-5 border-t border-slate-100 space-y-3">
+                  <p className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">
+                    {item.body}
+                  </p>
+                  {item.highlights && item.highlights.length > 0 && (
+                    <div className="pt-2 border-t border-slate-100/80">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Highlights</p>
+                      <ul className="space-y-1">
+                        {item.highlights.map((h: string, i: number) => (
+                          <li key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5">
+                            <span className="text-indigo-500">•</span>
+                            <span>{h}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.body);
+                        toast({ title: "Copied past summary to clipboard" });
+                      }}
+                      className="text-[11px] font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50"
+                    >
+                      Copy text
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 export default function NarrativePage() {

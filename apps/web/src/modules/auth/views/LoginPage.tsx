@@ -24,7 +24,12 @@ export const LoginPage = () => {
         try {
             await login(email, password);
             toast.success("Successfully logged in!");
-            navigate("/dashboard");
+            const onboardingDone = localStorage.getItem('floework_onboarding_v1_complete') === 'true';
+            if (!onboardingDone) {
+                navigate("/onboarding");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (error: any) {
             toast.error(error.message || "Invalid credentials");
         } finally {

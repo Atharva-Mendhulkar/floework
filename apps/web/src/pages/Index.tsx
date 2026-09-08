@@ -32,13 +32,14 @@ const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect to onboarding if user has no projects yet
+  // Redirect to onboarding if user has not completed onboarding
   const { data: projectsRes, isLoading: projectsLoading } = useGetProjectsQuery();
   useEffect(() => {
-    if (!projectsLoading && projectsRes?.data && projectsRes.data.length === 0) {
+    const onboardingComplete = localStorage.getItem('floework_onboarding_v1_complete') === 'true';
+    if (!onboardingComplete && user) {
       navigate('/onboarding', { replace: true });
     }
-  }, [projectsRes, projectsLoading, navigate]);
+  }, [user, navigate]);
 
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
   const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id;

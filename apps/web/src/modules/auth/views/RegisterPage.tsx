@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CognitoAuthService } from "@/services/CognitoAuthService";
+import { useAuth } from "../AuthContext";
 
 export const RegisterPage = () => {
     const [name, setName] = useState("");
@@ -12,6 +13,7 @@ export const RegisterPage = () => {
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,8 +25,16 @@ export const RegisterPage = () => {
         setIsLoading(true);
         try {
             await CognitoAuthService.signUp(email, password, name);
-            toast.success("Account created successfully! You can now sign in.");
-            navigate("/login");
+            // Auto sign in new user and take them directly to onboarding
+            try {
+                await login(email, password);
+                localStorage.setItem('floework_onboarding_v1_complete', 'false');
+                toast.success("Account created! Let's set up your workspace.");
+                navigate("/onboarding");
+            } catch {
+                toast.success("Account created successfully! You can now sign in.");
+                navigate("/login");
+            }
         } catch (error: any) {
             toast.error(error.message || "Registration failed");
         } finally {
