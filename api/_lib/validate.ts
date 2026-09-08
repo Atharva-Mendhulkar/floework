@@ -36,6 +36,7 @@ export const TaskCreateSchema = z.object({
   priority:    z.enum(['low', 'medium', 'high']).optional(),
   estimate:    z.number().int().min(0).max(999).optional(),
   status:      z.enum(['backlog', 'focus', 'review', 'outcome']).default('backlog'),
+  due_date:    z.string().nullable().optional(),
 })
 
 export const TaskUpdateSchema = TaskCreateSchema.partial()

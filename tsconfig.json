@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "api/**/*",
+    "workers/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "apps"
+  ]
+}

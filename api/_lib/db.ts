@@ -50,7 +50,7 @@ export function getPool(): pg.Pool {
 /**
  * Executes a parameterized SQL query against the RDS PostgreSQL pool
  */
-export async function query<T = any>(
+export async function query<T extends pg.QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<pg.QueryResult<T>> {
