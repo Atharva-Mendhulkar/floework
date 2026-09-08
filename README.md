@@ -7,6 +7,7 @@
 [![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
 [![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
 [![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
+[![Launch Readiness](https://img.shields.io/badge/Launch%20Readiness-Certified%20by%20Config%20%26%20Validation-success?style=flat-square&logo=amazonwebservices)](docs/PRODUCTION_LAUNCH_READINESS_REPORT.md)
 [![Tests Passing](https://img.shields.io/badge/Tests-240%2F240%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
 [![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -31,7 +32,13 @@
     Decoupled Multi-AZ AWS Infrastructure &middot; Fastify Modular Monolith on ECS Fargate &middot; RDS PostgreSQL 16 &middot; Amazon Bedrock AI &middot; Real-Time WebSockets &middot; SQS FIFO Workers
     <br />
     <br />
-    <a href="docs/PRODUCTION_LAUNCH_READINESS_REPORT.md"><strong>Explore Architecture & Launch Readiness (All 22 Phases Certified) »</strong></a>
+    <a href="docs/PRODUCTION_LAUNCH_READINESS_REPORT.md"><strong>Production Launch Readiness (26/26 Certified)</strong></a>
+    &middot;
+    <a href="docs/ARCHITECTURE_CASE_STUDY.md"><strong>Architecture Case Study</strong></a>
+    &middot;
+    <a href="docs/PORTFOLIO_AND_RESUME.md"><strong>Resume & Interview Defense</strong></a>
+    &middot;
+    <a href="docs/DAY_2_OPERATIONS_RUNBOOK.md"><strong>Day-2 Runbook</strong></a>
     &middot;
     <a href="https://github.com/Atharva-Mendhulkar/floework/issues">Report an Issue</a>
   </p>
@@ -390,9 +397,9 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 
 | Command | Description |
 | :--- | :--- |
-| `npm run test:api` | Run all 110 backend API behavioral unit and integration tests |
-| `npm run test:web` | Run frontend React unit and component tests with Vitest |
-| `npm run test` | Run complete backend and API test suite |
+| `npm run test:api` | Run all 236 backend API behavioral unit and integration tests |
+| `npm run test:web` | Run frontend React unit and component tests with Vitest (4 tests) |
+| `npm run test` | Run complete monorepo test suite (240 / 240 tests passing, 100% pass rate) |
 | `npm run start` | Start the modular monolith Fastify API server locally |
 | `npm run worker` | Launch the Amazon SQS FIFO background processing worker |
 | `npm run build` | Build the production React SPA bundle into `apps/web/dist/` |
@@ -440,7 +447,11 @@ terraform -chdir=terraform/environments/staging plan -no-color
 
 ---
 
-## Architectural Roadmap (All 20 Phases Completed)
+## Architectural Roadmap (All 22 Phases Completed & Certified)
+
+```text
+MVP ➔ AWS Architecture ➔ Security ➔ High Availability ➔ Disaster Recovery ➔ Chaos Engineering ➔ CI/CD + OIDC ➔ Container Security ➔ FinOps ➔ Day-2 Operations ➔ FINAL
+```
 
 - [x] **Phase 1: P0 Security & Concurrency Correctness**
   - OCC version checks, anti-spoofing guards, and 256-bit cryptographic invite tokens.

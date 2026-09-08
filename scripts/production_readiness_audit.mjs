@@ -68,7 +68,7 @@ export const READINESS_DOMAINS = {
   DOMAIN_9_CI_CD: {
     id: 'CICD',
     name: 'CI/CD Quality Gates & Automation',
-    description: 'GitHub Actions OIDC, 229 automated tests, Docker ECR delivery, frontend CDN pipeline'
+    description: 'GitHub Actions OIDC, 240 automated tests, Docker ECR delivery, frontend CDN pipeline'
   },
   DOMAIN_10_RESILIENCY_DR: {
     id: 'RES',
@@ -325,7 +325,7 @@ export function evaluateProductionReadiness(options = {}) {
     status: READINESS_STATUS.VALIDATED,
     verified: fileMatches('.github/workflows/ci.yml', 'vitest run test/api/') &&
               fileMatches('.github/workflows/ci.yml', 'frontend-tests'),
-    detail: 'Automated quality gate verifies all 229 monorepo tests across Node 20 and Node 22'
+    detail: 'Automated quality gate verifies all 240 monorepo tests across Node 20 and Node 22'
   })
 
   checks.push({
