@@ -34,6 +34,48 @@ function saveStoredTasks(tasks: TaskNode[]) {
     } catch {}
 }
 
+function getArchetypeTasks(useCase: string = 'software', projectId: string = 'proj-default-1'): TaskNode[] {
+    switch (useCase) {
+        case 'product':
+            return [
+                { id: 't-prod-1', title: 'User Journey Mapping', description: 'Map out key onboarding steps and friction points', status: 'done', phase: 'allocation', projectId, effort: 'M', focusCount: 4, priority: 'medium', isStarred: true, version: 1 },
+                { id: 't-prod-2', title: 'Design System Tokens', description: 'Review HSL palette and typography scale', status: 'in-progress', phase: 'allocation', projectId, effort: 'L', focusCount: 7, priority: 'high', version: 1 },
+                { id: 't-prod-3', title: 'Interactive Prototype Review', description: 'Team walkthrough of user dashboard flow', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 12, priority: 'high', version: 1 },
+                { id: 't-prod-4', title: 'Usability Testing Analysis', description: 'Session recordings analysis with 5 beta users', status: 'pending', phase: 'focus', projectId, effort: 'M', focusCount: 2, priority: 'medium', version: 1 },
+                { id: 't-prod-5', title: 'Accessibility Compliance Audit', description: 'WCAG AA contrast and screen reader review', status: 'pending', phase: 'resolution', projectId, effort: 'S', focusCount: 1, priority: 'low', version: 1 },
+                { id: 't-prod-6', title: 'Design Spec Handoff', description: 'Final export for engineering sprint implementation', status: 'done', phase: 'outcome', projectId, effort: 'M', focusCount: 5, priority: 'high', version: 1 },
+            ];
+        case 'agency':
+            return [
+                { id: 't-agn-1', title: 'Client Scope & Milestones', description: 'Align deliverables and timeline expectations', status: 'done', phase: 'allocation', projectId, effort: 'M', focusCount: 3, priority: 'high', isStarred: true, version: 1 },
+                { id: 't-agn-2', title: 'Creative Direction Moodboards', description: 'Present wireframes and visual moodboards', status: 'in-progress', phase: 'allocation', projectId, effort: 'L', focusCount: 6, priority: 'medium', version: 1 },
+                { id: 't-agn-3', title: 'Core Production Sprint', description: 'Active development of client portal features', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 15, priority: 'high', version: 1 },
+                { id: 't-agn-4', title: 'Client Feedback Integration', description: 'Address feedback notes from stakeholders', status: 'pending', phase: 'resolution', projectId, effort: 'M', focusCount: 4, priority: 'medium', version: 1 },
+                { id: 't-agn-5', title: 'QA & Staging Sign-Off', description: 'Final acceptance testing before release', status: 'pending', phase: 'resolution', projectId, effort: 'S', focusCount: 2, priority: 'high', version: 1 },
+                { id: 't-agn-6', title: 'Production Handover', description: 'Production deployment and client sign-off', status: 'done', phase: 'outcome', projectId, effort: 'S', focusCount: 3, priority: 'high', version: 1 },
+            ];
+        case 'solo':
+            return [
+                { id: 't-solo-1', title: 'Weekly Top 3 Priorities', description: 'Isolate high-leverage tasks for the week', status: 'done', phase: 'allocation', projectId, effort: 'S', focusCount: 2, priority: 'high', isStarred: true, version: 1 },
+                { id: 't-solo-2', title: 'Deep Work: Core Architecture', description: '90 minutes uninterrupted focus on system design', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 10, priority: 'high', version: 1 },
+                { id: 't-solo-3', title: 'Flow State Journaling', description: 'Track cognitive fatigue and energy peaks', status: 'in-progress', phase: 'focus', projectId, effort: 'S', focusCount: 4, priority: 'medium', version: 1 },
+                { id: 't-solo-4', title: 'Eliminate Backlog Friction', description: 'Prune low-value noise and unblock dependencies', status: 'pending', phase: 'resolution', projectId, effort: 'M', focusCount: 1, priority: 'low', version: 1 },
+                { id: 't-solo-5', title: 'Weekly Outcome Review', description: 'Review hours spent and completed deliverables', status: 'done', phase: 'outcome', projectId, effort: 'S', focusCount: 3, priority: 'medium', version: 1 },
+            ];
+        case 'software':
+        default:
+            return (initialPhases || []).flatMap((p) =>
+                (p.tasks || []).map((t) => ({
+                    ...t,
+                    projectId,
+                    isStarred: t.id === 't1' || t.id === 't3',
+                    focusCount: t.focusCount || 0,
+                    version: t.version || 1
+                }))
+            );
+    }
+}
+
 function getStoredMessages(projectId: string): any[] {
     try {
         const raw = localStorage.getItem(`floework_messages_${projectId}`);
@@ -144,23 +186,29 @@ export const api = createApi({
                         createdAt: w.created_at || new Date().toISOString()
                     }));
                     if (projects.length === 0) {
+                        const storedName = localStorage.getItem('floework_active_project') || localStorage.getItem('floework_active_workspace') || 'Core Platform';
+                        const storedId = localStorage.getItem('floework_active_project_id') || 'proj-default-1';
+                        const storedSprint = localStorage.getItem('floework_active_sprint') || 'Sprint 1';
                         projects.push({
-                            id: 'proj-default-1',
-                            name: 'Core Platform',
-                            sprintName: 'Sprint 1',
+                            id: storedId,
+                            name: storedName,
+                            sprintName: storedSprint,
                             teamId: 'team-default-1',
                             createdAt: new Date().toISOString()
                         });
                     }
                     return { data: { success: true, data: projects } };
                 } catch {
+                    const storedName = localStorage.getItem('floework_active_project') || localStorage.getItem('floework_active_workspace') || 'Core Platform';
+                    const storedId = localStorage.getItem('floework_active_project_id') || 'proj-default-1';
+                    const storedSprint = localStorage.getItem('floework_active_sprint') || 'Sprint 1';
                     return {
                         data: {
                             success: true,
                             data: [{
-                                id: 'proj-default-1',
-                                name: 'Core Platform',
-                                sprintName: 'Sprint 1',
+                                id: storedId,
+                                name: storedName,
+                                sprintName: storedSprint,
                                 teamId: 'team-default-1',
                                 createdAt: new Date().toISOString()
                             }]
@@ -421,8 +469,8 @@ export const api = createApi({
         googleLogin: builder.mutation<any, { idToken: string }>({
             queryFn: async () => ({ data: { success: true } }),
         }),
-        setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { workspaceName?: string; projectName?: string; sprintName?: string; useSandbox?: boolean }>({
-            queryFn: async ({ workspaceName = 'Engineering Core', projectName = 'Core Platform', sprintName = 'Sprint 1' }) => {
+        setupWorkspace: builder.mutation<{ success: boolean; data?: any; message?: string }, { workspaceName?: string; projectName?: string; sprintName?: string; useCase?: string; useSandbox?: boolean; seedTasks?: boolean }>({
+            queryFn: async ({ workspaceName = 'Engineering Core', projectName = 'Core Platform', sprintName = 'Sprint 1', useCase = 'software', useSandbox = false, seedTasks = true }) => {
                 const teamId = 'team-' + Date.now();
                 const projId = 'proj-' + Date.now();
 
@@ -442,8 +490,29 @@ export const api = createApi({
                 try {
                     localStorage.setItem('floework_active_workspace', workspaceName);
                     localStorage.setItem('floework_active_project', projectName);
+                    localStorage.setItem('floework_active_project_id', projId);
+                    localStorage.setItem('floework_active_sprint', sprintName);
+                    localStorage.setItem('floework_onboarding_use_case', useCase);
                     localStorage.setItem('floework_onboarding_v1_complete', 'true');
                 } catch {}
+
+                // Save custom initial sprint
+                saveStoredSprints(projId, [
+                    {
+                        id: 'sprint-1',
+                        name: sprintName || 'Sprint 1',
+                        status: 'ACTIVE',
+                        startDate: new Date().toISOString(),
+                        endDate: new Date(Date.now() + 14 * 86400000).toISOString(),
+                        projectId: projId
+                    }
+                ]);
+
+                // Seed appropriate sample tasks for the chosen use case
+                if (seedTasks || useSandbox) {
+                    const sampleTasks = getArchetypeTasks(useCase, projId);
+                    saveStoredTasks(sampleTasks);
+                }
 
                 return { data: { success: true, data: project } };
             },

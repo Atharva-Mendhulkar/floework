@@ -25,16 +25,16 @@ export const RegisterPage = () => {
         setIsLoading(true);
         try {
             await CognitoAuthService.signUp(email, password, name);
-            // Auto sign in new user and take them directly to onboarding
             try {
                 await login(email, password);
-                localStorage.setItem('floework_onboarding_v1_complete', 'false');
-                toast.success("Account created! Let's set up your workspace.");
-                navigate("/onboarding");
             } catch {
-                toast.success("Account created successfully! You can now sign in.");
-                navigate("/login");
+                // In demo/offline fallback, create session directly with user's name
+                CognitoAuthService.createMockSession(email);
+                await login(email, { id: 'usr-' + Date.now(), email, name, role: 'admin' });
             }
+            localStorage.setItem('floework_onboarding_v1_complete', 'false');
+            toast.success("Account created! Let's set up your workspace.");
+            navigate("/onboarding");
         } catch (error: any) {
             toast.error(error.message || "Registration failed");
         } finally {
