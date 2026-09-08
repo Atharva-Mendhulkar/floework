@@ -27,7 +27,7 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "start": "node -r ts-node/register/transpile-only api/server.ts",
+    "start": "node -r ts-node/register/transpile-only api/_server.ts",
     "worker": "node -r ts-node/register/transpile-only workers/sqs-worker.ts",
     "build": "cd apps/web && npm run build",
     "vercel-build": "cd apps/web && npm run build",

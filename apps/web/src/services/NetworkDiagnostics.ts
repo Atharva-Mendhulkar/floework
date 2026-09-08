@@ -29,7 +29,7 @@ class NetworkDiagnostics {
             const telemetry = this.gatherPerformanceMetrics();
             
             // We'll POST to a new backend endpoint
-            await fetch('/api/metrics/diagnostics', {
+            await fetch('/api/metrics', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(telemetry)
@@ -94,7 +94,7 @@ class NetworkDiagnostics {
 
     // This can be called from ConnectionManager to report reconnects
     public reportWebSocketReconnect() {
-        fetch('/api/metrics/diagnostics', {
+        fetch('/api/metrics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event: 'websocket_reconnect' })
