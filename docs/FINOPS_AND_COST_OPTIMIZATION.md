@@ -73,7 +73,7 @@ AWS Usage & Metering
 
 ### Q3: What happens when AWS credits expire?
 * **Non-Production Downsizing**: Staging defaults to zero idle spend optimizations: single-AZ NAT Gateway (`enable_multi_az_nat = false`), single-AZ RDS (`db.t4g.small`), micro Redis (`cache.t4g.micro`), and 2 minimum ECS tasks.
-* **Idle Hibernation Mode**: When the platform is not actively in use, running the hibernation procedure scales compute to 0 tasks and stops or snapshots non-essential instances, dropping monthly idle run-rate from ~$160/mo to <$15/mo (S3 storage and Route 53 DNS only).
+* **Non-Production Scale-Down Scenario**: When staging is not actively in use, running the off-hours scale-down procedure scales compute tasks to 0 and stops or snapshots non-production database instances (with explicit handling of RDS stop/start limitations), targeting an estimated scenario that drops monthly staging idle burn from ~$130–$160/mo to <$15/mo (retaining S3 storage, Route 53 DNS, and KMS keys only).
 * **Graviton3 Efficiency**: Workloads utilize AWS Graviton ARM64 architecture (`t4g` instances), delivering 20% lower hourly costs than x86_64 counterparts.
 
 ### Q4: Which resources are costing money while Floework is idle?

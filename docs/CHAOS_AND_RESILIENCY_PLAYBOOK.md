@@ -7,7 +7,7 @@ Floework employs proactive chaos engineering and automated fault injection to pr
 Our core reliability tenets:
 1. **Zero Unhandled 500 Errors**: All external dependencies (Redis, Amazon Bedrock, Stripe, SES) are wrapped in timeouts, exponential backoffs, and circuit breakers with deterministic fallbacks.
 2. **Graceful Service Degradation**: The core task execution engine remains functional even when telemetry, caching, or AI narrative synthesis tiers are fully degraded.
-3. **Automated Recovery**: Compute tasks auto-scale and heal; database failover resolves in under 120 seconds without human intervention.
+3. **Automated Recovery**: Compute tasks auto-scale and heal; database failover targets resolution in under 120 seconds without human intervention.
 4. **Controlled Blast Radius**: Chaos experiments run during designated maintenance windows or against staging environments with automated rollback triggers.
 
 ---
@@ -43,7 +43,7 @@ Our core reliability tenets:
   - Client SPA renders executive summary cleanly without blank state.
 
 ### Experiment 3: RDS PostgreSQL Multi-AZ Standby Failover
-- **Hypothesis**: If the primary database instance reboots or suffers hardware failure, synchronous Multi-AZ failover will promote the standby replica in under 120s, and application connection pools will reconnect with exponential backoff.
+- **Hypothesis**: If the primary database instance reboots or suffers hardware failure, synchronous Multi-AZ failover will promote the standby replica within the design target (< 120s), and application connection pools will reconnect with exponential backoff.
 - **Fault Mechanism**: Execute `aws rds reboot-db-instance --db-instance-identifier floework-prod-db --force-failover`.
 - **Verification**:
   - ALB health probes maintain container availability.

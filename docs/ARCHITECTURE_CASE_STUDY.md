@@ -143,7 +143,9 @@ WHERE id = $3 AND version = $4;
 If another developer modified the task concurrently, 0 rows match. The API rolls back the transaction, records audit metadata in `concurrency_conflicts`, and returns `HTTP 409 Conflict` (`STALE_UPDATE`). The frontend SPA applies randomized exponential jitter (50–200ms) before re-fetching the state, eliminating deadlocks.
 
 ### Asynchronous SQS FIFO Decoupling
-To prevent heavy operations (such as productivity stability scoring and Amazon Bedrock AI synthesis) from blocking the HTTP request path, we decoupled execution using **Amazon SQS FIFO** queues (`focus-completion.fifo`, `audit-logs.fifo`, `notifications.fifo`). The API handler responds in **< 15ms** with `HTTP 202 Accepted`. Background workers process messages via 20-second long polling and automatically isolate poison pills to a Dead-Letter Queue (`DLQ.fifo`) after 3 attempts.
+To prevent heavy operations (such as productivity stability scoring and Amazon Bedrock AI synthesis) from blocking the HTTP request path, we decoupled execution using **Amazon SQS FIFO** queues (`focus-completion.fifo`, `audit-logs.fifo`, `notifications.fifo`). SQS FIFO provides ordered, deduplicated delivery semantics, while workers use idempotent processing to achieve effectively-once application behavior. Furthermore, SQS has no continuously running broker or cluster to pay for (costs are primarily request- and data-based). The API handler responds in **< 15ms** with `HTTP 202 Accepted`. Background workers process messages via 20-second long polling and automatically isolate poison pills to a Dead-Letter Queue (`DLQ.fifo`) after 3 attempts.
+
+Amazon Bedrock integrates natively with the AWS IAM security model and is accessed through AWS-managed regional endpoints (with VPC PrivateLink endpoints available if dedicated private connectivity without internet routing is required). Wrapped in an embedded Opossum circuit breaker, any AI throttling or latency trips immediately yield deterministic statistical narratives without request failure.
 
 ### Real-Time WebSockets via API Gateway & Redis Pub/Sub
 Rather than binding stateful WebSockets to ECS containers, connection management is offloaded to **Amazon API Gateway WebSockets**, tracking connection IDs in **Amazon DynamoDB** with TTL cleanup. Workspace-level event fan-out is broadcast across ECS tasks via **Amazon ElastiCache Redis Pub/Sub**, allowing tasks to scale horizontally without state leakage.
@@ -281,7 +283,7 @@ To avoid cloud bill inflation and control infrastructure costs:
 * **AWS Cost Anomaly Detection**: Subscribed to daily anomaly monitors alerting on unexpected service spend spikes > $10 (staging) or > $20 (production).
 * **Single-AZ NAT Consolidation**: Staging uses a single-AZ NAT Gateway, saving ~$32.85/month compared to dual-AZ NAT.
 * **S3 Lifecycle Tiering**: Unaccessed assets transition to S3 Intelligent-Tiering after 30 days, noncurrent versions transition to Glacier IR after 30 days, and noncurrent versions permanently purge after 90 days.
-* **Off-Hours Hibernation**: Automated runbook scales compute to 0 and pauses RDS in staging, dropping staging idle burn from ~$160/mo to <$15/mo.
+* **Scheduled Non-Production Scale-Down**: Automated runbook scales staging ECS compute to 0 off-hours with explicit handling of RDS stop/start limitations, targeting an estimated scenario dropping staging idle burn from ~$160/mo to <$15/mo.
 
 ---
 

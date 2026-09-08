@@ -297,7 +297,7 @@ export function auditResiliencyAndDisasterRecovery(options = {}) {
     name: 'Production RDS Multi-AZ Standby Deployed',
     severity: 'CRITICAL',
     status: multiAz ? 'PASSED' : 'FAILED',
-    details: 'Synchronous replication to standby replica in secondary AZ with automated failover < 120s'
+    details: 'Synchronous replication to standby replica in secondary AZ with automated failover target < 120s'
   })
 
   // Check 5.2: Automated Snapshot Retention >= 7 Days

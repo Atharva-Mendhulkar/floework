@@ -49,7 +49,7 @@ This runbook establishes the authoritative operational protocols, recovery objec
 - **Expected Downtime**: < 2 Minutes
 - **Automated Behavior**:
   1. **ALB**: Automatically routes traffic away from unhealthy targets in us-east-1a to healthy Fargate tasks in us-east-1b.
-  2. **RDS Multi-AZ**: Amazon RDS detects primary host degradation, promotes the us-east-1b standby to primary, and updates the canonical DNS record (`module.database.db_instance_address`). Total failover duration: 60–120 seconds.
+  2. **RDS Multi-AZ**: Amazon RDS detects primary host degradation, promotes the us-east-1b standby to primary, and updates the canonical DNS record (`module.database.db_instance_address`). Total failover duration design target: 60–120 seconds.
   3. **ElastiCache Redis**: Automatic failover promotes replica node in us-east-1b to primary cluster master.
   4. **ECS Auto-Scaler**: Detects task capacity deficit and spawns replacement tasks in remaining healthy private app subnets.
 - **Engineer Action Required**:

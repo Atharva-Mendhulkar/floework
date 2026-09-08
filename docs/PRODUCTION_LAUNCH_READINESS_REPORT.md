@@ -63,7 +63,7 @@ To maintain defensible engineering credibility and distinguish simulated vs live
 | | `COM-02` | ECS Target Tracking Auto-Scaling (CPU 70% & RAM 80%) | **`AWS_VALIDATED`** | [`terraform/modules/compute/`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/compute/), dynamic task scale out/in |
 | **5. Object Storage** | `STO-01` | S3 Private Storage with CloudFront OAC | **`AWS_VALIDATED`** | [`terraform/modules/storage/`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/storage/), Block Public Access, SigV4 URLs |
 | | `STO-02` | S3 Intelligent-Tiering & Noncurrent Lifecycle Rules | **`VALIDATED`** | [`terraform/modules/storage/main.tf`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/storage/main.tf), 30d auto-tier, 90d expiration |
-| **6. Asynchronous Messaging**| `MSG-01` | Amazon SQS FIFO Queues with Dead-Letter Queues (DLQ) | **`AWS_VALIDATED`** | [`terraform/modules/queue/`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/queue/), exactly-once ordered dispatch |
+| **6. Asynchronous Messaging**| `MSG-01` | Amazon SQS FIFO Queues with Dead-Letter Queues (DLQ) | **`AWS_VALIDATED`** | [`terraform/modules/queue/`](file:///home/topfloorboss/Downloads/floework-main/terraform/modules/queue/), ordered deduplicated delivery with idempotent worker processing |
 | | `MSG-02` | Worker Poison Pill Quarantine & Isolation | **`FAILURE_TESTED`** | [`workers/sqs-worker.ts`](file:///home/topfloorboss/Downloads/floework-main/workers/sqs-worker.ts), [`test/api/sqs_phase8.test.ts`](file:///home/topfloorboss/Downloads/floework-main/test/api/sqs_phase8.test.ts) |
 | **7. Artificial Intelligence**| `AI-01` | Amazon Bedrock Claude 3 Haiku AI Integration | **`AWS_VALIDATED`** | [`api/_lib/bedrock.ts`](file:///home/topfloorboss/Downloads/floework-main/api/_lib/bedrock.ts), IAM SigV4 `bedrock:InvokeModel` |
 | | `AI-02` | Circuit Breaker (Opossum) with Deterministic Fallback | **`FAILURE_TESTED`** | [`api/analytics/narrative.ts`](file:///home/topfloorboss/Downloads/floework-main/api/analytics/narrative.ts), zero 500s on AI throttle/timeout |
@@ -172,7 +172,7 @@ Postmortem
   * ElastiCache Redis is right-sized to `cache.t4g.micro` in non-prod.
   * S3 Intelligent-Tiering automatically moves objects unaccessed for 30 days to infrequent access tiers, and expires noncurrent versions after 90 days.
 * **Shutdown & Hibernation Procedure**:
-  * Off-hours hibernation SOP scales ECS desired task count to 0 and pauses RDS compute in staging, reducing monthly idle burn rate from ~$160/mo to <$15/mo.
+  * Off-hours scale-down SOP scales staging ECS task count to 0 with explicit handling of RDS stop/start limitations, targeting an estimated scenario reducing monthly idle burn rate from ~$160/mo to <$15/mo in staging.
 
 ---
 
@@ -337,7 +337,7 @@ sequenceDiagram
 | Decision Area | Selected Architecture | Alternative Considered | Technical Tradeoff Rationale |
 | :--- | :--- | :--- | :--- |
 | **Compute Orchestration** | **AWS ECS Fargate** | Kubernetes (Amazon EKS) | Fargate eliminates node pool management, control plane upgrades, and OS patching. For a modular monolith with 2 services, EKS introduces unnecessary control plane cost ($73/mo minimum) and operational complexity without performance benefits. |
-| **Asynchronous Messaging** | **Amazon SQS FIFO** | Apache Kafka / Amazon MSK | SQS FIFO provides zero-maintenance, serverless, exactly-once ordered delivery with built-in dead-letter queues. Kafka/MSK requires cluster provisioning, ZooKeeper/KRaft quorum management, and partition rebalancing at 10x higher idle cost ($150+/mo). |
+| **Asynchronous Messaging** | **Amazon SQS FIFO** | Apache Kafka / Amazon MSK | SQS FIFO provides ordered, deduplicated delivery semantics with built-in dead-letter queues, while workers use idempotent processing to achieve effectively-once application behavior. SQS has no continuously running broker/cluster to pay for (costs are primarily request/data based), whereas Kafka/MSK requires cluster provisioning, ZooKeeper/KRaft quorum management, and partition rebalancing at 10x higher baseline cost ($150+/mo). |
 | **Relational Database** | **Amazon RDS PostgreSQL 16 Multi-AZ** | Aurora Serverless v2 | Standard RDS PostgreSQL provides predictable reserved pricing, synchronous cross-AZ physical replication, and native Postgres extension compatibility. Aurora Serverless v2 scaling increments introduce burst pricing unpredictability for project workloads. |
 | **Egress Networking** | **Single NAT (Staging) / Dual NAT (Prod)** | AWS PrivateLink VPC Endpoints | VPC Interface Endpoints charge $0.01/hr per AZ per endpoint plus data charges across 6 services (~$90/mo fixed). A single NAT Gateway in staging minimizes idle spend while dual NAT in production guarantees zone-redundant egress. |
 | **Session Authentication** | **Stateless Cognito RS256 JWKS** | Stateful Redis Sessions | Client-side RS256 token verification requires zero database or cache lookups per request, scaling linearly without Redis dependency. Public key caching refreshes every 24 hours via memoized JWKS fetchers. |

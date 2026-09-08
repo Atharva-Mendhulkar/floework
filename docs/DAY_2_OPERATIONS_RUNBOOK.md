@@ -76,7 +76,7 @@ This runbook establishes standard operating procedures (SOPs) for operating, mai
 
 ### 5. RDS PostgreSQL Multi-AZ Failover & Reconnection
 * **Symptom**: CloudWatch alarm `rds_high_connections` or transient database query timeouts.
-* **Behavior**: In a Multi-AZ deployment, AWS automatically promotes the synchronous standby in the second AZ (< 120 seconds). CNAME switches automatically.
+* **Behavior**: In a Multi-AZ deployment, AWS automatically promotes the synchronous standby in the second AZ (architectural design target < 120 seconds). CNAME switches automatically.
 * **Application Recovery**: The `pg-pool` client in `api/_lib/db.ts` utilizes exponential backoff retry wrappers (`executeWithRetry`), catching `ECONNRESET` and re-establishing connections automatically once DNS updates.
 * **Manual Failover Drill (GameDay)**:
   ```bash

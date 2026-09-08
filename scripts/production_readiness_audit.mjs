@@ -256,7 +256,7 @@ export function evaluateProductionReadiness(options = {}) {
     status: READINESS_STATUS.AWS_VALIDATED,
     verified: fileMatches('terraform/modules/queue/main.tf', 'fifo_queue') &&
               fileMatches('terraform/modules/queue/main.tf', 'maxReceiveCount'),
-    detail: 'FIFO queues guarantee exactly-once processing order with automated quarantine to DLQ'
+    detail: 'FIFO queues provide ordered deduplicated delivery semantics with automated quarantine to DLQ'
   })
 
   checks.push({

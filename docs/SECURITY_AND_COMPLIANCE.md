@@ -58,7 +58,7 @@ Floework is continuously validated against the 5 primary CIS AWS Foundations Ben
 - **CIS-4.5**: Dedicated S3 audit bucket with 365-day compliance retention policy and Standard-IA archival at 90 days.
 
 ### Domain 5: Resiliency & High Availability (CIS 5.x)
-- **CIS-5.1**: Amazon RDS PostgreSQL Multi-AZ synchronous standby deployment with automatic failover in under 120 seconds.
+- **CIS-5.1**: Amazon RDS PostgreSQL Multi-AZ synchronous standby deployment with automatic failover target < 120 seconds.
 - **CIS-5.2**: Automated database snapshot retention configured for 30 days with continuous write-ahead log (WAL) archiving.
 - **CIS-5.3**: Production networking provisions redundant NAT Gateways per Availability Zone (`enable_multi_az_nat = true`) to prevent single-AZ egress failure.
 
