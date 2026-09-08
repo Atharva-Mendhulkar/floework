@@ -30,15 +30,28 @@ function FloatingAvatar({
             }}
         >
             <div className="relative w-[104px] h-[104px]">
-                {/* Mascot + its baked-in colored circle */}
+
+                {/* Mascot image */}
                 <img
                     src={img}
                     alt="floework teammate"
                     className="w-full h-full object-contain"
+                    loading="eager"
+                    decoding="async"
                 />
-                {/* Floating cursor arrow */}
+
+                {/* Circular ring ON TOP of the image */}
                 <div
-                    className="absolute -bottom-1 -right-3 w-7 h-7 drop-shadow-md"
+                    className="absolute inset-[3px] rounded-full pointer-events-none"
+                    style={{
+                        border: `3px solid ${color}`,
+                        boxShadow: `0 4px 16px ${color}22`,
+                    }}
+                />
+
+                {/* Cursor arrow, kept close to the circle */}
+                <div
+                    className="absolute bottom-[2px] right-[-2px] w-6 h-6 drop-shadow-md"
                     style={{
                         transform: `rotate(${rotate}deg)`,
                     }}
@@ -57,6 +70,7 @@ function FloatingAvatar({
                         />
                     </svg>
                 </div>
+
             </div>
         </div>
     );
@@ -204,8 +218,9 @@ export default function LandingPage() {
                     rotate={-45}
                     color="#3b82f6"
                     top="15%"
-                    left="8%"
+                    left="9%"
                 />
+
                 {/* Top Right */}
                 <FloatingAvatar
                     img="/assets/two.png"
@@ -214,8 +229,9 @@ export default function LandingPage() {
                     rotate={45}
                     color="#10b981"
                     top="16%"
-                    right="8%"
+                    right="9%"
                 />
+
                 {/* Bottom Left */}
                 <FloatingAvatar
                     img="/assets/three.png"
@@ -224,8 +240,9 @@ export default function LandingPage() {
                     rotate={-110}
                     color="#8b5cf6"
                     bottom="11%"
-                    left="12%"
+                    left="13%"
                 />
+
                 {/* Bottom Right */}
                 <FloatingAvatar
                     img="/assets/four.png"
@@ -234,7 +251,7 @@ export default function LandingPage() {
                     rotate={110}
                     color="#f43f5e"
                     bottom="13%"
-                    right="12%"
+                    right="13%"
                 />
             </div>
 
