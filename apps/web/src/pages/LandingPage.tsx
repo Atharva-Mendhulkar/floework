@@ -30,7 +30,7 @@ function FloatingAvatar({
 }: FloatingAvatarProps) {
     return (
         <div
-            className="absolute z-10 hidden sm:flex pointer-events-auto cursor-pointer"
+            className="absolute z-10 hidden sm:flex pointer-events-none"
             style={{
                 top,
                 left,
@@ -38,35 +38,23 @@ function FloatingAvatar({
                 bottom,
             }}
         >
-            {/* ONE rigid animated object */}
+            {/* Floating wrapper: ONLY this moves */}
             <div
-                className="relative w-[88px] h-[88px] flex items-center justify-center"
+                className="relative w-[88px] h-[88px]"
                 style={{
                     animation: `${anim} 6s ease-in-out infinite`,
                     animationDelay: delay,
                     willChange: "transform",
-                    transform: "translate3d(0, 0, 0)",
                 }}
             >
-                {/* Circular background */}
+                {/* ONE clean circle */}
                 <div
                     className="
                         absolute inset-0
                         rounded-full
                         bg-white
-                        shadow-[0_8px_24px_rgba(15,23,42,0.12)]
-                    "
-                />
-
-                {/* Subtle surface depth */}
-                <div
-                    className="
-                        absolute inset-[2px]
-                        rounded-full
-                        bg-gradient-to-br
-                        from-white
-                        via-white
-                        to-slate-100
+                        border border-slate-200
+                        shadow-[0_8px_24px_rgba(15,23,42,0.10)]
                     "
                 />
 
@@ -75,7 +63,8 @@ function FloatingAvatar({
                     src={img}
                     alt="floework teammate"
                     className="
-                        relative
+                        absolute
+                        inset-0
                         z-10
                         w-full
                         h-full
@@ -83,39 +72,28 @@ function FloatingAvatar({
                         pointer-events-none
                     "
                     style={{
-                        transform: "scale(1.36)",
-                        transformOrigin: "center center",
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden",
+                        transform: "scale(1.12)",
+                        transformOrigin: "center",
                     }}
                     loading="eager"
                     decoding="async"
                     draggable={false}
                 />
 
-                {/* Very subtle highlight */}
+                {/* Arrow, intentionally outside */}
                 <div
                     className="
                         absolute
                         z-20
-                        top-[7px]
-                        left-[14px]
-                        w-[40px]
-                        h-[12px]
-                        rounded-full
-                        bg-white/40
-                        blur-[4px]
+                        bottom-[-7px]
+                        right-[-7px]
+                        w-6
+                        h-6
                         pointer-events-none
                     "
-                />
-
-                {/* Cursor */}
-                <div
-                    className="absolute bottom-[-2px] right-[-2px] w-6 h-6 z-30 pointer-events-none"
                     style={{
                         transform: `rotate(${rotate}deg)`,
-                        filter:
-                            "drop-shadow(0 3px 5px rgba(15,23,42,0.22))",
+                        filter: "drop-shadow(0 3px 4px rgba(15,23,42,0.20))",
                     }}
                 >
                     <svg
@@ -127,7 +105,7 @@ function FloatingAvatar({
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
                             fill="#007dff"
-                            stroke="#ffffff"
+                            stroke="white"
                             strokeWidth="2"
                             strokeLinejoin="round"
                         />
@@ -171,28 +149,28 @@ export default function LandingPage() {
 
         @keyframes swayA {
             0%, 100% {
-                transform: translate3d(0, 0, 0);
+                transform: translateY(0);
             }
             50% {
-                transform: translate3d(0, -7px, 0);
+                transform: translateY(-5px);
             }
         }
 
         @keyframes swayB {
             0%, 100% {
-                transform: translate3d(0, 0, 0);
+                transform: translateY(0);
             }
             50% {
-                transform: translate3d(0, 7px, 0);
+                transform: translateY(5px);
             }
         }
 
         @keyframes swayC {
             0%, 100% {
-                transform: translate3d(0, 0, 0);
+                transform: translateY(0);
             }
             50% {
-                transform: translate3d(5px, -5px, 0);
+                transform: translateY(-4px);
             }
         }
 
