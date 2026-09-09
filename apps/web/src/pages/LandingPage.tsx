@@ -16,6 +16,7 @@ interface FloatingAvatarProps {
     bottom?: string;
     anim: string;
     rotate: number;
+    color?: string;
 }
 
 function FloatingAvatar({
@@ -27,6 +28,7 @@ function FloatingAvatar({
     bottom,
     anim,
     rotate,
+    color,
 }: FloatingAvatarProps) {
     return (
         <div
@@ -40,7 +42,7 @@ function FloatingAvatar({
         >
             {/* Floating wrapper: ONLY this moves */}
             <div
-                className="relative w-[88px] h-[88px]"
+                className="relative w-[72px] h-[72px]"
                 style={{
                     animation: `${anim} 6s ease-in-out infinite`,
                     animationDelay: delay,
@@ -72,7 +74,7 @@ function FloatingAvatar({
                         pointer-events-none
                     "
                     style={{
-                        transform: "scale(1.12)",
+                        transform: "scale(1.15)",
                         transformOrigin: "center",
                     }}
                     loading="eager"
@@ -85,8 +87,8 @@ function FloatingAvatar({
                     className="
                         absolute
                         z-20
-                        bottom-[-7px]
-                        right-[-7px]
+                        bottom-[-6px]
+                        right-[-6px]
                         w-6
                         h-6
                         pointer-events-none
@@ -104,7 +106,7 @@ function FloatingAvatar({
                     >
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill="#007dff"
+                            fill={color || "#007dff"}
                             stroke="white"
                             strokeWidth="2"
                             strokeLinejoin="round"
@@ -271,6 +273,7 @@ export default function LandingPage() {
                     delay="0s"
                     anim="swayC"
                     rotate={-45}
+                    color="#007dff"
                     top="15%"
                     left="9%"
                 />
@@ -282,6 +285,7 @@ export default function LandingPage() {
                     delay="1s"
                     anim="swayA"
                     rotate={45}
+                    color="#10b981"
                     top="16%"
                     right="9%"
                 />
@@ -293,6 +297,7 @@ export default function LandingPage() {
                     delay="0.5s"
                     anim="swayB"
                     rotate={-110}
+                    color="#8b5cf6"
                     bottom="11%"
                     left="13%"
                 />
@@ -304,6 +309,7 @@ export default function LandingPage() {
                     delay="1.5s"
                     anim="swayC"
                     rotate={110}
+                    color="#ef4444"
                     bottom="13%"
                     right="13%"
                 />
