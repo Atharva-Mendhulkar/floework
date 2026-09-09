@@ -7,14 +7,16 @@ import {
     useUpdateWorkspaceMemberMutation,
     useRemoveWorkspaceMemberMutation,
     useDeleteWorkspaceMutation,
-    useInviteToTeamMutation
+    useInviteToTeamMutation,
+    useGetPendingInvitesQuery,
+    useRevokeInviteMutation
 } from "@/store/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, UserPlus, Trash2, LogOut, Settings, MoreVertical, Copy, Check } from "lucide-react";
+import { User, Shield, UserPlus, Trash2, LogOut, Settings, MoreVertical, Copy, Check, Clock, Link as LinkIcon, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -22,24 +24,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { InviteToWorkspaceModal } from "@/components/InviteToWorkspaceModal";
 
 const WorkspaceSettingsPage = () => {
     const { user } = useAuth();
     const { data: teamsRes, isLoading: teamsLoading } = useGetMyTeamsQuery();
     const activeTeam = teamsRes?.data?.[0]; // Default to first for now, can be improved with a switcher
     const { data: membersRes, isLoading: membersLoading } = useGetWorkspaceMembersQuery(activeTeam?.id || "");
+    const { data: pendingRes, refetch: refetchPending } = useGetPendingInvitesQuery(activeTeam?.id || "", {
+        skip: !activeTeam?.id
+    });
     
     const [updateWorkspace] = useUpdateWorkspaceMutation();
     const [updateRole] = useUpdateWorkspaceMemberMutation();
     const [removeMember] = useRemoveWorkspaceMemberMutation();
     const [deleteWorkspace] = useDeleteWorkspaceMutation();
     const [inviteMember] = useInviteToTeamMutation();
+    const [revokeInvite] = useRevokeInviteMutation();
 
     const [wsName, setWsName] = useState(activeTeam?.name || "");
     const [inviteEmail, setInviteEmail] = useState("");
     const [lastInvite, setLastInvite] = useState<{ email: string; token: string } | null>(null);
     const [copied, setCopied] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
+    const pendingInvites = pendingRes?.data || [];
     const isAdmin = membersRes?.data?.find(m => m.user_id === user?.id)?.role === "admin";
 
     const handleUpdateName = async () => {
@@ -167,54 +176,14 @@ const WorkspaceSettingsPage = () => {
                             <CardDescription>People with access to this workspace</CardDescription>
                         </div>
                         {isAdmin && (
-                            <div className="flex gap-2">
-                                <Input 
-                                    placeholder="Enter invitee email (for tracking)" 
-                                    className="h-9 w-72 text-sm"
-                                    value={inviteEmail}
-                                    onChange={(e) => setInviteEmail(e.target.value)}
-                                />
-                                <Button onClick={handleInvite} size="sm" className="bg-[#007dff] hover:bg-[#0066cc]">
-                                    <UserPlus size={14} className="mr-2" />
-                                    Generate Token
-                                </Button>
-                            </div>
+                            <Button onClick={() => setIsInviteModalOpen(true)} size="sm" className="bg-[#007dff] hover:bg-[#0066cc] text-white">
+                                <UserPlus size={14} className="mr-2" />
+                                Invite Member
+                            </Button>
                         )}
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {/* Latest Invite Banner */}
-                    {lastInvite && (
-                        <div className="bg-[#007dff]/5 border-b border-[#007dff]/20 p-4 animate-in fade-in slide-in-from-top-2">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-bold text-[#007dff]">New Token Generated for {lastInvite.email}</p>
-                                    <p className="text-xs text-slate-500">Send this token to the user so they can join during onboarding.</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <code className="bg-white border text-[#007dff] px-3 py-1.5 rounded-lg font-mono text-sm font-bold shadow-sm">
-                                        {lastInvite.token}
-                                    </code>
-                                    <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        className="h-9 w-9 text-[#007dff] border-[#007dff]/30 hover:bg-[#007dff]/10"
-                                        onClick={() => copyToClipboard(lastInvite.token)}
-                                    >
-                                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                                    </Button>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="text-slate-400 text-xs"
-                                        onClick={() => setLastInvite(null)}
-                                    >
-                                        Close
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                     <div className="divide-y divide-slate-100">
                         {membersRes?.data?.map((member) => (
                             <div key={member.user_id} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
@@ -262,6 +231,93 @@ const WorkspaceSettingsPage = () => {
                 </CardContent>
             </Card>
 
+            {/* Pending Invitations Section */}
+            {isAdmin && (
+                <Card className="border-slate-200/60 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Clock size={18} className="text-[#007dff]" />
+                                    Pending Invitations
+                                </CardTitle>
+                                <CardDescription>Open invites awaiting team member acceptance</CardDescription>
+                            </div>
+                            <Button 
+                                onClick={() => setIsInviteModalOpen(true)} 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs border-slate-200 text-slate-700"
+                            >
+                                <UserPlus size={13} className="mr-1.5" />
+                                New Invite
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {pendingInvites.length === 0 ? (
+                            <div className="p-8 text-center text-slate-400 text-xs">
+                                No pending invitations. All invited members have joined!
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100">
+                                {pendingInvites.map((inv: any) => {
+                                    const link = inv.invite_link || `${window.location.origin}/join?token=${inv.token}`;
+                                    return (
+                                        <div key={inv.id || inv.token} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
+                                            <div className="min-w-0 flex-1 pr-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-semibold text-slate-900 truncate">{inv.email}</span>
+                                                    <Badge variant="outline" className="text-[10px] py-0 px-2 font-medium bg-white">
+                                                        {inv.role || "Member"}
+                                                    </Badge>
+                                                    <Badge variant="secondary" className="text-[10px] py-0 px-2 font-medium bg-amber-50 text-amber-700 border-amber-200">
+                                                        Pending
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-slate-400 mt-1 font-mono">
+                                                    <span>Token: {inv.token}</span>
+                                                    <span>•</span>
+                                                    <span>Expires in 7 days</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 text-xs border-slate-200 text-[#007dff] hover:bg-blue-50"
+                                                    onClick={() => copyToClipboard(link)}
+                                                >
+                                                    <Copy size={13} className="mr-1.5" />
+                                                    Copy Link
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 text-xs text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                                    onClick={async () => {
+                                                        try {
+                                                            await revokeInvite({ teamId: activeTeam.id, inviteId: inv.id || inv.token }).unwrap();
+                                                            toast.success("Invitation revoked");
+                                                            refetchPending();
+                                                        } catch {
+                                                            toast.error("Failed to revoke invitation");
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 size={13} className="mr-1" />
+                                                    Revoke
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Danger Zone */}
             {isAdmin && (
                 <Card className="border-red-100 bg-red-50/30 overflow-hidden">
@@ -292,6 +348,15 @@ const WorkspaceSettingsPage = () => {
                     </CardContent>
                 </Card>
             )}
+
+            <InviteToWorkspaceModal
+                isOpen={isInviteModalOpen}
+                onClose={() => {
+                    setIsInviteModalOpen(false);
+                    refetchPending();
+                }}
+                teamId={activeTeam.id}
+            />
         </div>
     );
 };

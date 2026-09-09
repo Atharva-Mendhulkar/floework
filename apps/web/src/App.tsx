@@ -49,6 +49,7 @@ import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 // Other Protected/Shared Pages (Lazy)
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const SharedNarrativePage = lazy(() => import("@/pages/SharedNarrativePage"));
+const JoinWorkspacePage = lazy(() => import("./pages/JoinWorkspacePage"));
 
 const App = () => (
   <ErrorBoundary>
@@ -75,6 +76,8 @@ const App = () => (
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
                     <Route path="/narrative/shared/:token" element={<SharedNarrativePage />} />
+                    <Route path="/join" element={<JoinWorkspacePage />} />
+                    <Route path="/join/:token" element={<JoinWorkspacePage />} />
 
                     {/* Auth */}
                     <Route path="/login" element={<LoginPage />} />

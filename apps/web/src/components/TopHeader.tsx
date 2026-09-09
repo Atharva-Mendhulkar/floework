@@ -8,6 +8,7 @@ import { ProjectSelector } from "./ProjectSelector";
 import { SprintSelector } from "./SprintSelector";
 import { ManageWorkspaceModal } from "./ManageWorkspaceModal";
 import { JoinWorkspaceModal } from "./JoinWorkspaceModal";
+import { InviteToWorkspaceModal } from "./InviteToWorkspaceModal";
 import { UserAvatar } from "./UserAvatar";
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ const TopHeader = () => {
 
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Helper for time ago
   const getTimeAgo = (dateStr: string) => {
@@ -116,6 +118,16 @@ const TopHeader = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Invite button */}
+        <button
+          onClick={() => setIsInviteModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007dff] hover:bg-[#0066cc] text-white text-xs font-semibold rounded-xl shadow-sm transition-all hover:shadow active:scale-95 ml-1 mr-1"
+          title="Invite members to workspace"
+        >
+          <UserPlus size={13} />
+          <span>Invite</span>
+        </button>
+
         {/* Divider */}
         <div className="w-px h-5 bg-slate-200 mx-1" />
 
@@ -142,6 +154,10 @@ const TopHeader = () => {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setIsInviteModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
+              <UserPlus className="mr-2 h-4 w-4 text-[#007dff]" />
+              <span className="text-[#007dff]">Invite Members</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/workspace/settings")} className="cursor-pointer text-slate-700 font-medium py-2">
               <Users className="mr-2 h-4 w-4" />
               <span>Workspace Settings</span>
@@ -161,6 +177,7 @@ const TopHeader = () => {
 
       <ManageWorkspaceModal isOpen={isManageModalOpen} onClose={() => setIsManageModalOpen(false)} />
       <JoinWorkspaceModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} />
+      <InviteToWorkspaceModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
     </header>
   );
 };

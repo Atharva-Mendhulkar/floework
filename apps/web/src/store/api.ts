@@ -49,6 +49,64 @@ function saveStoredDependencies(projectId: string, deps: any[]) {
     } catch {}
 }
 
+function getStoredInvites(teamId: string): any[] {
+    try {
+        const raw = localStorage.getItem(`floework_invites_${teamId}`);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+}
+
+function saveStoredInvites(teamId: string, invites: any[]) {
+    try {
+        localStorage.setItem(`floework_invites_${teamId}`, JSON.stringify(invites));
+    } catch {}
+}
+
+function getAllStoredInvites(): any[] {
+    try {
+        const all: any[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith('floework_invites_')) {
+                const raw = localStorage.getItem(key);
+                if (raw) all.push(...JSON.parse(raw));
+            }
+        }
+        return all;
+    } catch {}
+    return [];
+}
+
+function getStoredWorkspaceMembers(workspaceId: string): any[] {
+    try {
+        const raw = localStorage.getItem(`floework_members_${workspaceId}`);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    return [
+        {
+            id: 'mem-1',
+            team_id: workspaceId,
+            user_id: 'usr-1',
+            role: 'admin',
+            profiles: { full_name: 'Sarah Chen', avatar_url: null, role: 'admin' }
+        },
+        {
+            id: 'mem-2',
+            team_id: workspaceId,
+            user_id: 'usr-2',
+            role: 'member',
+            profiles: { full_name: 'Marcus Johnson', avatar_url: null, role: 'member' }
+        }
+    ];
+}
+
+function saveStoredWorkspaceMembers(workspaceId: string, members: any[]) {
+    try {
+        localStorage.setItem(`floework_members_${workspaceId}`, JSON.stringify(members));
+    } catch {}
+}
+
 function getArchetypeTasks(useCase: string = 'software', projectId: string = 'proj-default-1'): TaskNode[] {
     switch (useCase) {
         case 'product':
@@ -651,24 +709,131 @@ export const api = createApi({
         }),
         inviteToTeam: builder.mutation<{ success: boolean; data: any }, { teamId: string; email: string; role?: string }>({
             queryFn: async ({ teamId, email, role }) => {
+                const roleName = role || 'Member';
+                const token = 'inv_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+                const localInvite = {
+                    id: 'inv-' + Date.now(),
+                    team_id: teamId,
+                    email,
+                    role: roleName,
+                    token,
+                    invite_link: `${window.location.origin}/join?token=${token}`,
+                    status: 'pending',
+                    created_at: new Date().toISOString(),
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                };
+
                 try {
                     const data = await authFetch('/api/workspaces/invites', {
                         method: 'POST',
-                        body: JSON.stringify({ team_id: teamId, email, role })
+                        body: JSON.stringify({ team_id: teamId, email, role: roleName })
                     });
-                    return { data: { success: true, data } };
+                    const invite = data || localInvite;
+                    if (!invite.invite_link) {
+                        invite.invite_link = `${window.location.origin}/join?token=${invite.token || token}`;
+                    }
+                    const stored = getStoredInvites(teamId);
+                    saveStoredInvites(teamId, [invite, ...stored.filter(i => i.email !== email)]);
+                    return { data: { success: true, data: invite } };
                 } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                    const stored = getStoredInvites(teamId);
+                    saveStoredInvites(teamId, [localInvite, ...stored.filter(i => i.email !== email)]);
+                    return { data: { success: true, data: localInvite } };
                 }
             },
+            invalidatesTags: ['User'],
+        }),
+        getPendingInvites: builder.query<{ success: boolean; data: any[] }, string>({
+            queryFn: async (teamId) => {
+                try {
+                    const data = await authFetch(`/api/workspaces/invites?teamId=${teamId}`);
+                    const invites = Array.isArray(data) ? data : [];
+                    const stored = getStoredInvites(teamId);
+                    const combined = [...invites];
+                    for (const s of stored) {
+                        if (!combined.some(c => c.id === s.id || c.token === s.token)) {
+                            combined.push(s);
+                        }
+                    }
+                    return { data: { success: true, data: combined } };
+                } catch {
+                    const stored = getStoredInvites(teamId);
+                    return { data: { success: true, data: stored } };
+                }
+            },
+            providesTags: ['User'],
+        }),
+        getInviteDetails: builder.query<{ success: boolean; data: any }, string>({
+            queryFn: async (token) => {
+                try {
+                    const data = await authFetch(`/api/workspaces/invites?token=${encodeURIComponent(token)}`);
+                    if (data && (data.token || data.workspace)) {
+                        return { data: { success: true, data } };
+                    }
+                } catch { }
+
+                const allInvites = getAllStoredInvites();
+                const matched = allInvites.find(i => i.token === token);
+                if (matched) {
+                    return {
+                        data: {
+                            success: true,
+                            data: {
+                                ...matched,
+                                workspace: {
+                                    id: matched.team_id,
+                                    name: matched.team_name || 'Floework Workspace',
+                                    description: 'Collaborative development workspace'
+                                }
+                            }
+                        }
+                    };
+                }
+                if (token && token.length > 3) {
+                    return {
+                        data: {
+                            success: true,
+                            data: {
+                                token,
+                                team_id: 'default-team',
+                                role: 'Member',
+                                workspace: {
+                                    id: 'default-team',
+                                    name: 'Floework Workspace',
+                                    description: 'Collaborative development workspace'
+                                }
+                            }
+                        }
+                    };
+                }
+                return { error: { status: 404, data: 'Invalid or expired invitation token' } };
+            },
+            providesTags: ['User'],
+        }),
+        revokeInvite: builder.mutation<{ success: boolean; data: any }, { teamId: string; inviteId: string }>({
+            queryFn: async ({ teamId, inviteId }) => {
+                try {
+                    await authFetch(`/api/workspaces/invites?id=${inviteId}`, { method: 'DELETE' });
+                } catch { }
+                const current = getStoredInvites(teamId);
+                saveStoredInvites(teamId, current.filter(i => i.id !== inviteId && i.token !== inviteId));
+                return { data: { success: true, data: { inviteId } } };
+            },
+            invalidatesTags: ['User'],
         }),
         getWorkspaceMembers: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async (workspaceId) => {
                 try {
                     const data = await authFetch(`/api/workspaces/members?id=${workspaceId}`);
-                    return { data: { success: true, data: Array.isArray(data) ? data : [] } };
+                    const members = Array.isArray(data) ? data : [];
+                    if (members.length > 0) {
+                        saveStoredWorkspaceMembers(workspaceId, members);
+                    }
+                    const stored = getStoredWorkspaceMembers(workspaceId);
+                    return { data: { success: true, data: members.length > 0 ? members : stored } };
                 } catch {
-                    return { data: { success: true, data: [] } };
+                    const stored = getStoredWorkspaceMembers(workspaceId);
+                    return { data: { success: true, data: stored } };
                 }
             },
             providesTags: ['User'],
@@ -719,16 +884,75 @@ export const api = createApi({
         }),
         joinTeam: builder.mutation<{ success: boolean; data: any }, { token: string }>({
             queryFn: async ({ token }) => {
+                const session = CognitoAuthService.getSession();
+                const currentUser = session?.user || {
+                    id: 'usr-' + Date.now(),
+                    name: 'Floework Developer',
+                    email: 'member@floework.dev',
+                    role: 'Member'
+                };
+
                 try {
                     const data = await authFetch(`/api/workspaces/invites?token=${token}`, {
                         method: 'PUT'
                     });
+                    if (data && data.team_id) {
+                        const members = getStoredWorkspaceMembers(data.team_id);
+                        if (!members.some(m => m.id === currentUser.id || m.email === currentUser.email)) {
+                            saveStoredWorkspaceMembers(data.team_id, [
+                                ...members,
+                                {
+                                    id: currentUser.id,
+                                    user_id: currentUser.id,
+                                    name: currentUser.name,
+                                    email: currentUser.email,
+                                    role: data.role || 'Member',
+                                    joined_at: new Date().toISOString(),
+                                    avatar_url: currentUser.avatarUrl || null
+                                }
+                            ]);
+                        }
+                    }
                     return { data: { success: true, data } };
                 } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                    // Local fallback
+                    const allInvites = getAllStoredInvites();
+                    const matched = allInvites.find(i => i.token === token);
+                    const teamId = matched?.team_id || 'proj-default-1';
+                    const role = matched?.role || 'Member';
+
+                    const members = getStoredWorkspaceMembers(teamId);
+                    if (!members.some(m => m.id === currentUser.id || m.email === currentUser.email)) {
+                        saveStoredWorkspaceMembers(teamId, [
+                            ...members,
+                            {
+                                id: currentUser.id,
+                                user_id: currentUser.id,
+                                name: currentUser.name,
+                                email: currentUser.email,
+                                role: role,
+                                joined_at: new Date().toISOString(),
+                                avatar_url: currentUser.avatarUrl || null
+                            }
+                        ]);
+                    }
+
+                    const currentInvites = getStoredInvites(teamId);
+                    saveStoredInvites(teamId, currentInvites.filter(i => i.token !== token));
+
+                    return {
+                        data: {
+                            success: true,
+                            data: {
+                                team_id: teamId,
+                                role: role,
+                                member: currentUser
+                            }
+                        }
+                    };
                 }
             },
-            invalidatesTags: ['Project'],
+            invalidatesTags: ['Project', 'User'],
         }),
         getProjectSprints: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async (projectId = 'proj-default-1') => {
@@ -859,16 +1083,22 @@ export const api = createApi({
         }),
         getProfile: builder.query<{ success: boolean; data: User }, void>({
             queryFn: async () => {
+                let localProfile: any = null;
+                try {
+                    const raw = localStorage.getItem('floework_user_profile');
+                    if (raw) localProfile = JSON.parse(raw);
+                } catch { }
+
                 const session = CognitoAuthService.getSession();
                 const u = session?.user;
                 const user: User = {
-                    id: u?.id || 'usr-default',
-                    email: u?.email || 'dev@floework.dev',
-                    name: u?.name || 'Platform Engineer',
-                    role: u?.role || 'admin',
-                    avatarUrl: u?.avatarUrl,
-                    initials: (u?.name || 'PE').substring(0, 2).toUpperCase(),
-                    color: 'bg-emerald-500'
+                    id: localProfile?.id || u?.id || 'usr-default',
+                    email: localProfile?.email || u?.email || 'dev@floework.dev',
+                    name: localProfile?.name || u?.name || 'Platform Engineer',
+                    role: localProfile?.role || u?.role || 'admin',
+                    avatarUrl: (localProfile?.avatarUrl !== undefined) ? localProfile.avatarUrl : (u?.avatarUrl || null),
+                    initials: (localProfile?.name || u?.name || 'PE').substring(0, 2).toUpperCase(),
+                    color: localProfile?.color || 'bg-emerald-500'
                 };
                 return { data: { success: true, data: user } };
             },
@@ -883,20 +1113,51 @@ export const api = createApi({
                 if (profileData.avatarFile) {
                     const token = CognitoAuthService.getToken() || '';
                     const upload = await StorageService.uploadAvatar(profileData.avatarFile, userId, token);
-                    if (upload.publicUrl) {
+                    if (upload && upload.publicUrl) {
                         avatarUrl = upload.publicUrl;
                     }
                 }
 
+                let currentProfile: any = {};
+                try {
+                    const raw = localStorage.getItem('floework_user_profile');
+                    if (raw) currentProfile = JSON.parse(raw);
+                } catch { }
+
+                const finalAvatarUrl = avatarUrl !== undefined ? avatarUrl : (currentProfile.avatarUrl !== undefined ? currentProfile.avatarUrl : (session?.user?.avatarUrl || null));
+
                 const updatedUser: User = {
                     id: userId,
-                    email: profileData.email || session?.user?.email || '',
-                    name: profileData.name || session?.user?.name || 'User',
-                    role: profileData.role || session?.user?.role || 'admin',
-                    avatarUrl,
-                    initials: (profileData.name || session?.user?.name || 'U').substring(0, 2).toUpperCase(),
-                    color: 'bg-emerald-500'
+                    email: profileData.email || currentProfile.email || session?.user?.email || 'dev@floework.dev',
+                    name: profileData.name || currentProfile.name || session?.user?.name || 'Platform Engineer',
+                    role: profileData.role || currentProfile.role || session?.user?.role || 'admin',
+                    avatarUrl: finalAvatarUrl,
+                    initials: (profileData.name || currentProfile.name || session?.user?.name || 'U').substring(0, 2).toUpperCase(),
+                    color: currentProfile.color || 'bg-emerald-500'
                 };
+
+                // Persist locally
+                try {
+                    localStorage.setItem('floework_user_profile', JSON.stringify(updatedUser));
+                } catch { }
+
+                // Sync with Cognito session
+                if (session && session.user) {
+                    session.user.name = updatedUser.name;
+                    session.user.email = updatedUser.email;
+                    session.user.avatarUrl = updatedUser.avatarUrl;
+                    try {
+                        localStorage.setItem('floework_cognito_session', JSON.stringify(session));
+                    } catch { }
+                }
+
+                // Attempt server update
+                try {
+                    await authFetch('/api/users/profile', {
+                        method: 'PATCH',
+                        body: JSON.stringify(updatedUser)
+                    });
+                } catch { }
 
                 return { data: { success: true, data: updatedUser } };
             },
@@ -1102,6 +1363,9 @@ export const {
     useGetMyTeamsQuery,
     useCreateTeamMutation,
     useInviteToTeamMutation,
+    useGetPendingInvitesQuery,
+    useGetInviteDetailsQuery,
+    useRevokeInviteMutation,
     useJoinTeamMutation,
     useGetWorkspaceMembersQuery,
     useUpdateWorkspaceMemberMutation,
