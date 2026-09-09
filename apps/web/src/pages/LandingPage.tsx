@@ -42,14 +42,15 @@ function FloatingAvatar({
                 animationDelay: delay,
             }}
         >
-            <div className="relative w-[104px] h-[104px]">
+            <div className="relative w-[104px] h-[104px] flex items-center justify-center">
 
-                {/* Mascot image */}
-                <div className="w-full h-full">
+                {/* Mascot image - scaled to eliminate padding and frame photo directly */}
+                <div className="w-full h-full flex items-center justify-center pointer-events-none">
                     <img
                         src={img}
                         alt="floework teammate"
                         className="w-full h-full object-contain"
+                        style={{ transform: "scale(1.39)" }}
                         loading="eager"
                         decoding="async"
                     />
@@ -61,12 +62,12 @@ function FloatingAvatar({
                     style={{
                         border: "3.5px solid #ffffff",
                         boxShadow: `
-                            0 8px 24px -2px rgba(15, 23, 42, 0.18),
-                            0 3px 8px -1px rgba(15, 23, 42, 0.12),
-                            0 0 0 1px rgba(255, 255, 255, 0.9),
-                            0 0 14px 2px rgba(255, 255, 255, 0.7),
-                            inset 0 1.5px 2px 0 rgba(255, 255, 255, 1),
-                            inset 0 -1.5px 2px 0 rgba(15, 23, 42, 0.08)
+                            0 10px 24px -2px rgba(15, 23, 42, 0.22),
+                            0 4px 10px -1px rgba(15, 23, 42, 0.14),
+                            0 0 0 1px rgba(255, 255, 255, 0.95),
+                            0 0 14px 2px rgba(255, 255, 255, 0.75),
+                            inset 0 2px 2px 0 rgba(255, 255, 255, 1),
+                            inset 0 -2px 3px 0 rgba(15, 23, 42, 0.12)
                         `,
                     }}
                 />
