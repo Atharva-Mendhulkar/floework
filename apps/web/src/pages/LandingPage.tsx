@@ -44,40 +44,67 @@ function FloatingAvatar({
         >
             <div className="relative w-[88px] h-[88px] flex items-center justify-center">
 
-                {/* Mascot image - scaled to eliminate padding and frame photo directly */}
-                <div className="w-full h-full flex items-center justify-center pointer-events-none">
+                {/* Circular background placeholder */}
+                <div
+                    className="
+                        absolute inset-0
+                        rounded-full
+                        bg-white/80
+                        backdrop-blur-md
+                        shadow-[0_10px_25px_rgba(15,23,42,0.14),0_3px_8px_rgba(15,23,42,0.08)]
+                    "
+                />
+
+                {/* Very subtle inner depth, NOT a ring */}
+                <div
+                    className="
+                        absolute inset-[3px]
+                        rounded-full
+                        bg-gradient-to-br
+                        from-white
+                        via-white/80
+                        to-slate-100/70
+                        opacity-90
+                    "
+                />
+
+                {/* Mascot image */}
+                <div className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none">
                     <img
                         src={img}
                         alt="floework teammate"
                         className="w-full h-full object-contain"
-                        style={{ transform: "scale(1.36)" }}
+                        style={{
+                            transform: "scale(1.36)",
+                        }}
                         loading="eager"
                         decoding="async"
                     />
                 </div>
 
-                {/* Thick solid white 3D ring layered OVER the photo with dimensional shadows */}
+                {/* Glass-like highlight on the circular surface */}
                 <div
-                    className="absolute inset-[2px] rounded-full pointer-events-none z-10"
-                    style={{
-                        border: "5.5px solid #ffffff",
-                        boxShadow: `
-                            0 10px 24px -2px rgba(15, 23, 42, 0.22),
-                            0 4px 10px -1px rgba(15, 23, 42, 0.14),
-                            0 0 0 1px rgba(255, 255, 255, 0.95),
-                            0 0 16px 2px rgba(255, 255, 255, 0.8),
-                            inset 0 2.5px 3px 0 rgba(255, 255, 255, 1),
-                            inset 0 -2.5px 3.5px 0 rgba(15, 23, 42, 0.12)
-                        `,
-                    }}
+                    className="
+                        absolute
+                        top-[5px]
+                        left-[12px]
+                        right-[20px]
+                        h-[18px]
+                        rounded-full
+                        bg-white/45
+                        blur-[5px]
+                        pointer-events-none
+                        z-20
+                    "
                 />
 
-                {/* Colored 3D cursor arrow */}
+                {/* Cursor arrow */}
                 <div
-                    className="absolute bottom-[-2px] right-[-2px] w-6 h-6 z-20 pointer-events-none"
+                    className="absolute bottom-[-2px] right-[-2px] w-6 h-6 z-30 pointer-events-none"
                     style={{
                         transform: `rotate(${rotate}deg)`,
-                        filter: "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.28)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.18))",
+                        filter:
+                            "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.28)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.18))",
                     }}
                 >
                     <svg
