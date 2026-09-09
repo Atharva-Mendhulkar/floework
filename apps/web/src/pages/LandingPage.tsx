@@ -6,7 +6,21 @@ import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCaus
 
 import Reveal from "@/components/Reveal";
 
+interface FloatingAvatarProps {
+    id: string;
+    img: string;
+    delay: string;
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+    anim: string;
+    rotate: number;
+    color?: string; // Kept optional for backward compatibility, ignored in favor of pure liquid glass
+}
+
 function FloatingAvatar({
+    id,
     img,
     delay,
     top,
@@ -15,8 +29,7 @@ function FloatingAvatar({
     bottom,
     anim,
     rotate,
-    color,
-}: any) {
+}: FloatingAvatarProps) {
     return (
         <div
             className="absolute z-10 hidden sm:flex pointer-events-none"
@@ -46,33 +59,98 @@ function FloatingAvatar({
                     />
                 </div>
 
-                {/* Circular ring ON TOP of the image - STATIC, NOT MOVING */}
+                {/* 1. Frosted optical refraction halo (masked exclusively to the ring so the center mascot remains crisp) */}
                 <div
                     className="absolute inset-[3px] rounded-full pointer-events-none"
                     style={{
-                        border: `3px solid ${color}`,
-                        boxShadow: `0 4px 16px ${color}22`,
+                        WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4.5px), #fff calc(100% - 4px))",
+                        mask: "radial-gradient(farthest-side, transparent calc(100% - 4.5px), #fff calc(100% - 4px))",
+                        backdropFilter: "blur(6px) saturate(140%)",
+                        WebkitBackdropFilter: "blur(6px) saturate(140%)",
+                        background: "linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.35) 100%)",
                     }}
                 />
 
-                {/* Cursor arrow, kept close to the static circle */}
+                {/* 2. Dimensional 3D Liquid-Glass Ring (Apple Vision Pro aesthetic: 3.5px extruded bevel, specular highlights, diffuse shadow) */}
                 <div
-                    className="absolute bottom-[2px] right-[-2px] w-6 h-6 drop-shadow-md"
+                    className="absolute inset-[3px] rounded-full pointer-events-none"
+                    style={{
+                        border: "3.5px solid rgba(255, 255, 255, 0.55)",
+                        boxShadow: `
+                            -1.5px -1.5px 3px 0px rgba(255, 255, 255, 0.95),
+                            1px 1.5px 2.5px 0px rgba(255, 255, 255, 0.45),
+                            0 0 0 0.5px rgba(255, 255, 255, 0.7),
+                            0 10px 24px -3px rgba(15, 23, 42, 0.09),
+                            0 4px 10px -2px rgba(15, 23, 42, 0.05),
+                            0 0 16px 1px rgba(255, 255, 255, 0.5),
+                            inset 1.5px 1.5px 2px 0px rgba(255, 255, 255, 0.9),
+                            inset -1px -1.5px 2px 0px rgba(15, 23, 42, 0.04),
+                            inset 0 0 6px 1px rgba(255, 255, 255, 0.35)
+                        `,
+                    }}
+                />
+
+                {/* 3. Curved specular glint arc (Apple Vision Pro catchlight on top-left curve) */}
+                <svg
+                    className="absolute inset-[3px] w-[98px] h-[98px] pointer-events-none"
+                    viewBox="0 0 98 98"
+                    fill="none"
+                >
+                    <defs>
+                        <linearGradient id={`specularArc-${id}`} x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+                            <stop offset="35%" stopColor="#ffffff" stopOpacity="0.85" />
+                            <stop offset="55%" stopColor="#ffffff" stopOpacity="0.95" />
+                            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d="M 18 34 A 45.5 45.5 0 0 1 56 5"
+                        stroke={`url(#specularArc-${id})`}
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                    />
+                </svg>
+
+                {/* 4. Liquid-glass cursor arrow with subtle reflection and diffuse shadow */}
+                <div
+                    className="absolute bottom-[2px] right-[-2px] w-6 h-6"
                     style={{
                         transform: `rotate(${rotate}deg)`,
+                        filter: "drop-shadow(0 4px 8px rgba(15, 23, 42, 0.12)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.08))",
                     }}
                 >
                     <svg
                         viewBox="0 0 24 24"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
+                        className="w-full h-full"
                     >
+                        <defs>
+                            <linearGradient id={`cursorGlass-${id}`} x1="20%" y1="10%" x2="80%" y2="90%">
+                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                                <stop offset="45%" stopColor="#f8fafc" stopOpacity="0.8" />
+                                <stop offset="100%" stopColor="#e2e8f0" stopOpacity="0.65" />
+                            </linearGradient>
+                            <linearGradient id={`cursorStroke-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                                <stop offset="50%" stopColor="#ffffff" stopOpacity="0.75" />
+                                <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.6" />
+                            </linearGradient>
+                        </defs>
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill={color}
-                            stroke="white"
-                            strokeWidth="2"
+                            fill={`url(#cursorGlass-${id})`}
+                            stroke={`url(#cursorStroke-${id})`}
+                            strokeWidth="1.5"
                             strokeLinejoin="round"
+                        />
+                        <path
+                            d="M6.5 4.5L12 13"
+                            stroke="white"
+                            strokeWidth="1"
+                            strokeLinecap="round"
+                            strokeOpacity="0.9"
                         />
                     </svg>
                 </div>
@@ -218,44 +296,44 @@ export default function LandingPage() {
 
                 {/* Top Left */}
                 <FloatingAvatar
+                    id="one"
                     img="/assets/one.png"
                     delay="0s"
                     anim="swayC"
                     rotate={-45}
-                    color="#3b82f6"
                     top="15%"
                     left="9%"
                 />
 
                 {/* Top Right */}
                 <FloatingAvatar
+                    id="two"
                     img="/assets/two.png"
                     delay="1s"
                     anim="swayA"
                     rotate={45}
-                    color="#10b981"
                     top="16%"
                     right="9%"
                 />
 
                 {/* Bottom Left */}
                 <FloatingAvatar
+                    id="three"
                     img="/assets/three.png"
                     delay="0.5s"
                     anim="swayB"
                     rotate={-110}
-                    color="#8b5cf6"
                     bottom="11%"
                     left="13%"
                 />
 
                 {/* Bottom Right */}
                 <FloatingAvatar
+                    id="four"
                     img="/assets/four.png"
                     delay="1.5s"
                     anim="swayC"
                     rotate={110}
-                    color="#f43f5e"
                     bottom="13%"
                     right="13%"
                 />
