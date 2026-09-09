@@ -7,7 +7,7 @@ import ExecutionCausalityStrip, { type NodeId } from "@/components/ExecutionCaus
 import Reveal from "@/components/Reveal";
 
 interface FloatingAvatarProps {
-    id: string;
+    id?: string;
     img: string;
     delay: string;
     top?: string;
@@ -16,11 +16,10 @@ interface FloatingAvatarProps {
     bottom?: string;
     anim: string;
     rotate: number;
-    color?: string; // Kept optional for backward compatibility, ignored in favor of pure liquid glass
+    color?: string;
 }
 
 function FloatingAvatar({
-    id,
     img,
     delay,
     top,
@@ -29,27 +28,24 @@ function FloatingAvatar({
     bottom,
     anim,
     rotate,
+    color,
 }: FloatingAvatarProps) {
     return (
         <div
-            className="absolute z-10 hidden sm:flex pointer-events-none"
+            className="absolute z-10 hidden sm:flex pointer-events-auto transition-transform duration-300 hover:scale-110 hover:z-30 cursor-pointer"
             style={{
                 top,
                 left,
                 right,
                 bottom,
+                animation: `${anim} 5s ease-in-out infinite`,
+                animationDelay: delay,
             }}
         >
             <div className="relative w-[104px] h-[104px]">
 
-                {/* Mascot image - subtly floats inside the static frame */}
-                <div
-                    className="w-full h-full"
-                    style={{
-                        animation: `${anim} 5s ease-in-out infinite`,
-                        animationDelay: delay,
-                    }}
-                >
+                {/* Mascot image */}
+                <div className="w-full h-full">
                     <img
                         src={img}
                         alt="floework teammate"
@@ -59,65 +55,28 @@ function FloatingAvatar({
                     />
                 </div>
 
-                {/* 1. Frosted optical refraction halo (masked exclusively to the ring so the center mascot remains crisp) */}
+                {/* Solid white 3D ring layered OVER the photo with dimensional shadows */}
                 <div
-                    className="absolute inset-[3px] rounded-full pointer-events-none"
+                    className="absolute inset-[3px] rounded-full pointer-events-none z-10"
                     style={{
-                        WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4.5px), #fff calc(100% - 4px))",
-                        mask: "radial-gradient(farthest-side, transparent calc(100% - 4.5px), #fff calc(100% - 4px))",
-                        backdropFilter: "blur(6px) saturate(140%)",
-                        WebkitBackdropFilter: "blur(6px) saturate(140%)",
-                        background: "linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.35) 100%)",
-                    }}
-                />
-
-                {/* 2. Dimensional 3D Liquid-Glass Ring (Apple Vision Pro aesthetic: 3.5px extruded bevel, specular highlights, diffuse shadow) */}
-                <div
-                    className="absolute inset-[3px] rounded-full pointer-events-none"
-                    style={{
-                        border: "3.5px solid rgba(255, 255, 255, 0.55)",
+                        border: "3.5px solid #ffffff",
                         boxShadow: `
-                            -1.5px -1.5px 3px 0px rgba(255, 255, 255, 0.95),
-                            1px 1.5px 2.5px 0px rgba(255, 255, 255, 0.45),
-                            0 0 0 0.5px rgba(255, 255, 255, 0.7),
-                            0 10px 24px -3px rgba(15, 23, 42, 0.09),
-                            0 4px 10px -2px rgba(15, 23, 42, 0.05),
-                            0 0 16px 1px rgba(255, 255, 255, 0.5),
-                            inset 1.5px 1.5px 2px 0px rgba(255, 255, 255, 0.9),
-                            inset -1px -1.5px 2px 0px rgba(15, 23, 42, 0.04),
-                            inset 0 0 6px 1px rgba(255, 255, 255, 0.35)
+                            0 8px 24px -2px rgba(15, 23, 42, 0.18),
+                            0 3px 8px -1px rgba(15, 23, 42, 0.12),
+                            0 0 0 1px rgba(255, 255, 255, 0.9),
+                            0 0 14px 2px rgba(255, 255, 255, 0.7),
+                            inset 0 1.5px 2px 0 rgba(255, 255, 255, 1),
+                            inset 0 -1.5px 2px 0 rgba(15, 23, 42, 0.08)
                         `,
                     }}
                 />
 
-                {/* 3. Curved specular glint arc (Apple Vision Pro catchlight on top-left curve) */}
-                <svg
-                    className="absolute inset-[3px] w-[98px] h-[98px] pointer-events-none"
-                    viewBox="0 0 98 98"
-                    fill="none"
-                >
-                    <defs>
-                        <linearGradient id={`specularArc-${id}`} x1="0%" y1="100%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-                            <stop offset="35%" stopColor="#ffffff" stopOpacity="0.85" />
-                            <stop offset="55%" stopColor="#ffffff" stopOpacity="0.95" />
-                            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-                    <path
-                        d="M 18 34 A 45.5 45.5 0 0 1 56 5"
-                        stroke={`url(#specularArc-${id})`}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                    />
-                </svg>
-
-                {/* 4. Liquid-glass cursor arrow with subtle reflection and diffuse shadow */}
+                {/* Solid white 3D cursor arrow */}
                 <div
-                    className="absolute bottom-[2px] right-[-2px] w-6 h-6"
+                    className="absolute bottom-[2px] right-[-2px] w-6 h-6 z-20"
                     style={{
                         transform: `rotate(${rotate}deg)`,
-                        filter: "drop-shadow(0 4px 8px rgba(15, 23, 42, 0.12)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.08))",
+                        filter: "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.2)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.12))",
                     }}
                 >
                     <svg
@@ -126,31 +85,19 @@ function FloatingAvatar({
                         xmlns="http://www.w3.org/2000/svg"
                         className="w-full h-full"
                     >
-                        <defs>
-                            <linearGradient id={`cursorGlass-${id}`} x1="20%" y1="10%" x2="80%" y2="90%">
-                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-                                <stop offset="45%" stopColor="#f8fafc" stopOpacity="0.8" />
-                                <stop offset="100%" stopColor="#e2e8f0" stopOpacity="0.65" />
-                            </linearGradient>
-                            <linearGradient id={`cursorStroke-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                                <stop offset="50%" stopColor="#ffffff" stopOpacity="0.75" />
-                                <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.6" />
-                            </linearGradient>
-                        </defs>
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill={`url(#cursorGlass-${id})`}
-                            stroke={`url(#cursorStroke-${id})`}
+                            fill={color || "#ffffff"}
+                            stroke="#ffffff"
                             strokeWidth="1.5"
                             strokeLinejoin="round"
                         />
                         <path
-                            d="M6.5 4.5L12 13"
-                            stroke="white"
+                            d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
+                            fill="none"
+                            stroke="rgba(15, 23, 42, 0.1)"
                             strokeWidth="1"
-                            strokeLinecap="round"
-                            strokeOpacity="0.9"
+                            strokeLinejoin="round"
                         />
                     </svg>
                 </div>
