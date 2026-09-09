@@ -3,10 +3,11 @@ import TaskDetailPanel from "@/components/TaskDetailPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectTask } from "@/store/slices/projectSlice";
 import type { TaskNode } from "@/data/mockData";
-import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation, useGetTasksQuery } from "@/store/api";
+import { api, useGetHasRealTasksQuery, useDeleteSampleTasksMutation, useGetTasksQuery, useGetProjectsQuery } from "@/store/api";
 import { useState, lazy, Suspense } from "react";
-import { X, Sparkles, Loader2 } from "lucide-react";
+import { X, Sparkles, Loader2, Plus } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { TaskCreateModal } from "@/components/TaskCreateModal";
 
 const ExecutionGraph = lazy(() => import("@/components/ExecutionGraph").then(m => ({ default: m.ExecutionGraph })));
 
@@ -16,11 +17,15 @@ const BoardsPage = () => {
     const { data: hasRealTasksRes } = useGetHasRealTasksQuery();
     const [deleteSamples] = useDeleteSampleTasksMutation();
     const [bannerDismissed, setBannerDismissed] = useState(false);
+    const [isGraphCreateModalOpen, setIsGraphCreateModalOpen] = useState(false);
 
     const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
-    const { data: tasksRes } = useGetTasksQuery({ projectId: activeProjectId || undefined });
+    const { data: projectsRes } = useGetProjectsQuery();
+    const effectiveProjectId = activeProjectId || projectsRes?.data?.[0]?.id || 'proj-default-1';
 
-    const hasRealTasks = hasRealTasksRes?.data?.hasRealTasks ?? true;
+    const { data: tasksRes } = useGetTasksQuery({ projectId: effectiveProjectId });
+
+    const hasRealTasks = hasRealTasksRes?.data?.hasRealTasks ?? false;
     const showBanner = !hasRealTasks && !bannerDismissed;
 
     const handleClearSamples = async () => {
@@ -70,9 +75,18 @@ const BoardsPage = () => {
             
             {/* Execution Graph Layer inserted below Kanban */}
             <div className="mt-4 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-                <div>
-                    <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
-                    <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-[15px] font-semibold text-slate-900">Execution Intelligence Graph</h3>
+                        <p className="text-[12px] text-slate-400">Interactive map of task dependencies and realtime signals.</p>
+                    </div>
+                    <button
+                        onClick={() => setIsGraphCreateModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007dff] hover:bg-[#0070e8] text-white text-xs font-semibold rounded-xl shadow-sm shadow-[#007dff]/20 transition-all active:scale-95"
+                    >
+                        <Plus size={13} />
+                        <span>New Task</span>
+                    </button>
                 </div>
                 <ErrorBoundary fallback={
                     <div className="h-[200px] flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80 text-slate-500 text-sm gap-2">
@@ -80,12 +94,25 @@ const BoardsPage = () => {
                         <button onClick={() => window.location.reload()} className="text-xs text-[#007dff] hover:underline">Reload graph</button>
                     </div>
                 }>
-                    <Suspense fallback={<div className="h-[600px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80"><Loader2 className="animate-spin text-slate-400" /></div>}>
-                        <ExecutionGraph tasks={tasksRes?.data || []} onTaskClick={handleTaskClick} />
+                    <Suspense fallback={<div className="h-[620px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-200/80"><Loader2 className="animate-spin text-slate-400" /></div>}>
+                        <ExecutionGraph
+                            tasks={tasksRes?.data || []}
+                            projectId={effectiveProjectId}
+                            onTaskClick={handleTaskClick}
+                            onNewTaskClick={() => setIsGraphCreateModalOpen(true)}
+                        />
                     </Suspense>
                 </ErrorBoundary>
             </div>
             <TaskDetailPanel task={selectedTask} onClose={() => handleTaskClick(null)} />
+
+            {effectiveProjectId && (
+                <TaskCreateModal
+                    isOpen={isGraphCreateModalOpen}
+                    onClose={() => setIsGraphCreateModalOpen(false)}
+                    projectId={effectiveProjectId}
+                />
+            )}
         </div>
     );
 };

@@ -80,36 +80,36 @@ export const phases: Phase[] = [
     id: "allocation",
     title: "Task Allocation",
     tasks: [
-      { id: "t1", title: "API Schema Design", assignee: team[0], status: "done", phase: "allocation", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "M", focusCount: 4 },
-      { id: "t2", title: "Auth Middleware", assignee: team[1], status: "in-progress", phase: "allocation", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "L", focusCount: 2 },
+      { id: "t1", title: "API Schema Design", assignee: team[0], status: "done", phase: "allocation", projectId: "proj-default-1", effort: "M", focusCount: 4, isSample: true },
+      { id: "t2", title: "Auth Middleware", assignee: team[1], status: "in-progress", phase: "allocation", projectId: "proj-default-1", effort: "L", focusCount: 2, isSample: true },
     ],
   },
   {
     id: "focus",
     title: "Focus Sessions",
     tasks: [
-      { id: "t3", title: "Component Library Pipeline", assignee: team[4], status: "in-progress", hasFocus: true, phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "L", focusCount: 12 },
-      { id: "t4", title: "Dashboard Layout", assignee: team[2], status: "in-progress", hasFocus: true, phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "M", focusCount: 6 },
-      { id: "t5", title: "Redux Setup", assignee: team[3], status: "pending", phase: "focus", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "S", focusCount: 0 },
+      { id: "t3", title: "Component Library Pipeline", assignee: team[4], status: "in-progress", hasFocus: true, phase: "focus", projectId: "proj-default-1", effort: "L", focusCount: 12, isSample: true },
+      { id: "t4", title: "Dashboard Layout", assignee: team[2], status: "in-progress", hasFocus: true, phase: "focus", projectId: "proj-default-1", effort: "M", focusCount: 6, isSample: true },
+      { id: "t5", title: "Redux Setup", assignee: team[3], status: "pending", phase: "focus", projectId: "proj-default-1", effort: "S", focusCount: 0, isSample: true },
     ],
   },
   {
     id: "resolution",
     title: "Technical Resolution",
     tasks: [
-      { id: "t6", title: "Fix iOS Safari visual bugs", assignee: team[5], status: "pending", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "S", focusCount: 1 },
-      { id: "t7", title: "Optimize build times", assignee: team[1], status: "in-progress", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "L", focusCount: 8 },
-      { id: "t8", title: "Update deps", assignee: team[0], status: "done", phase: "resolution", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "S", focusCount: 2 },
+      { id: "t6", title: "Fix iOS Safari visual bugs", assignee: team[5], status: "pending", phase: "resolution", projectId: "proj-default-1", effort: "S", focusCount: 1, isSample: true },
+      { id: "t7", title: "Optimize build times", assignee: team[1], status: "in-progress", phase: "resolution", projectId: "proj-default-1", effort: "L", focusCount: 8, isSample: true },
+      { id: "t8", title: "Update deps", assignee: team[0], status: "done", phase: "resolution", projectId: "proj-default-1", effort: "S", focusCount: 2, isSample: true },
     ],
   },
   {
     id: "outcome",
     title: "Output & Outcome",
     tasks: [
-      { id: "t9", title: "Q1 Marketing Page", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "L", focusCount: 24 },
-      { id: "t10", title: "Blog Template", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "M", focusCount: 5 },
-      { id: "t11", title: "Email Campaign Assets", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "S", focusCount: 3 },
-      { id: "t12", title: "SEO Audit", status: "done", phase: "outcome", projectId: "d5b480c4-ce88-4a96-aeae-7386b436a8ac", effort: "M", focusCount: 7 },
+      { id: "t9", title: "Q1 Marketing Page", status: "done", phase: "outcome", projectId: "proj-default-1", effort: "L", focusCount: 24, isSample: true },
+      { id: "t10", title: "Blog Template", status: "done", phase: "outcome", projectId: "proj-default-1", effort: "M", focusCount: 5, isSample: true },
+      { id: "t11", title: "Email Campaign Assets", status: "done", phase: "outcome", projectId: "proj-default-1", effort: "S", focusCount: 3, isSample: true },
+      { id: "t12", title: "SEO Audit", status: "done", phase: "outcome", projectId: "proj-default-1", effort: "M", focusCount: 7, isSample: true },
     ],
   },
 ];

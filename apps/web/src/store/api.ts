@@ -19,7 +19,8 @@ function getStoredTasks(): TaskNode[] {
             status: t.status === 'done' ? 'done' : t.status === 'in-progress' ? 'in-progress' : 'pending',
             isStarred: t.id === 't1' || t.id === 't3',
             focusCount: t.focusCount || 0,
-            version: t.version || 1
+            version: t.version || 1,
+            isSample: true
         }))
     );
     try {
@@ -31,6 +32,20 @@ function getStoredTasks(): TaskNode[] {
 function saveStoredTasks(tasks: TaskNode[]) {
     try {
         localStorage.setItem('floework_tasks_store', JSON.stringify(tasks));
+    } catch {}
+}
+
+function getStoredDependencies(projectId: string): any[] {
+    try {
+        const raw = localStorage.getItem(`floework_deps_${projectId}`);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+}
+
+function saveStoredDependencies(projectId: string, deps: any[]) {
+    try {
+        localStorage.setItem(`floework_deps_${projectId}`, JSON.stringify(deps));
     } catch {}
 }
 
@@ -286,17 +301,59 @@ export const api = createApi({
         }),
         getTaskDependencies: builder.query<{ success: boolean; data: any[] }, string>({
             queryFn: async (projectId) => {
+                const proj = projectId || 'proj-default-1';
                 try {
-                    const res = await authFetch(`/api/tasks/dependencies?projectId=${projectId}`);
-                    return { data: { success: true, data: res.edges || [] } };
+                    const res = await authFetch(`/api/tasks/dependencies?projectId=${proj}`);
+                    if (res && Array.isArray(res.edges)) {
+                        saveStoredDependencies(proj, res.edges);
+                        return { data: { success: true, data: res.edges } };
+                    }
                 } catch {
-                    return { data: { success: true, data: [] } };
+                    // Fall back cleanly to dual-engine stored dependencies
                 }
+                const stored = getStoredDependencies(proj);
+                return { data: { success: true, data: stored } };
             },
             providesTags: ['Task'],
         }),
         addDependency: builder.mutation<{ success: boolean; data: any }, { sourceId: string; targetId: string; type?: string; projectId?: string }>({
-            queryFn: async ({ sourceId, targetId, type, projectId = 'fallback-id' }) => {
+            queryFn: async ({ sourceId, targetId, type, projectId = 'proj-default-1' }) => {
+                if (sourceId === targetId) {
+                    return { error: { status: 400, data: 'A task cannot depend on itself' } };
+                }
+                const depType = type || 'BLOCKS';
+                const currentDeps = getStoredDependencies(projectId);
+
+                // Direct cycle prevention: if targetId -> sourceId exists
+                const hasCycle = currentDeps.some((d: any) => {
+                    const s = d.source_task_id || d.sourceTaskId || d.source;
+                    const t = d.target_task_id || d.targetTaskId || d.target;
+                    return s === targetId && t === sourceId;
+                });
+                if (hasCycle) {
+                    return { error: { status: 400, data: 'Circular dependency detected (cycle prevented)' } };
+                }
+
+                // Check for existing duplicate edge
+                const existing = currentDeps.find((d: any) => {
+                    const s = d.source_task_id || d.sourceTaskId || d.source;
+                    const t = d.target_task_id || d.targetTaskId || d.target;
+                    return s === sourceId && t === targetId;
+                });
+                if (existing) {
+                    return { data: { success: true, data: existing } };
+                }
+
+                const newDep = {
+                    id: `dep-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                    project_id: projectId,
+                    source_task_id: sourceId,
+                    target_task_id: targetId,
+                    dependency_type: depType,
+                    relationship_type: depType.toLowerCase(),
+                    created_at: new Date().toISOString()
+                };
+
                 try {
                     const data = await authFetch('/api/tasks/dependencies', {
                         method: 'POST',
@@ -304,13 +361,42 @@ export const api = createApi({
                             projectId,
                             sourceTaskId: sourceId,
                             targetTaskId: targetId,
-                            dependencyType: type || 'BLOCKS'
+                            dependencyType: depType
                         })
                     });
-                    return { data: { success: true, data } };
-                } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                    if (data?.dependency?.id) {
+                        newDep.id = data.dependency.id;
+                    }
+                } catch {
+                    // Stored fallback
                 }
+
+                saveStoredDependencies(projectId, [...currentDeps, newDep]);
+                return { data: { success: true, data: newDep } };
+            },
+            invalidatesTags: ['Task'],
+        }),
+        deleteDependency: builder.mutation<{ success: boolean; data: any }, { id?: string; sourceId?: string; targetId?: string; projectId?: string }>({
+            queryFn: async ({ id, sourceId, targetId, projectId = 'proj-default-1' }) => {
+                const currentDeps = getStoredDependencies(projectId);
+                const updatedDeps = currentDeps.filter((d: any) => {
+                    if (id && d.id === id) return false;
+                    const dSource = d.source_task_id || d.sourceTaskId || d.source;
+                    const dTarget = d.target_task_id || d.targetTaskId || d.target;
+                    if (sourceId && targetId && dSource === sourceId && dTarget === targetId) return false;
+                    return true;
+                });
+                saveStoredDependencies(projectId, updatedDeps);
+
+                if (id) {
+                    try {
+                        await authFetch('/api/tasks/dependencies', {
+                            method: 'DELETE',
+                            body: JSON.stringify({ id, projectId })
+                        });
+                    } catch {}
+                }
+                return { data: { success: true, data: { deleted: true } } };
             },
             invalidatesTags: ['Task'],
         }),
@@ -356,22 +442,41 @@ export const api = createApi({
             },
             invalidatesTags: ['Task'],
         }),
-        createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string; sprintId?: string | null }>({
+        createTask: builder.mutation<{ success: boolean; data: TaskNode }, { title: string; description?: string; projectId: string; assigneeId?: string; dueDate?: string; priority?: string; sprintId?: string | null; phase?: string }>({
             queryFn: async (taskData) => {
                 const session = CognitoAuthService.getSession();
+                const chosenPhase = taskData.phase || 'allocation';
+                const phaseToStatus: Record<string, string> = {
+                    allocation: 'pending',
+                    focus: 'in-progress',
+                    resolution: 'in-progress',
+                    outcome: 'done'
+                };
+                const phaseToBackendStatus: Record<string, string> = {
+                    allocation: 'backlog',
+                    focus: 'in_progress',
+                    resolution: 'review',
+                    outcome: 'done'
+                };
                 const newTask: TaskNode = {
                     id: 'task-' + Date.now(),
                     title: taskData.title,
                     description: taskData.description || '',
-                    status: 'pending',
-                    phase: 'allocation',
+                    status: phaseToStatus[chosenPhase] || 'pending',
+                    phase: chosenPhase,
                     priority: taskData.priority || 'medium',
                     dueDate: taskData.dueDate,
                     projectId: taskData.projectId || 'proj-default-1',
                     focusCount: 0,
                     version: 1,
                     isStarred: false,
-                    assignee: {
+                    isSample: false,
+                    assignee: taskData.assigneeId && taskData.assigneeId !== 'unassigned' ? {
+                        id: taskData.assigneeId,
+                        name: 'Assignee',
+                        initials: 'AS',
+                        color: 'bg-blue-500'
+                    } : {
                         id: session?.user?.id || 'usr-default',
                         name: session?.user?.name || 'User',
                         initials: (session?.user?.name || 'U').substring(0, 2).toUpperCase(),
@@ -387,10 +492,11 @@ export const api = createApi({
                             title: taskData.title,
                             description: taskData.description,
                             project_id: taskData.projectId,
-                            assignee_id: taskData.assigneeId,
+                            assignee_id: taskData.assigneeId && taskData.assigneeId !== 'unassigned' ? taskData.assigneeId : undefined,
                             due_date: taskData.dueDate,
                             priority: taskData.priority,
-                            sprint_id: taskData.sprintId
+                            sprint_id: taskData.sprintId,
+                            status: phaseToBackendStatus[chosenPhase] || 'backlog'
                         })
                     });
                     if (data?.id) newTask.id = data.id;
@@ -958,11 +1064,18 @@ export const api = createApi({
             queryFn: async () => ({ data: { success: true, metric: 0.15 } }),
         }),
         getHasRealTasks: builder.query<any, void>({
-            queryFn: async () => ({ data: { hasRealTasks: true } }),
+            queryFn: async () => {
+                const tasks = getStoredTasks();
+                const hasReal = tasks.some(t => !t.isSample);
+                return { data: { hasRealTasks: hasReal } };
+            },
+            providesTags: ['Task'],
         }),
         deleteSampleTasks: builder.mutation<any, void>({
             queryFn: async () => {
-                saveStoredTasks([]);
+                const tasks = getStoredTasks();
+                const realTasks = tasks.filter(t => !t.isSample);
+                saveStoredTasks(realTasks);
                 return { data: { success: true } };
             },
             invalidatesTags: ['Task'],
@@ -976,6 +1089,7 @@ export const {
     useGetTasksQuery,
     useGetTaskDependenciesQuery,
     useAddDependencyMutation,
+    useDeleteDependencyMutation,
     useUpdateTaskMutation,
     useCreateTaskMutation,
     useToggleTaskStarMutation,
