@@ -16,7 +16,6 @@ interface FloatingAvatarProps {
     bottom?: string;
     anim: string;
     rotate: number;
-    color?: string;
 }
 
 function FloatingAvatar({
@@ -28,83 +27,95 @@ function FloatingAvatar({
     bottom,
     anim,
     rotate,
-    color,
 }: FloatingAvatarProps) {
     return (
         <div
-            className="absolute z-10 hidden sm:flex pointer-events-auto transition-transform duration-300 hover:scale-110 hover:z-30 cursor-pointer"
+            className="absolute z-10 hidden sm:flex pointer-events-auto cursor-pointer"
             style={{
                 top,
                 left,
                 right,
                 bottom,
-                animation: `${anim} 5s ease-in-out infinite`,
-                animationDelay: delay,
             }}
         >
-            <div className="relative w-[88px] h-[88px] flex items-center justify-center">
-
-                {/* Circular background placeholder */}
+            {/* ONE rigid animated object */}
+            <div
+                className="relative w-[88px] h-[88px] flex items-center justify-center"
+                style={{
+                    animation: `${anim} 6s ease-in-out infinite`,
+                    animationDelay: delay,
+                    willChange: "transform",
+                    transform: "translate3d(0, 0, 0)",
+                }}
+            >
+                {/* Circular background */}
                 <div
                     className="
                         absolute inset-0
                         rounded-full
-                        bg-white/80
-                        backdrop-blur-md
-                        shadow-[0_10px_25px_rgba(15,23,42,0.14),0_3px_8px_rgba(15,23,42,0.08)]
+                        bg-white
+                        shadow-[0_8px_24px_rgba(15,23,42,0.12)]
                     "
                 />
 
-                {/* Very subtle inner depth, NOT a ring */}
+                {/* Subtle surface depth */}
                 <div
                     className="
-                        absolute inset-[3px]
+                        absolute inset-[2px]
                         rounded-full
                         bg-gradient-to-br
                         from-white
-                        via-white/80
-                        to-slate-100/70
-                        opacity-90
+                        via-white
+                        to-slate-100
                     "
                 />
 
-                {/* Mascot image */}
-                <div className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none">
-                    <img
-                        src={img}
-                        alt="floework teammate"
-                        className="w-full h-full object-contain"
-                        style={{
-                            transform: "scale(1.36)",
-                        }}
-                        loading="eager"
-                        decoding="async"
-                    />
-                </div>
+                {/* Mascot */}
+                <img
+                    src={img}
+                    alt="floework teammate"
+                    className="
+                        relative
+                        z-10
+                        w-full
+                        h-full
+                        object-contain
+                        pointer-events-none
+                    "
+                    style={{
+                        transform: "scale(1.36)",
+                        transformOrigin: "center center",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                    }}
+                    loading="eager"
+                    decoding="async"
+                    draggable={false}
+                />
 
-                {/* Glass-like highlight on the circular surface */}
+                {/* Very subtle highlight */}
                 <div
                     className="
                         absolute
-                        top-[5px]
-                        left-[12px]
-                        right-[20px]
-                        h-[18px]
-                        rounded-full
-                        bg-white/45
-                        blur-[5px]
-                        pointer-events-none
                         z-20
+                        top-[7px]
+                        left-[14px]
+                        w-[40px]
+                        h-[12px]
+                        rounded-full
+                        bg-white/40
+                        blur-[4px]
+                        pointer-events-none
                     "
                 />
 
-                {/* Cursor arrow */}
+                {/* Cursor */}
                 <div
                     className="absolute bottom-[-2px] right-[-2px] w-6 h-6 z-30 pointer-events-none"
                     style={{
                         transform: `rotate(${rotate}deg)`,
                         filter:
-                            "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.28)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.18))",
+                            "drop-shadow(0 3px 5px rgba(15,23,42,0.22))",
                     }}
                 >
                     <svg
@@ -115,14 +126,13 @@ function FloatingAvatar({
                     >
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill={color || "#007dff"}
+                            fill="#007dff"
                             stroke="#ffffff"
                             strokeWidth="2"
                             strokeLinejoin="round"
                         />
                     </svg>
                 </div>
-
             </div>
         </div>
     );
@@ -160,16 +170,30 @@ export default function LandingPage() {
         .rotate-y-180 { transform: rotateY(180deg); }
 
         @keyframes swayA {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50%      { transform: translateY(-12px) rotate(2deg); }
+            0%, 100% {
+                transform: translate3d(0, 0, 0);
+            }
+            50% {
+                transform: translate3d(0, -7px, 0);
+            }
         }
+
         @keyframes swayB {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50%      { transform: translateY(10px) rotate(-2deg); }
+            0%, 100% {
+                transform: translate3d(0, 0, 0);
+            }
+            50% {
+                transform: translate3d(0, 7px, 0);
+            }
         }
+
         @keyframes swayC {
-          0%, 100% { transform: translateX(0px) translateY(0px); }
-          50%      { transform: translateX(8px) translateY(-8px); }
+            0%, 100% {
+                transform: translate3d(0, 0, 0);
+            }
+            50% {
+                transform: translate3d(5px, -5px, 0);
+            }
         }
 
         @keyframes slideUpFade {
@@ -269,7 +293,6 @@ export default function LandingPage() {
                     delay="0s"
                     anim="swayC"
                     rotate={-45}
-                    color="#007dff"
                     top="15%"
                     left="9%"
                 />
@@ -281,7 +304,6 @@ export default function LandingPage() {
                     delay="1s"
                     anim="swayA"
                     rotate={45}
-                    color="#10b981"
                     top="16%"
                     right="9%"
                 />
@@ -293,7 +315,6 @@ export default function LandingPage() {
                     delay="0.5s"
                     anim="swayB"
                     rotate={-110}
-                    color="#8b5cf6"
                     bottom="11%"
                     left="13%"
                 />
@@ -305,7 +326,6 @@ export default function LandingPage() {
                     delay="1.5s"
                     anim="swayC"
                     rotate={110}
-                    color="#ef4444"
                     bottom="13%"
                     right="13%"
                 />
