@@ -42,7 +42,7 @@ function FloatingAvatar({
                 animationDelay: delay,
             }}
         >
-            <div className="relative w-[104px] h-[104px] flex items-center justify-center">
+            <div className="relative w-[88px] h-[88px] flex items-center justify-center">
 
                 {/* Mascot image - scaled to eliminate padding and frame photo directly */}
                 <div className="w-full h-full flex items-center justify-center pointer-events-none">
@@ -50,34 +50,34 @@ function FloatingAvatar({
                         src={img}
                         alt="floework teammate"
                         className="w-full h-full object-contain"
-                        style={{ transform: "scale(1.39)" }}
+                        style={{ transform: "scale(1.36)" }}
                         loading="eager"
                         decoding="async"
                     />
                 </div>
 
-                {/* Solid white 3D ring layered OVER the photo with dimensional shadows */}
+                {/* Thick solid white 3D ring layered OVER the photo with dimensional shadows */}
                 <div
-                    className="absolute inset-[3px] rounded-full pointer-events-none z-10"
+                    className="absolute inset-[2px] rounded-full pointer-events-none z-10"
                     style={{
-                        border: "3.5px solid #ffffff",
+                        border: "5.5px solid #ffffff",
                         boxShadow: `
                             0 10px 24px -2px rgba(15, 23, 42, 0.22),
                             0 4px 10px -1px rgba(15, 23, 42, 0.14),
                             0 0 0 1px rgba(255, 255, 255, 0.95),
-                            0 0 14px 2px rgba(255, 255, 255, 0.75),
-                            inset 0 2px 2px 0 rgba(255, 255, 255, 1),
-                            inset 0 -2px 3px 0 rgba(15, 23, 42, 0.12)
+                            0 0 16px 2px rgba(255, 255, 255, 0.8),
+                            inset 0 2.5px 3px 0 rgba(255, 255, 255, 1),
+                            inset 0 -2.5px 3.5px 0 rgba(15, 23, 42, 0.12)
                         `,
                     }}
                 />
 
-                {/* Solid white 3D cursor arrow */}
+                {/* Colored 3D cursor arrow */}
                 <div
-                    className="absolute bottom-[2px] right-[-2px] w-6 h-6 z-20"
+                    className="absolute bottom-[-2px] right-[-2px] w-6 h-6 z-20 pointer-events-none"
                     style={{
                         transform: `rotate(${rotate}deg)`,
-                        filter: "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.2)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.12))",
+                        filter: "drop-shadow(0 4px 6px rgba(15, 23, 42, 0.28)) drop-shadow(0 1px 3px rgba(15, 23, 42, 0.18))",
                     }}
                 >
                     <svg
@@ -88,16 +88,9 @@ function FloatingAvatar({
                     >
                         <path
                             d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill={color || "#ffffff"}
+                            fill={color || "#007dff"}
                             stroke="#ffffff"
-                            strokeWidth="1.5"
-                            strokeLinejoin="round"
-                        />
-                        <path
-                            d="M5.5 3L19 11.5L12 13.5L9 21L5.5 3Z"
-                            fill="none"
-                            stroke="rgba(15, 23, 42, 0.1)"
-                            strokeWidth="1"
+                            strokeWidth="2"
                             strokeLinejoin="round"
                         />
                     </svg>
@@ -249,6 +242,7 @@ export default function LandingPage() {
                     delay="0s"
                     anim="swayC"
                     rotate={-45}
+                    color="#007dff"
                     top="15%"
                     left="9%"
                 />
@@ -260,6 +254,7 @@ export default function LandingPage() {
                     delay="1s"
                     anim="swayA"
                     rotate={45}
+                    color="#10b981"
                     top="16%"
                     right="9%"
                 />
@@ -271,6 +266,7 @@ export default function LandingPage() {
                     delay="0.5s"
                     anim="swayB"
                     rotate={-110}
+                    color="#8b5cf6"
                     bottom="11%"
                     left="13%"
                 />
@@ -282,6 +278,7 @@ export default function LandingPage() {
                     delay="1.5s"
                     anim="swayC"
                     rotate={110}
+                    color="#ef4444"
                     bottom="13%"
                     right="13%"
                 />
