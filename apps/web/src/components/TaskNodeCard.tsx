@@ -1,6 +1,7 @@
 import { Check, MoreHorizontal, Lock, Star, Play, Zap, Github, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { TaskNode } from "@/data/mockData";
+import { UserAvatar } from "./UserAvatar";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useSocket } from "@/modules/socket/SocketContext";
@@ -76,11 +77,12 @@ const TaskNodeCard = ({ task, phaseId, onClick }: TaskNodeCardProps) => {
       <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-border bg-surface" />
 
       {task.assignee && (
-        <div
-          className={`flex-shrink-0 w-8 h-8 rounded-lg ${task.assignee.color} flex items-center justify-center text-xs font-semibold text-foreground`}
-        >
-          {task.assignee?.name?.[0] || 'U'}
-        </div>
+        <UserAvatar
+          name={task.assignee.name}
+          avatarUrl={(task.assignee as any).avatarUrl}
+          size="sm"
+          className="shrink-0"
+        />
       )}
 
       <span className="text-sm font-medium text-foreground flex-1 leading-tight flex items-center gap-2">

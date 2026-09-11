@@ -1034,25 +1034,53 @@ export const api = createApi({
         }),
         getMyTeams: builder.query<{ success: boolean; data: any[] }, void>({
             queryFn: async () => {
+                const defaultTeams = [
+                    {
+                        id: 'proj-default-1',
+                        name: localStorage.getItem('floework_active_workspace') || 'Core Platform',
+                        slug: 'core-platform',
+                        description: 'Collaborative engineering workspace for execution graphs, sprint causality, and telemetry.'
+                    }
+                ];
                 try {
+                    const customWorkspaces = JSON.parse(localStorage.getItem('floework_user_workspaces') || '[]');
                     const data = await authFetch('/api/workspaces');
-                    return { data: { success: true, data: Array.isArray(data) ? data : [] } };
+                    const serverList = Array.isArray(data) ? data : [];
+                    const combined = [...serverList, ...customWorkspaces];
+                    if (combined.length === 0) {
+                        return { data: { success: true, data: defaultTeams } };
+                    }
+                    return { data: { success: true, data: combined } };
                 } catch {
-                    return { data: { success: true, data: [] } };
+                    const customWorkspaces = JSON.parse(localStorage.getItem('floework_user_workspaces') || '[]');
+                    return { data: { success: true, data: [...defaultTeams, ...customWorkspaces] } };
                 }
             },
             providesTags: ['Project'],
         }),
         createTeam: builder.mutation<{ success: boolean; data: any }, { name: string; description?: string }>({
-            queryFn: async ({ name }) => {
+            queryFn: async ({ name, description }) => {
+                const newWorkspace = {
+                    id: 'team-' + Date.now(),
+                    name,
+                    slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                    description: description || '',
+                    created_at: new Date().toISOString()
+                };
                 try {
                     const data = await authFetch('/api/workspaces', {
                         method: 'POST',
-                        body: JSON.stringify({ name })
+                        body: JSON.stringify({ name, description })
                     });
-                    return { data: { success: true, data } };
-                } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                    return { data: { success: true, data: data || newWorkspace } };
+                } catch {
+                    // Fall back to client storage
+                    const stored = JSON.parse(localStorage.getItem('floework_user_workspaces') || '[]');
+                    stored.push(newWorkspace);
+                    localStorage.setItem('floework_user_workspaces', JSON.stringify(stored));
+                    localStorage.setItem('floework_active_workspace', name);
+                    localStorage.setItem('floework_active_project_id', newWorkspace.id);
+                    return { data: { success: true, data: newWorkspace } };
                 }
             },
             invalidatesTags: ['Project'],

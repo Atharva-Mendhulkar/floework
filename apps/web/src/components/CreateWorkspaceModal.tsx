@@ -15,15 +15,27 @@ import { Plus, Rocket, Layout, Calendar } from "lucide-react";
 import { useCreateTeamMutation, useCreateProjectMutation } from "@/store/api";
 import { toast } from "sonner";
 
-export function CreateWorkspaceModal() {
-    const [open, setOpen] = useState(false);
+export function CreateWorkspaceModal({ 
+    open: controlledOpen, 
+    onOpenChange: setControlledOpen, 
+    trigger 
+}: { 
+    open?: boolean; 
+    onOpenChange?: (open: boolean) => void; 
+    trigger?: React.ReactNode 
+} = {}) {
+    const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : uncontrolledOpen;
+    const setOpen = isControlled ? setControlledOpen! : setUncontrolledOpen;
+
     const [name, setName] = useState("");
     const [createTeam, { isLoading }] = useCreateTeamMutation();
 
     const handleCreate = async () => {
         if (!name.trim()) return;
         try {
-            await createTeam({ name }).unwrap();
+            await createTeam({ name: name.trim() }).unwrap();
             toast.success("Workspace created!");
             setOpen(false);
             setName("");
@@ -34,11 +46,15 @@ export function CreateWorkspaceModal() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 border-slate-200">
-                    <Plus size={16} /> New Workspace
-                </Button>
-            </DialogTrigger>
+            {trigger ? (
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+            ) : !isControlled ? (
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 border-slate-200">
+                        <Plus size={16} /> New Workspace
+                    </Button>
+                </DialogTrigger>
+            ) : null}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Create Workspace</DialogTitle>

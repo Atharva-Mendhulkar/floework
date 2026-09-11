@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Check, MoreHorizontal, Lock, Star, Play, Zap, Github, X } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
+import { UserAvatar } from "./UserAvatar";
 import { useSelector } from "react-redux";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useToggleTaskStarMutation } from "@/store/api";
@@ -85,11 +86,12 @@ const TaskCustomNode = ({ data, selected }: NodeProps) => {
       <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-[#007dff]" id="bottom" />
 
       {task.assignee && (
-        <div
-          className={`flex-shrink-0 w-8 h-8 rounded-lg ${task.assignee.color || 'bg-slate-200'} flex items-center justify-center text-xs font-semibold text-foreground`}
-        >
-          {task.assignee?.name?.[0] || 'U'}
-        </div>
+        <UserAvatar
+          name={task.assignee.name}
+          avatarUrl={(task.assignee as any).avatarUrl}
+          size="sm"
+          className="shrink-0"
+        />
       )}
 
       <span className="text-sm font-medium text-foreground flex-1 leading-tight flex items-center gap-2">
