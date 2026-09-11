@@ -140,8 +140,13 @@ async function dispatchRoute(
     return true
   }
 
-  // 4. Analytics Narrative API
-  if (pathname === '/api/analytics/narrative' || pathname === '/api/v1/analytics/narrative') {
+  // 4. Analytics Narrative API (Executive Narrative Engine, Share, Regeneration)
+  if (
+    pathname === '/api/analytics/narrative' ||
+    pathname === '/api/v1/analytics/narrative' ||
+    pathname.startsWith('/api/analytics/narrative/') ||
+    pathname.startsWith('/api/v1/analytics/narrative/')
+  ) {
     await narrativeHandler(req, res)
     return true
   }

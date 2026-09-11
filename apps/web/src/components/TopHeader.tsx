@@ -118,19 +118,6 @@ const TopHeader = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Invite button */}
-        <button
-          onClick={() => setIsInviteModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007dff] hover:bg-[#0066cc] text-white text-xs font-semibold rounded-xl shadow-sm transition-all hover:shadow active:scale-95 ml-1 mr-1"
-          title="Invite members to workspace"
-        >
-          <UserPlus size={13} />
-          <span>Invite</span>
-        </button>
-
-        {/* Divider */}
-        <div className="w-px h-5 bg-slate-200 mx-1" />
-
         {/* User chip */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -145,24 +132,24 @@ const TopHeader = () => {
           <DropdownMenuContent align="end" className="w-56 mt-1 rounded-xl shadow-lg border-slate-200">
             <DropdownMenuLabel className="font-semibold text-slate-900">My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2">
+            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2 focus:bg-slate-100 focus:text-slate-900">
               <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2">
+            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer text-slate-700 font-medium py-2 focus:bg-slate-100 focus:text-slate-900">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsInviteModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
-              <UserPlus className="mr-2 h-4 w-4 text-[#007dff]" />
-              <span className="text-[#007dff]">Invite Members</span>
+            <DropdownMenuItem onClick={() => setIsInviteModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2 focus:bg-slate-100 hover:bg-slate-100 focus:text-slate-900">
+              <UserPlus className="mr-2 h-4 w-4 text-slate-600" />
+              <span>Invite Members</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/workspace/settings")} className="cursor-pointer text-slate-700 font-medium py-2">
+            <DropdownMenuItem onClick={() => navigate("/workspace/settings")} className="cursor-pointer text-slate-700 font-medium py-2 focus:bg-slate-100 focus:text-slate-900">
               <Users className="mr-2 h-4 w-4" />
               <span>Workspace Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsJoinModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2">
+            <DropdownMenuItem onClick={() => setIsJoinModalOpen(true)} className="cursor-pointer text-slate-700 font-medium py-2 focus:bg-slate-100 focus:text-slate-900">
               <UserPlus className="mr-2 h-4 w-4" />
               <span>Join Workspace</span>
             </DropdownMenuItem>
