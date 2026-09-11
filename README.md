@@ -1,22 +1,5 @@
 <a id="readme-top"></a>
 
-<!-- PROJECT SHIELDS -->
-<div align="center">
-
-[![CI Quality Gates](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/ci.yml)
-[![Terraform Speculative Plan](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/terraform-ci.yml)
-[![Docker & ECR Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/docker-ecr.yml)
-[![Frontend CDN Delivery](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Atharva-Mendhulkar/floework/actions/workflows/deploy-frontend.yml)
-[![Launch Readiness](https://img.shields.io/badge/Launch%20Readiness-Certified%20by%20Config%20%26%20Validation-success?style=flat-square&logo=amazonwebservices)](docs/PRODUCTION_LAUNCH_READINESS_REPORT.md)
-[![Tests Passing](https://img.shields.io/badge/Tests-240%2F240%20Passing%20(100%25)-success?style=flat-square&logo=vitest)](test/)
-[![AWS Architecture](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20SQS%20%7C%20S3%20%7C%20CloudFront%20%7C%20Bedrock-FF9900?style=flat-square&logo=amazonwebservices)](terraform/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Terraform](https://img.shields.io/badge/Terraform-1.9.5-844FBA?style=flat-square&logo=terraform)](https://www.terraform.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-
-
-</div>
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
