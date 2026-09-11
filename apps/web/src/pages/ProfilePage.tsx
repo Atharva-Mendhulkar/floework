@@ -24,19 +24,108 @@ import {
     Sparkles, 
     Check, 
     Shield, 
-    Briefcase, 
-    Copy 
+    Palette, 
+    ExternalLink,
+    CheckCheck,
+    Cpu
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/UserAvatar";
+import { getTheme, setTheme, ThemeName } from "@/lib/theme";
 
-const MASCOT_PRESETS = [
-    { id: "mascot-1", name: "Atlas Blue", url: "/assets/one.png", color: "border-blue-400 bg-blue-50/50" },
-    { id: "mascot-2", name: "Pulse Green", url: "/assets/two.png", color: "border-emerald-400 bg-emerald-50/50" },
-    { id: "mascot-3", name: "Nova Purple", url: "/assets/three.png", color: "border-purple-400 bg-purple-50/50" },
-    { id: "mascot-4", name: "Spark Red", url: "/assets/four.png", color: "border-rose-400 bg-rose-50/50" },
+interface MascotPreset {
+    id: string;
+    name: string;
+    url: string;
+    theme: ThemeName;
+    color: string;
+    badge: string;
+}
+
+const MASCOT_PRESETS: MascotPreset[] = [
+    { 
+        id: "mascot-1", 
+        name: "Atlas Blue", 
+        url: "/assets/one.png", 
+        theme: "blue", 
+        color: "border-blue-400 bg-blue-50/50",
+        badge: "Classic"
+    },
+    { 
+        id: "mascot-2", 
+        name: "Pulse Green", 
+        url: "/assets/two.png", 
+        theme: "green", 
+        color: "border-emerald-400 bg-emerald-50/50",
+        badge: "Velocity"
+    },
+    { 
+        id: "mascot-3", 
+        name: "Nova Purple", 
+        url: "/assets/three.png", 
+        theme: "purple", 
+        color: "border-purple-400 bg-purple-50/50",
+        badge: "Creative"
+    },
+    { 
+        id: "mascot-4", 
+        name: "Spark Red", 
+        url: "/assets/four.png", 
+        theme: "red", 
+        color: "border-rose-400 bg-rose-50/50",
+        badge: "Sprint"
+    },
+];
+
+interface ThemeOption {
+    id: ThemeName;
+    name: string;
+    badge: string;
+    colorHex: string;
+    bgClass: string;
+    borderActive: string;
+    desc: string;
+}
+
+const THEME_OPTIONS: ThemeOption[] = [
+    {
+        id: "blue",
+        name: "Atlas Blue",
+        badge: "Default",
+        colorHex: "#007dff",
+        bgClass: "bg-[#007dff]",
+        borderActive: "border-[#007dff] ring-2 ring-[#007dff]/25",
+        desc: "Classic Floework deep cobalt aesthetic"
+    },
+    {
+        id: "green",
+        name: "Pulse Green",
+        badge: "Emerald",
+        colorHex: "#059669",
+        bgClass: "bg-emerald-600",
+        borderActive: "border-emerald-600 ring-2 ring-emerald-500/25",
+        desc: "High velocity & focused sprint theme"
+    },
+    {
+        id: "purple",
+        name: "Nova Purple",
+        badge: "Violet",
+        colorHex: "#7c3aed",
+        bgClass: "bg-purple-600",
+        borderActive: "border-purple-600 ring-2 ring-purple-500/25",
+        desc: "Deep creative session styling"
+    },
+    {
+        id: "red",
+        name: "Spark Red",
+        badge: "Crimson",
+        colorHex: "#e11d48",
+        bgClass: "bg-rose-600",
+        borderActive: "border-rose-600 ring-2 ring-rose-500/25",
+        desc: "Urgent execution & deadline mode"
+    },
 ];
 
 export default function ProfilePage() {
@@ -51,7 +140,20 @@ export default function ProfilePage() {
     const [password, setPassword] = useState("");
     const [weeklyReport, setWeeklyReport] = useState(true);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [activeTheme, setActiveTheme] = useState<ThemeName>(() => getTheme());
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Synchronize active theme from global state & system events
+    useEffect(() => {
+        setActiveTheme(getTheme());
+        const handleThemeChange = (e: any) => {
+            if (e.detail?.theme) {
+                setActiveTheme(e.detail.theme);
+            }
+        };
+        window.addEventListener('floework:themechange', handleThemeChange);
+        return () => window.removeEventListener('floework:themechange', handleThemeChange);
+    }, []);
 
     useEffect(() => {
         if (profileRes?.data) {
@@ -65,17 +167,24 @@ export default function ProfilePage() {
     const gcalData = gcalRes?.data;
     const currentAvatarUrl = profile?.avatarUrl || null;
 
+    const handleSwitchTheme = (newTheme: ThemeName) => {
+        setTheme(newTheme);
+        setActiveTheme(newTheme);
+        const label = newTheme === 'green' ? 'Pulse Green' : newTheme === 'purple' ? 'Nova Purple' : newTheme === 'red' ? 'Spark Red' : 'Atlas Blue';
+        toast.success(`UI Theme changed to ${label}! Entire interface updated.`);
+    };
+
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const payload: any = { name, email };
             if (password) payload.password = password;
             await updateProfile(payload).unwrap();
-            toast.success("Profile updated successfully");
+            toast.success("Profile details updated successfully");
             setPassword("");
             refetch();
         } catch (error) {
-            toast.error("Failed to update profile");
+            toast.error("Failed to update profile details");
         }
     };
 
@@ -102,29 +211,32 @@ export default function ProfilePage() {
                 session.user.avatarUrl = res.data.avatarUrl;
                 localStorage.setItem('floework_cognito_session', JSON.stringify(session));
             }
-            toast.success('Profile picture updated!');
+            toast.success('Custom profile picture updated!');
             refetch();
         } catch {
-            toast.error('Failed to upload avatar.');
+            toast.error('Failed to upload avatar image.');
         } finally {
             setIsUploadingAvatar(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    const handleSelectPreset = async (presetUrl: string) => {
+    const handleSelectPreset = async (preset: MascotPreset) => {
         setIsUploadingAvatar(true);
+        // Seamlessly switch global theme to match mascot
+        handleSwitchTheme(preset.theme);
+
         try {
-            await updateProfile({ avatarUrl: presetUrl } as any).unwrap();
+            await updateProfile({ avatarUrl: preset.url } as any).unwrap();
             const session = CognitoAuthService.getSession();
             if (session && session.user) {
-                session.user.avatarUrl = presetUrl;
+                session.user.avatarUrl = preset.url;
                 localStorage.setItem('floework_cognito_session', JSON.stringify(session));
             }
-            toast.success("Avatar updated with Floework mascot!");
+            toast.success(`Selected ${preset.name} mascot! UI theme switched to ${preset.name}.`);
             refetch();
         } catch {
-            toast.error("Failed to update avatar");
+            toast.error("Failed to update mascot avatar");
         } finally {
             setIsUploadingAvatar(false);
         }
@@ -156,7 +268,7 @@ export default function ProfilePage() {
             toast.success(next ? "Weekly focus report enabled" : "Weekly focus report disabled");
         } catch {
             setWeeklyReport(!next);
-            toast.error("Failed to update preference");
+            toast.error("Failed to update notification preference");
         }
     };
 
@@ -191,341 +303,492 @@ export default function ProfilePage() {
 
     if (isLoadingProfile) {
         return (
-            <div className="flex items-center justify-center p-12 text-slate-500">
+            <div className="flex-1 flex items-center justify-center p-12 text-slate-500">
                 <Loader2 size={24} className="animate-spin text-[#007dff] mr-2" />
-                <span className="text-sm">Loading profile settings...</span>
+                <span className="text-sm font-medium">Loading profile and workspace settings...</span>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 overflow-y-auto w-full max-w-3xl flex flex-col gap-8 pb-12">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">User Profile Settings</h1>
-                <p className="text-slate-500 text-sm mt-1">
-                    Manage your personal account, avatar, and connected integrations.
-                </p>
-            </div>
-
-            {/* Profile Photo & Avatar Customization Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <Camera size={18} className="text-[#007dff]" />
-                            Profile Photo
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Upload a custom avatar or choose from official Floework mascots.
-                        </p>
+        <div className="flex-1 w-full max-w-7xl mx-auto flex flex-col gap-6 p-2 sm:p-4 pb-16 no-scrollbar animate-in fade-in duration-300">
+            {/* Page Header with Accent Theme Pill */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+                <div>
+                    <div className="flex items-center gap-2.5">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">User Profile Settings</h1>
+                        <Badge variant="outline" className="text-xs font-semibold capitalize bg-white border-slate-200 shadow-2xs">
+                            <Shield size={11} className="mr-1 text-[#007dff]" />
+                            {profile?.role || "Member"}
+                        </Badge>
                     </div>
-                    {currentAvatarUrl && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleRemoveAvatar}
-                            disabled={isUploadingAvatar}
-                            className="text-xs text-slate-500 hover:text-red-600 hover:bg-red-50 flex items-center gap-1.5"
-                        >
-                            <Trash2 size={13} />
-                            Remove Photo
-                        </Button>
-                    )}
+                    <p className="text-slate-500 text-sm mt-1">
+                        Manage your account credentials, avatar, interface theme colors, and connected developer tools.
+                    </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    {/* Main Avatar Preview */}
-                    <div className="relative group cursor-pointer shrink-0" onClick={() => fileInputRef.current?.click()}>
-                        <UserAvatar
-                            name={name || profile?.name}
-                            avatarUrl={currentAvatarUrl}
-                            size="lg"
-                            className="shadow-md ring-4 ring-slate-100 group-hover:ring-[#007dff]/20 transition-all"
-                        />
-                        {/* Overlay */}
-                        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
-                            {isUploadingAvatar ? (
-                                <Loader2 size={22} className="animate-spin text-white" />
-                            ) : (
-                                <>
-                                    <Camera size={20} />
-                                    <span className="text-[10px] font-medium mt-1">Upload</span>
-                                </>
+                {/* Quick Theme Status Badge */}
+                <div className="flex items-center gap-2.5 self-start sm:self-auto bg-white border border-slate-200/80 rounded-xl px-3.5 py-1.5 shadow-xs">
+                    <span className="text-xs text-slate-500 font-medium">Active Theme:</span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold capitalize text-slate-800">
+                        <span className={`w-2.5 h-2.5 rounded-full ${
+                            activeTheme === 'green' ? 'bg-emerald-500 ring-2 ring-emerald-200' :
+                            activeTheme === 'purple' ? 'bg-purple-500 ring-2 ring-purple-200' :
+                            activeTheme === 'red' ? 'bg-rose-500 ring-2 ring-rose-200' :
+                            'bg-[#007dff] ring-2 ring-blue-200'
+                        }`} />
+                        {activeTheme === 'blue' ? 'Atlas Blue' : activeTheme === 'green' ? 'Pulse Green' : activeTheme === 'purple' ? 'Nova Purple' : 'Spark Red'}
+                    </span>
+                </div>
+            </div>
+
+            {/* 2-Column Responsive Dashboard Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* =========================================================================
+                    LEFT COLUMN: Identity, Avatar & Interface Accent Theme (lg:col-span-5)
+                    ========================================================================= */}
+                <div className="lg:col-span-5 flex flex-col gap-6">
+                    
+                    {/* Identity & Profile Photo Card */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-5">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <Camera size={18} className="text-[#007dff]" />
+                                    Profile Identity
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Your public avatar across boards, narratives, and comments.
+                                </p>
+                            </div>
+                            {currentAvatarUrl && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleRemoveAvatar}
+                                    disabled={isUploadingAvatar}
+                                    className="text-xs text-slate-500 hover:text-red-600 hover:bg-red-50 flex items-center gap-1.5"
+                                >
+                                    <Trash2 size={13} />
+                                    Reset
+                                </Button>
                             )}
                         </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={handleAvatarChange}
-                            className="hidden"
-                        />
+
+                        {/* Avatar Hero Display */}
+                        <div className="flex items-center gap-5">
+                            <div 
+                                className="relative group cursor-pointer shrink-0" 
+                                onClick={() => fileInputRef.current?.click()}
+                                title="Click to upload custom picture"
+                            >
+                                <UserAvatar
+                                    name={name || profile?.name}
+                                    avatarUrl={currentAvatarUrl}
+                                    size="lg"
+                                    className="w-20 h-20 shadow-md ring-4 ring-slate-100 group-hover:ring-[#007dff]/30 transition-all"
+                                />
+                                <div className="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
+                                    {isUploadingAvatar ? (
+                                        <Loader2 size={20} className="animate-spin text-white" />
+                                    ) : (
+                                        <>
+                                            <Camera size={18} />
+                                            <span className="text-[10px] font-medium mt-0.5">Change</span>
+                                        </>
+                                    )}
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={handleAvatarChange}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-slate-900 truncate">{name || profile?.name || "User"}</h3>
+                                </div>
+                                <p className="text-xs text-slate-500 truncate">{email || profile?.email || "dev@floework.dev"}</p>
+                                
+                                <div className="flex items-center gap-2 pt-1">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploadingAvatar}
+                                        className="h-7 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50/50 flex items-center gap-1.5"
+                                    >
+                                        <Upload size={12} />
+                                        Upload Image
+                                    </Button>
+                                    <span className="text-[11px] text-slate-400">Max 2MB</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Security & Access Info Pill */}
+                        <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 text-slate-600">
+                                <Cpu size={14} className="text-[#007dff]" />
+                                <span>Auth: AWS Cognito Secured</span>
+                            </div>
+                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                                <CheckCircle2 size={12} /> Verified
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-lg font-bold text-slate-900">{profile?.name || "User"}</h3>
-                            <Badge variant="outline" className="text-xs font-semibold capitalize bg-slate-50 border-slate-200">
-                                <Shield size={11} className="mr-1 text-[#007dff]" />
-                                {profile?.role || "Member"}
-                            </Badge>
+                    {/* Interface Accent Theme & Mascot Selector Card */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-6">
+                        <div className="border-b border-slate-100 pb-3">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <Palette size={18} className="text-[#007dff]" />
+                                    Interface Accent Theme
+                                </h2>
+                                <Badge variant="secondary" className="text-[10px] font-semibold bg-slate-100 text-slate-700">
+                                    Instant Full Re-skin
+                                </Badge>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Switch between Atlas Blue, Pulse Green, Nova Purple, or Spark Red. Changing the theme morphs buttons, badges, highlights, and navigation globally.
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500">
-                            {profile?.email || "dev@floework.dev"}
-                        </p>
-                        <div className="flex items-center gap-2 pt-1">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploadingAvatar}
-                                className="h-8 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50/50 flex items-center gap-1.5"
-                            >
-                                <Upload size={13} />
-                                Upload Custom Image
-                            </Button>
-                            <span className="text-[11px] text-slate-400">JPG, PNG or WebP up to 2MB</span>
+
+                        {/* 4 Theme Color Tiles */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {THEME_OPTIONS.map((theme) => {
+                                const isSelected = activeTheme === theme.id;
+                                return (
+                                    <button
+                                        key={theme.id}
+                                        type="button"
+                                        onClick={() => handleSwitchTheme(theme.id)}
+                                        className={`flex flex-col p-3 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                                            isSelected 
+                                                ? `${theme.borderActive} bg-slate-50/80 shadow-xs` 
+                                                : "border-slate-200/90 bg-white hover:bg-slate-50/60 hover:border-slate-300"
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-3.5 h-3.5 rounded-full ${theme.bgClass} shadow-xs`} />
+                                                <span className="text-xs font-bold text-slate-900">{theme.name}</span>
+                                            </div>
+                                            {isSelected && (
+                                                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-900 text-white">
+                                                    <Check size={10} className="stroke-[3]" />
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                            {theme.desc}
+                                        </p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Official Mascots Section */}
+                        <div className="pt-2 border-t border-slate-100 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                    <Sparkles size={13} className="text-[#007dff]" /> Official Floework Mascots
+                                </label>
+                                <span className="text-[11px] text-slate-400">Syncs theme & avatar</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                {MASCOT_PRESETS.map((preset) => {
+                                    const isCurrentAvatar = currentAvatarUrl === preset.url;
+                                    const isCurrentTheme = activeTheme === preset.theme;
+                                    return (
+                                        <button
+                                            key={preset.id}
+                                            type="button"
+                                            onClick={() => handleSelectPreset(preset)}
+                                            disabled={isUploadingAvatar}
+                                            className={`flex flex-col items-center text-center p-2.5 rounded-xl border transition-all relative group ${
+                                                isCurrentAvatar 
+                                                    ? "border-[#007dff] bg-blue-50/70 ring-2 ring-[#007dff]/25 shadow-xs" 
+                                                    : "border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300"
+                                            }`}
+                                        >
+                                            <div className="relative w-12 h-12 rounded-full bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-inner mb-1.5">
+                                                <img
+                                                    src={preset.url}
+                                                    alt={preset.name}
+                                                    className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+                                                />
+                                                {isCurrentAvatar && (
+                                                    <div className="absolute inset-0 bg-[#007dff]/20 flex items-center justify-center">
+                                                        <Check size={14} className="text-[#007dff] font-bold" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-800 truncate w-full">{preset.name}</p>
+                                            <span className="text-[10px] text-slate-400">{preset.badge}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Floework Mascot Presets */}
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                        <Sparkles size={13} className="text-[#007dff]" /> Choose a Floework Mascot
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {MASCOT_PRESETS.map((preset) => {
-                            const isSelected = currentAvatarUrl === preset.url;
-                            return (
-                                <button
-                                    key={preset.id}
-                                    type="button"
-                                    onClick={() => handleSelectPreset(preset.url)}
-                                    disabled={isUploadingAvatar}
-                                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all text-left group ${
-                                        isSelected 
-                                            ? "border-[#007dff] bg-blue-50/60 ring-2 ring-[#007dff]/20 shadow-sm" 
-                                            : "border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300"
-                                    }`}
+                {/* =========================================================================
+                    RIGHT COLUMN: Account Form, Notifications, Connected Tools (lg:col-span-7)
+                    ========================================================================= */}
+                <div className="lg:col-span-7 flex flex-col gap-6">
+                    
+                    {/* Account Details Form */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
+                            <div>
+                                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <UserIcon size={18} className="text-[#007dff]" />
+                                    Account Details
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Update your name, contact email, and authentication credentials.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                        <UserIcon size={13} className="text-slate-400" /> Full Name
+                                    </label>
+                                    <Input
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Your Name"
+                                        className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                        <Mail size={13} className="text-slate-400" /> Email Address
+                                    </label>
+                                    <Input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                        <Lock size={13} className="text-slate-400" /> Change Password
+                                    </label>
+                                    <span className="text-[11px] text-slate-400">Optional</span>
+                                </div>
+                                <Input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Leave blank to keep your current password"
+                                    className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white"
+                                />
+                                <p className="text-[11px] text-slate-400">Must be at least 8 characters with letters and digits.</p>
+                            </div>
+
+                            <div className="pt-2 flex justify-end">
+                                <Button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="bg-[#007dff] hover:bg-[#0066cc] text-white font-semibold h-9 px-5 rounded-xl shadow-xs flex items-center gap-2"
                                 >
-                                    <div className="relative w-10 h-10 rounded-full bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-inner">
-                                        <img
-                                            src={preset.url}
-                                            alt={preset.name}
-                                            className="w-8 h-8 object-contain transition-transform group-hover:scale-110"
-                                        />
-                                        {isSelected && (
-                                            <div className="absolute inset-0 bg-[#007dff]/20 flex items-center justify-center">
-                                                <Check size={14} className="text-[#007dff] font-bold" />
-                                            </div>
+                                    {isUpdating ? (
+                                        <>
+                                            <Loader2 size={15} className="animate-spin" />
+                                            Saving Changes...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={15} />
+                                            Save Account Details
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Notifications & Weekly Focus Report */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-4">
+                        <div className="border-b border-slate-100 pb-3">
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <Bell size={18} className="text-[#007dff]" />
+                                Notifications & Communication
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Manage automated email digest alerts and sprint focus stability reports.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50/40">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#007dff] flex items-center justify-center shrink-0">
+                                    <Bell size={18} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold text-slate-900 text-sm">Weekly Focus & Effort Digest</h3>
+                                        {weeklyReport && (
+                                            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                Active
+                                            </span>
                                         )}
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-bold text-slate-800 truncate">{preset.name}</p>
-                                        <p className="text-[10px] text-slate-400 truncate">Preset</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Automated sprint velocity analysis, bottleneck warnings, and focus density summary delivered every Monday at 9:00 AM.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleWeeklyReportToggle}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
+                                    weeklyReport ? 'bg-[#007dff]' : 'bg-slate-200'
+                                }`}
+                                title="Toggle weekly focus report"
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                                        weeklyReport ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Integrations & Connected Tools */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-4">
+                        <div className="border-b border-slate-100 pb-3">
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <Github size={18} className="text-[#007dff]" />
+                                Connected Developer Integrations
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Connect version control and calendar scheduling to automate task causal tracking.
+                            </p>
+                        </div>
+
+                        {/* GitHub Integration Card */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50/40 gap-3">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <Github size={20} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold text-slate-900 text-sm">GitHub Repository Link</h3>
+                                        {profile?.gitHubConnection && (
+                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                <CheckCheck size={11} /> Linked
+                                            </span>
+                                        )}
                                     </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        {profile?.gitHubConnection 
+                                            ? `Authenticated as @${profile.gitHubConnection.githubLogin}. Pull requests and commits link automatically to tasks.` 
+                                            : "Link PRs, branch updates, and code reviews directly to sprint backlog nodes."}
+                                    </p>
+                                </div>
+                            </div>
 
-            {/* Profile Details Form */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
-                <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                    <UserIcon size={18} className="text-[#007dff]" />
-                    Account Details
-                </h2>
-
-                <form onSubmit={handleUpdateProfile} className="space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                                <UserIcon size={13} className="text-slate-400" /> Full Name
-                            </label>
-                            <Input
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Your Name"
-                                className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white"
-                            />
+                            <div className="self-end sm:self-auto shrink-0">
+                                {profile?.gitHubConnection ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs text-slate-600 border-slate-200 hover:text-red-600 hover:border-red-200"
+                                        disabled={isDisconnecting}
+                                        onClick={async () => {
+                                            await disconnectGitHub().unwrap();
+                                            toast.success("Disconnected GitHub repository");
+                                            refetch();
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleConnectGitHub}
+                                        className="h-8 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50 font-medium"
+                                    >
+                                        Connect GitHub
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                                <Mail size={13} className="text-slate-400" /> Email Address
-                            </label>
-                            <Input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white"
-                            />
-                        </div>
-                    </div>
+                        {/* Google Calendar Integration Card */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50/40 gap-3">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 shadow-xs">
+                                    <Calendar size={20} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold text-slate-900 text-sm">Google Calendar Sync</h3>
+                                        {gcalData?.connected && (
+                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                <CheckCheck size={11} /> Synced
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        {gcalData?.connected 
+                                            ? `Connected with ${gcalData.googleEmail}. Deep work execution slots populate into your personal agenda.` 
+                                            : "Sync deep work sessions and focus stability blocks directly into your work calendar."}
+                                    </p>
+                                </div>
+                            </div>
 
-                    <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                            <Lock size={13} className="text-slate-400" /> New Password (Optional)
-                        </label>
-                        <Input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Leave blank to keep your current password"
-                            className="h-10 text-sm bg-slate-50/60 border-slate-200 focus:bg-white max-w-md"
-                        />
-                    </div>
-
-                    <div className="pt-3">
-                        <Button
-                            type="submit"
-                            disabled={isUpdating}
-                            className="bg-[#007dff] hover:bg-[#0066cc] text-white font-semibold h-9 px-5 rounded-xl shadow-sm flex items-center gap-2"
-                        >
-                            <Save size={15} />
-                            {isUpdating ? "Saving..." : "Save Changes"}
-                        </Button>
-                    </div>
-                </form>
-            </div>
-
-            {/* Notifications */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
-                <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
-                    <Bell size={18} className="text-[#007dff]" />
-                    Notifications & Communication
-                </h2>
-
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                            <Bell size={18} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-slate-900 text-sm">Weekly Focus Report</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Receive automated summaries of your team velocity and focus density every Monday morning.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={handleWeeklyReportToggle}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            weeklyReport ? 'bg-[#007dff]' : 'bg-slate-200'
-                        }`}
-                        title="Toggle weekly focus report"
-                    >
-                        <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
-                                weeklyReport ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                        />
-                    </button>
-                </div>
-            </div>
-
-            {/* Integrations */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
-                <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
-                    <Briefcase size={18} className="text-[#007dff]" />
-                    Integrations & Connected Services
-                </h2>
-
-                {/* GitHub */}
-                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/40">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">
-                            <Github size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-slate-900 text-sm">GitHub</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {profile?.gitHubConnection ? `Connected as @${profile.gitHubConnection.githubLogin}` : "Link PRs to tasks and track branch execution state."}
-                            </p>
+                            <div className="self-end sm:self-auto shrink-0">
+                                {gcalData?.connected ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs text-slate-600 border-slate-200 hover:text-red-600 hover:border-red-200"
+                                        disabled={isDisconnectingGcal}
+                                        onClick={async () => {
+                                            await disconnectGoogleCalendar().unwrap();
+                                            toast.success("Disconnected Google Calendar");
+                                            refetchGcal();
+                                            refetch();
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleConnectGoogleCalendar}
+                                        className="h-8 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50 font-medium"
+                                    >
+                                        Connect Calendar
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
-
-                    {profile?.gitHubConnection ? (
-                        <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                                <CheckCircle2 size={13} /> Connected
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs text-slate-600 border-slate-200"
-                                disabled={isDisconnecting}
-                                onClick={async () => {
-                                    await disconnectGitHub().unwrap();
-                                    toast.success("Disconnected GitHub");
-                                    refetch();
-                                }}
-                            >
-                                Disconnect
-                            </Button>
-                        </div>
-                    ) : (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleConnectGitHub}
-                            className="h-8 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50"
-                        >
-                            Connect
-                        </Button>
-                    )}
-                </div>
-
-                {/* Google Calendar */}
-                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/40">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                            <Calendar size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-slate-900 text-sm">Google Calendar</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {gcalData?.connected ? `Connected as ${gcalData.googleEmail}` : "Sync deep work sessions and execution windows directly with calendar."}
-                            </p>
-                        </div>
-                    </div>
-
-                    {gcalData?.connected ? (
-                        <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                                <CheckCircle2 size={13} /> Connected
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs text-slate-600 border-slate-200"
-                                disabled={isDisconnectingGcal}
-                                onClick={async () => {
-                                    await disconnectGoogleCalendar().unwrap();
-                                    toast.success("Disconnected Google Calendar");
-                                    refetchGcal();
-                                    refetch();
-                                }}
-                            >
-                                Disconnect
-                            </Button>
-                        </div>
-                    ) : (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleConnectGoogleCalendar}
-                            className="h-8 text-xs border-slate-200 text-slate-700 hover:text-[#007dff] hover:bg-blue-50"
-                        >
-                            Connect
-                        </Button>
-                    )}
                 </div>
             </div>
         </div>

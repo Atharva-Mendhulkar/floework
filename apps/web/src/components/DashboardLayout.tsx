@@ -12,7 +12,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <SidebarNavigation />
       <div className="flex flex-col flex-1 gap-3 min-w-0">
         <TopHeader />
-        <main className="flex-1 overflow-y-auto flex flex-col gap-3">
+        <main className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-3">
           {children || <Outlet />}
         </main>
       </div>

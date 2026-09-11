@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 216 33% 8%;
 
-    /* Brand accent: #007dff */
+    /* Brand accent: Atlas Blue #007dff */
     --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
@@ -61,6 +61,42 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 211 100% 50%;
   }
+
+  /* Pulse Green Theme: #059669 / #10b981 */
+  [data-theme="green"] {
+    --primary: 158 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 158 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 158 84% 39%;
+    --focus: 158 84% 39%;
+    --sidebar-primary: 158 84% 39%;
+    --sidebar-ring: 158 84% 39%;
+  }
+
+  /* Nova Purple Theme: #7c3aed */
+  [data-theme="purple"] {
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 262 83% 58%;
+    --focus: 262 83% 58%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  /* Spark Red Theme: #e11d48 */
+  [data-theme="red"] {
+    --primary: 347 77% 50%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 347 77% 50%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 347 77% 50%;
+    --focus: 347 77% 50%;
+    --sidebar-primary: 347 77% 50%;
+    --sidebar-ring: 347 77% 50%;
+  }
 }
 
 @layer base {
@@ -70,5 +106,263 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* ==============================================================================
+   Green Theme Class Overrides (Converts complete UI from Atlas Blue to Pulse Green)
+   ============================================================================== */
+[data-theme="green"] .bg-\[\#007dff\] {
+  background-color: #059669 !important;
+}
+[data-theme="green"] .hover\:bg-\[\#007dff\]:hover,
+[data-theme="green"] .hover\:bg-\[\#0066cc\]:hover {
+  background-color: #047857 !important;
+}
+[data-theme="green"] .text-\[\#007dff\] {
+  color: #059669 !important;
+}
+[data-theme="green"] .hover\:text-\[\#007dff\]:hover {
+  color: #047857 !important;
+}
+[data-theme="green"] .border-\[\#007dff\] {
+  border-color: #059669 !important;
+}
+[data-theme="green"] .hover\:border-\[\#007dff\]:hover {
+  border-color: #059669 !important;
+}
+[data-theme="green"] .focus\:border-\[\#007dff\]:focus {
+  border-color: #059669 !important;
+}
+[data-theme="green"] .focus\:ring-\[\#007dff\]\/20:focus,
+[data-theme="green"] .ring-\[\#007dff\]\/20 {
+  --tw-ring-color: rgba(5, 150, 105, 0.25) !important;
+}
+[data-theme="green"] .ring-\[\#007dff\] {
+  --tw-ring-color: #059669 !important;
+}
+[data-theme="green"] .from-\[\#007dff\] {
+  --tw-gradient-from: #059669 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(5 150 105 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[data-theme="green"] .to-\[\#007dff\] {
+  --tw-gradient-to: #059669 var(--tw-gradient-to-position) !important;
+}
+[data-theme="green"] .via-\[\#007dff\] {
+  --tw-gradient-to: rgb(5 150 105 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #059669 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+[data-theme="green"] .via-blue-400 {
+  --tw-gradient-to: rgb(52 211 153 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #34d399 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+[data-theme="green"] .shadow-\[\#007dff\]\/30 {
+  --tw-shadow-color: rgba(5, 150, 105, 0.3) !important;
+}
+[data-theme="green"] .bg-blue-50\/70,
+[data-theme="green"] .bg-blue-50\/60,
+[data-theme="green"] .bg-blue-50\/50,
+[data-theme="green"] .bg-blue-50\/30,
+[data-theme="green"] .bg-blue-50\/20,
+[data-theme="green"] .bg-blue-50 {
+  background-color: rgb(236 253 245 / 0.85) !important;
+}
+[data-theme="green"] .hover\:bg-blue-50:hover,
+[data-theme="green"] .hover\:bg-blue-50\/50:hover {
+  background-color: rgb(209 250 229 / 0.9) !important;
+}
+[data-theme="green"] .text-blue-500,
+[data-theme="green"] .text-blue-600,
+[data-theme="green"] .text-blue-700 {
+  color: #059669 !important;
+}
+[data-theme="green"] .text-blue-600\/80 {
+  color: rgba(5, 150, 105, 0.8) !important;
+}
+[data-theme="green"] .border-blue-100,
+[data-theme="green"] .border-blue-200,
+[data-theme="green"] .border-blue-200\/60 {
+  border-color: #a7f3d0 !important;
+}
+[data-theme="green"] .border-blue-400,
+[data-theme="green"] .border-blue-500,
+[data-theme="green"] .border-blue-500\/20 {
+  border-color: #34d399 !important;
+}
+[data-theme="green"] .border-\[\#007dff\]\/40 {
+  border-color: rgba(5, 150, 105, 0.4) !important;
+}
+[data-theme="green"] .border-\[\#007dff\]\/20 {
+  border-color: rgba(5, 150, 105, 0.2) !important;
+}
+[data-theme="green"] .bg-blue-500 {
+  background-color: #059669 !important;
+}
+[data-theme="green"] .bg-blue-500\/10 {
+  background-color: rgba(5, 150, 105, 0.1) !important;
+}
+[data-theme="green"] .ring-blue-500 {
+  --tw-ring-color: #059669 !important;
+}
+[data-theme="green"] .fill-\[\#007dff\] {
+  fill: #059669 !important;
+}
+[data-theme="green"] .stroke-\[\#007dff\] {
+  stroke: #059669 !important;
+}
+
+/* ==============================================================================
+   Purple Theme Class Overrides (Nova Purple)
+   ============================================================================== */
+[data-theme="purple"] .bg-\[\#007dff\] {
+  background-color: #7c3aed !important;
+}
+[data-theme="purple"] .hover\:bg-\[\#007dff\]:hover,
+[data-theme="purple"] .hover\:bg-\[\#0066cc\]:hover {
+  background-color: #6d28d9 !important;
+}
+[data-theme="purple"] .text-\[\#007dff\] {
+  color: #7c3aed !important;
+}
+[data-theme="purple"] .hover\:text-\[\#007dff\]:hover {
+  color: #6d28d9 !important;
+}
+[data-theme="purple"] .border-\[\#007dff\] {
+  border-color: #7c3aed !important;
+}
+[data-theme="purple"] .hover\:border-\[\#007dff\]:hover {
+  border-color: #7c3aed !important;
+}
+[data-theme="purple"] .focus\:border-\[\#007dff\]:focus {
+  border-color: #7c3aed !important;
+}
+[data-theme="purple"] .focus\:ring-\[\#007dff\]\/20:focus,
+[data-theme="purple"] .ring-\[\#007dff\]\/20 {
+  --tw-ring-color: rgba(124, 58, 237, 0.25) !important;
+}
+[data-theme="purple"] .ring-\[\#007dff\] {
+  --tw-ring-color: #7c3aed !important;
+}
+[data-theme="purple"] .from-\[\#007dff\] {
+  --tw-gradient-from: #7c3aed var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(124 58 237 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[data-theme="purple"] .to-\[\#007dff\] {
+  --tw-gradient-to: #7c3aed var(--tw-gradient-to-position) !important;
+}
+[data-theme="purple"] .shadow-\[\#007dff\]\/30 {
+  --tw-shadow-color: rgba(124, 58, 237, 0.3) !important;
+}
+[data-theme="purple"] .bg-blue-50\/70,
+[data-theme="purple"] .bg-blue-50\/60,
+[data-theme="purple"] .bg-blue-50\/50,
+[data-theme="purple"] .bg-blue-50\/30,
+[data-theme="purple"] .bg-blue-50\/20,
+[data-theme="purple"] .bg-blue-50 {
+  background-color: rgb(245 243 255 / 0.85) !important;
+}
+[data-theme="purple"] .hover\:bg-blue-50:hover,
+[data-theme="purple"] .hover\:bg-blue-50\/50:hover {
+  background-color: rgb(237 233 254 / 0.9) !important;
+}
+[data-theme="purple"] .text-blue-500,
+[data-theme="purple"] .text-blue-600,
+[data-theme="purple"] .text-blue-700 {
+  color: #7c3aed !important;
+}
+[data-theme="purple"] .border-blue-100,
+[data-theme="purple"] .border-blue-200 {
+  border-color: #ddd6fe !important;
+}
+[data-theme="purple"] .border-blue-400 {
+  border-color: #c4b5fd !important;
+}
+[data-theme="purple"] .bg-blue-500 {
+  background-color: #7c3aed !important;
+}
+
+/* ==============================================================================
+   Red Theme Class Overrides (Spark Red)
+   ============================================================================== */
+[data-theme="red"] .bg-\[\#007dff\] {
+  background-color: #e11d48 !important;
+}
+[data-theme="red"] .hover\:bg-\[\#007dff\]:hover,
+[data-theme="red"] .hover\:bg-\[\#0066cc\]:hover {
+  background-color: #be123c !important;
+}
+[data-theme="red"] .text-\[\#007dff\] {
+  color: #e11d48 !important;
+}
+[data-theme="red"] .hover\:text-\[\#007dff\]:hover {
+  color: #be123c !important;
+}
+[data-theme="red"] .border-\[\#007dff\] {
+  border-color: #e11d48 !important;
+}
+[data-theme="red"] .hover\:border-\[\#007dff\]:hover {
+  border-color: #e11d48 !important;
+}
+[data-theme="red"] .focus\:border-\[\#007dff\]:focus {
+  border-color: #e11d48 !important;
+}
+[data-theme="red"] .focus\:ring-\[\#007dff\]\/20:focus,
+[data-theme="red"] .ring-\[\#007dff\]\/20 {
+  --tw-ring-color: rgba(225, 29, 72, 0.25) !important;
+}
+[data-theme="red"] .ring-\[\#007dff\] {
+  --tw-ring-color: #e11d48 !important;
+}
+[data-theme="red"] .from-\[\#007dff\] {
+  --tw-gradient-from: #e11d48 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(225 29 72 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[data-theme="red"] .to-\[\#007dff\] {
+  --tw-gradient-to: #e11d48 var(--tw-gradient-to-position) !important;
+}
+[data-theme="red"] .shadow-\[\#007dff\]\/30 {
+  --tw-shadow-color: rgba(225, 29, 72, 0.3) !important;
+}
+[data-theme="red"] .bg-blue-50\/70,
+[data-theme="red"] .bg-blue-50\/60,
+[data-theme="red"] .bg-blue-50\/50,
+[data-theme="red"] .bg-blue-50\/30,
+[data-theme="red"] .bg-blue-50\/20,
+[data-theme="red"] .bg-blue-50 {
+  background-color: rgb(255 241 242 / 0.85) !important;
+}
+[data-theme="red"] .hover\:bg-blue-50:hover,
+[data-theme="red"] .hover\:bg-blue-50\/50:hover {
+  background-color: rgb(254 226 226 / 0.9) !important;
+}
+[data-theme="red"] .text-blue-500,
+[data-theme="red"] .text-blue-600,
+[data-theme="red"] .text-blue-700 {
+  color: #e11d48 !important;
+}
+[data-theme="red"] .border-blue-100,
+[data-theme="red"] .border-blue-200 {
+  border-color: #fecdd3 !important;
+}
+[data-theme="red"] .border-blue-400 {
+  border-color: #fda4af !important;
+}
+[data-theme="red"] .bg-blue-500 {
+  background-color: #e11d48 !important;
+}
+
+/* ==============================================================================
+   Scrollbar Hiding Utilities
+   ============================================================================== */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
