@@ -303,7 +303,7 @@ export default function NarrativePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><Flame size={14} className="text-amber-500" /> Deep Focus</span>
+                <span className="flex items-center gap-1.5"><Flame size={14} className="text-[#007dff]" /> Deep Focus</span>
               </div>
               <p className="text-xl font-bold text-slate-900 mt-2">{stats.focusHours}h</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Uninterrupted focus</p>
@@ -311,7 +311,7 @@ export default function NarrativePage() {
 
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-500" /> Resolved</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#007dff]" /> Resolved</span>
               </div>
               <p className="text-xl font-bold text-slate-900 mt-2">{stats.completedTasks} tasks</p>
               <p className="text-[11px] text-slate-400 mt-0.5">{stats.activeTasks} in flight</p>
@@ -327,7 +327,7 @@ export default function NarrativePage() {
 
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><Clock size={14} className="text-indigo-500" /> Velocity</span>
+                <span className="flex items-center gap-1.5"><Clock size={14} className="text-[#007dff]" /> Velocity</span>
               </div>
               <p className="text-xl font-bold text-slate-900 mt-2">{stats.velocityIndex || "Optimal"}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Throughput pacing</p>

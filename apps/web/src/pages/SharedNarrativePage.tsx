@@ -101,7 +101,7 @@ export default function SharedNarrativePage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <Flame size={13} className="text-amber-500" /> Deep Focus
+              <Flame size={13} className="text-[#007dff]" /> Deep Focus
             </div>
             <p className="text-lg font-bold text-slate-900 mt-1">{stats.focusHours}h</p>
             <p className="text-[10px] text-slate-400">Total deep focus time</p>
@@ -109,7 +109,7 @@ export default function SharedNarrativePage() {
 
           <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <CheckCircle2 size={13} className="text-emerald-500" /> Completed
+              <CheckCircle2 size={13} className="text-[#007dff]" /> Completed
             </div>
             <p className="text-lg font-bold text-slate-900 mt-1">{stats.completedTasks} tasks</p>
             <p className="text-[10px] text-slate-400">Resolved deliverables</p>
@@ -125,7 +125,7 @@ export default function SharedNarrativePage() {
 
           <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <Clock size={13} className="text-indigo-500" /> Velocity
+              <Clock size={13} className="text-[#007dff]" /> Velocity
             </div>
             <p className="text-lg font-bold text-slate-900 mt-1">{stats.velocityIndex || "Optimal"}</p>
             <p className="text-[10px] text-slate-400">Execution pacing</p>

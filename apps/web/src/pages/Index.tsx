@@ -14,10 +14,10 @@ import { Button } from "@/components/ui/button";
 import { CreateWorkspaceModal, CreateProjectModal } from "@/components/CreateWorkspaceModal";
 import { Reveal } from "@/components/Reveal";
 
-const MiniStatCard = ({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) => (
-  <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}14` }}>
-      <Icon size={16} style={{ color }} />
+const MiniStatCard = ({ icon: Icon, label, value }: { icon: any; label: string; value: string; color?: string }) => (
+  <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-xs">
+    <div className="w-9 h-9 rounded-xl bg-slate-100/90 flex items-center justify-center shrink-0 text-slate-600">
+      <Icon size={16} />
     </div>
     <div>
       <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">{label}</p>
@@ -99,22 +99,22 @@ const Index = () => {
           {/* Quick Stats Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Reveal delay={200}>
-              <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} color="#007dff" />
+              <MiniStatCard icon={Zap} label="Team Focus Hours" value={`${totalFocusHrs}h`} />
             </Reveal>
             <Reveal delay={300}>
-              <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} color="#10b981" />
+              <MiniStatCard icon={TrendingUp} label="Tasks Done" value={String(totalTasks)} />
             </Reveal>
             <Reveal delay={400}>
-              <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} color="#f59e0b" />
+              <MiniStatCard icon={AlertTriangle} label="Burnout Risk" value={`${latestBurnout}%`} />
             </Reveal>
           </div>
 
           {/* Weekly Focus Report banner */}
           {focusReportRes?.data && (
             <Reveal delay={500}>
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start justify-between gap-3">
+              <div className="bg-blue-50/60 border border-blue-100/80 rounded-2xl p-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1">
+                  <p className="text-[11px] font-bold text-[#007dff] uppercase tracking-wider mb-1">
                     Weekly Focus Report — {focusReportRes.data.weekLabel}
                     {focusReportRes.data.isLastWeek && " (last week)"}
                   </p>
@@ -122,7 +122,7 @@ const Index = () => {
                 </div>
                 <button
                   onClick={() => navigate('/analytics')}
-                  className="shrink-0 flex items-center gap-1 text-[12px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-0.5"
+                  className="shrink-0 flex items-center gap-1 text-[12px] font-semibold text-[#007dff] hover:opacity-80 transition-opacity mt-0.5"
                 >
                   Full report <ArrowRight size={13} />
                 </button>

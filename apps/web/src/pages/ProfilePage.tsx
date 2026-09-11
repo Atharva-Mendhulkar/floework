@@ -14,7 +14,6 @@ import {
     Mail, 
     Save, 
     Github, 
-    CheckCircle2, 
     Calendar, 
     Bell, 
     Camera, 
@@ -24,10 +23,7 @@ import {
     Sparkles, 
     Check, 
     Shield, 
-    Palette, 
-    ExternalLink,
-    CheckCheck,
-    Cpu
+    CheckCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,7 +36,6 @@ interface MascotPreset {
     name: string;
     url: string;
     theme: ThemeName;
-    color: string;
     badge: string;
 }
 
@@ -50,7 +45,6 @@ const MASCOT_PRESETS: MascotPreset[] = [
         name: "Atlas Blue", 
         url: "/assets/one.png", 
         theme: "blue", 
-        color: "border-blue-400 bg-blue-50/50",
         badge: "Classic"
     },
     { 
@@ -58,7 +52,6 @@ const MASCOT_PRESETS: MascotPreset[] = [
         name: "Pulse Green", 
         url: "/assets/two.png", 
         theme: "green", 
-        color: "border-emerald-400 bg-emerald-50/50",
         badge: "Velocity"
     },
     { 
@@ -66,7 +59,6 @@ const MASCOT_PRESETS: MascotPreset[] = [
         name: "Nova Purple", 
         url: "/assets/three.png", 
         theme: "purple", 
-        color: "border-purple-400 bg-purple-50/50",
         badge: "Creative"
     },
     { 
@@ -74,57 +66,7 @@ const MASCOT_PRESETS: MascotPreset[] = [
         name: "Spark Red", 
         url: "/assets/four.png", 
         theme: "red", 
-        color: "border-rose-400 bg-rose-50/50",
         badge: "Sprint"
-    },
-];
-
-interface ThemeOption {
-    id: ThemeName;
-    name: string;
-    badge: string;
-    colorHex: string;
-    bgClass: string;
-    borderActive: string;
-    desc: string;
-}
-
-const THEME_OPTIONS: ThemeOption[] = [
-    {
-        id: "blue",
-        name: "Atlas Blue",
-        badge: "Default",
-        colorHex: "#007dff",
-        bgClass: "bg-[#007dff]",
-        borderActive: "border-[#007dff] ring-2 ring-[#007dff]/25",
-        desc: "Classic Floework deep cobalt aesthetic"
-    },
-    {
-        id: "green",
-        name: "Pulse Green",
-        badge: "Emerald",
-        colorHex: "#059669",
-        bgClass: "bg-emerald-600",
-        borderActive: "border-emerald-600 ring-2 ring-emerald-500/25",
-        desc: "High velocity & focused sprint theme"
-    },
-    {
-        id: "purple",
-        name: "Nova Purple",
-        badge: "Violet",
-        colorHex: "#7c3aed",
-        bgClass: "bg-purple-600",
-        borderActive: "border-purple-600 ring-2 ring-purple-500/25",
-        desc: "Deep creative session styling"
-    },
-    {
-        id: "red",
-        name: "Spark Red",
-        badge: "Crimson",
-        colorHex: "#e11d48",
-        bgClass: "bg-rose-600",
-        borderActive: "border-rose-600 ring-2 ring-rose-500/25",
-        desc: "Urgent execution & deadline mode"
     },
 ];
 
@@ -171,7 +113,7 @@ export default function ProfilePage() {
         setTheme(newTheme);
         setActiveTheme(newTheme);
         const label = newTheme === 'green' ? 'Pulse Green' : newTheme === 'purple' ? 'Nova Purple' : newTheme === 'red' ? 'Spark Red' : 'Atlas Blue';
-        toast.success(`UI Theme changed to ${label}! Entire interface updated.`);
+        toast.success(`UI theme updated to ${label}!`);
     };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -223,7 +165,7 @@ export default function ProfilePage() {
 
     const handleSelectPreset = async (preset: MascotPreset) => {
         setIsUploadingAvatar(true);
-        // Seamlessly switch global theme to match mascot
+        // Seamlessly switch global theme to match selected mascot
         handleSwitchTheme(preset.theme);
 
         try {
@@ -233,7 +175,7 @@ export default function ProfilePage() {
                 session.user.avatarUrl = preset.url;
                 localStorage.setItem('floework_cognito_session', JSON.stringify(session));
             }
-            toast.success(`Selected ${preset.name} mascot! UI theme switched to ${preset.name}.`);
+            toast.success(`${preset.name} selected! Theme set to ${preset.name}.`);
             refetch();
         } catch {
             toast.error("Failed to update mascot avatar");
@@ -312,7 +254,7 @@ export default function ProfilePage() {
 
     return (
         <div className="flex-1 w-full max-w-7xl mx-auto flex flex-col gap-6 p-2 sm:p-4 pb-16 no-scrollbar animate-in fade-in duration-300">
-            {/* Page Header with Accent Theme Pill */}
+            {/* Page Header with Mascot / Theme Indicator */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
                 <div>
                     <div className="flex items-center gap-2.5">
@@ -323,7 +265,7 @@ export default function ProfilePage() {
                         </Badge>
                     </div>
                     <p className="text-slate-500 text-sm mt-1">
-                        Manage your account credentials, avatar, interface theme colors, and connected developer tools.
+                        Manage your account credentials, mascot persona, and connected developer tools.
                     </p>
                 </div>
 
@@ -346,7 +288,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
                 {/* =========================================================================
-                    LEFT COLUMN: Identity, Avatar & Interface Accent Theme (lg:col-span-5)
+                    LEFT COLUMN: Identity & Official Floework Mascots (lg:col-span-5)
                     ========================================================================= */}
                 <div className="lg:col-span-5 flex flex-col gap-6">
                     
@@ -429,113 +371,72 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Security & Access Info Pill */}
-                        <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2 text-slate-600">
-                                <Cpu size={14} className="text-[#007dff]" />
-                                <span>Auth: AWS Cognito Secured</span>
-                            </div>
-                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                                <CheckCircle2 size={12} /> Verified
-                            </span>
-                        </div>
                     </div>
 
-                    {/* Interface Accent Theme & Mascot Selector Card */}
-                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-6">
+                    {/* Official Mascots Card (Large photos, no white circle ring, auto theme switch) */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-4">
                         <div className="border-b border-slate-100 pb-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Palette size={18} className="text-[#007dff]" />
-                                    Interface Accent Theme
+                                    <Sparkles size={18} className="text-[#007dff]" />
+                                    Floework Mascots
                                 </h2>
                                 <Badge variant="secondary" className="text-[10px] font-semibold bg-slate-100 text-slate-700">
-                                    Instant Full Re-skin
+                                    Syncs Theme & Avatar
                                 </Badge>
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
-                                Switch between Atlas Blue, Pulse Green, Nova Purple, or Spark Red. Changing the theme morphs buttons, badges, highlights, and navigation globally.
+                                Select a mascot to customize your persona and transform the UI accent theme.
                             </p>
                         </div>
 
-                        {/* 4 Theme Color Tiles */}
-                        <div className="grid grid-cols-2 gap-3">
-                            {THEME_OPTIONS.map((theme) => {
-                                const isSelected = activeTheme === theme.id;
+                        {/* 4 Mascot Cards in a 2x2 Grid */}
+                        <div className="grid grid-cols-2 gap-3.5">
+                            {MASCOT_PRESETS.map((preset) => {
+                                const isCurrentAvatar = currentAvatarUrl === preset.url;
+                                const isCurrentTheme = activeTheme === preset.theme;
+                                const isSelected = isCurrentAvatar || isCurrentTheme;
+                                
                                 return (
                                     <button
-                                        key={theme.id}
+                                        key={preset.id}
                                         type="button"
-                                        onClick={() => handleSwitchTheme(theme.id)}
-                                        className={`flex flex-col p-3 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                                        onClick={() => handleSelectPreset(preset)}
+                                        disabled={isUploadingAvatar}
+                                        className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all relative group text-center cursor-pointer ${
                                             isSelected 
-                                                ? `${theme.borderActive} bg-slate-50/80 shadow-xs` 
-                                                : "border-slate-200/90 bg-white hover:bg-slate-50/60 hover:border-slate-300"
+                                                ? "border-[#007dff] bg-blue-50/50 ring-2 ring-[#007dff]/25 shadow-sm" 
+                                                : "border-slate-200/90 bg-white hover:bg-slate-50/60 hover:border-slate-300 shadow-2xs"
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`w-3.5 h-3.5 rounded-full ${theme.bgClass} shadow-xs`} />
-                                                <span className="text-xs font-bold text-slate-900">{theme.name}</span>
-                                            </div>
-                                            {isSelected && (
-                                                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-900 text-white">
-                                                    <Check size={10} className="stroke-[3]" />
-                                                </span>
-                                            )}
+                                        {isSelected && (
+                                            <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#007dff] text-white flex items-center justify-center shadow-xs">
+                                                <Check size={12} className="stroke-[3]" />
+                                            </span>
+                                        )}
+
+                                        {/* Large mascot artwork with NO white ring/circle container */}
+                                        <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center my-1">
+                                            <img
+                                                src={preset.url}
+                                                alt={preset.name}
+                                                className="w-full h-full object-contain drop-shadow-md transition-transform duration-200 group-hover:scale-110"
+                                            />
                                         </div>
-                                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                                            {theme.desc}
-                                        </p>
+
+                                        <div className="w-full mt-2">
+                                            <p className="text-[13px] font-bold text-slate-900 leading-snug">{preset.name}</p>
+                                            <span className={`inline-block text-[11px] font-semibold mt-1 px-2.5 py-0.5 rounded-full ${
+                                                isSelected 
+                                                    ? "bg-[#007dff]/10 text-[#007dff]" 
+                                                    : "bg-slate-100 text-slate-500 group-hover:bg-slate-200/70"
+                                            }`}>
+                                                {preset.badge}
+                                            </span>
+                                        </div>
                                     </button>
                                 );
                             })}
-                        </div>
-
-                        {/* Official Mascots Section */}
-                        <div className="pt-2 border-t border-slate-100 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                                    <Sparkles size={13} className="text-[#007dff]" /> Official Floework Mascots
-                                </label>
-                                <span className="text-[11px] text-slate-400">Syncs theme & avatar</span>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                {MASCOT_PRESETS.map((preset) => {
-                                    const isCurrentAvatar = currentAvatarUrl === preset.url;
-                                    const isCurrentTheme = activeTheme === preset.theme;
-                                    return (
-                                        <button
-                                            key={preset.id}
-                                            type="button"
-                                            onClick={() => handleSelectPreset(preset)}
-                                            disabled={isUploadingAvatar}
-                                            className={`flex flex-col items-center text-center p-2.5 rounded-xl border transition-all relative group ${
-                                                isCurrentAvatar 
-                                                    ? "border-[#007dff] bg-blue-50/70 ring-2 ring-[#007dff]/25 shadow-xs" 
-                                                    : "border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300"
-                                            }`}
-                                        >
-                                            <div className="relative w-12 h-12 rounded-full bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-inner mb-1.5">
-                                                <img
-                                                    src={preset.url}
-                                                    alt={preset.name}
-                                                    className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
-                                                />
-                                                {isCurrentAvatar && (
-                                                    <div className="absolute inset-0 bg-[#007dff]/20 flex items-center justify-center">
-                                                        <Check size={14} className="text-[#007dff] font-bold" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-xs font-bold text-slate-800 truncate w-full">{preset.name}</p>
-                                            <span className="text-[10px] text-slate-400">{preset.badge}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
                         </div>
                     </div>
                 </div>

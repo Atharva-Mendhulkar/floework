@@ -8,7 +8,7 @@ export default function FocusReportCard() {
   if (isLoading) {
     return (
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm min-h-[140px] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-[#007dff] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -19,8 +19,8 @@ export default function FocusReportCard() {
   if (!report || report.sessionCount < 3) {
     return (
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-          <Target className="text-indigo-500" size={18} />
+        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+          <Target className="text-[#007dff]" size={18} />
         </div>
         <div>
           <h3 className="text-[13px] font-semibold text-slate-900">Context-Switch Audit</h3>
@@ -44,7 +44,7 @@ export default function FocusReportCard() {
           <p className="text-[11px] text-slate-500 mt-1">Deep work sessions (≥25m, ≤2 interrupts)</p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-black text-indigo-600 tracking-tight">{report.deepFocusHours.toFixed(1)} <span className="text-sm font-medium text-slate-400">hrs</span></p>
+          <p className="text-2xl font-black text-[#007dff] tracking-tight">{report.deepFocusHours.toFixed(1)} <span className="text-sm font-medium text-slate-400">hrs</span></p>
         </div>
       </div>
 

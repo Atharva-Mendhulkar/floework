@@ -232,8 +232,8 @@ const FocusPage = () => {
       )}
 
       {/* AI Toggle */}
-      <div className="flex items-center gap-2 mb-2 bg-purple-50 px-4 py-2 rounded-xl border border-purple-100">
-        <Sparkles size={14} className="text-purple-500" />
+      <div className="flex items-center gap-2 mb-2 bg-blue-50/70 px-4 py-2 rounded-xl border border-blue-200/60">
+        <Sparkles size={14} className="text-[#007dff]" />
         <span className="text-sm font-medium text-slate-700">AI-assisted session</span>
         <label className="relative inline-flex items-center cursor-pointer ml-2">
             <input 
@@ -243,7 +243,7 @@ const FocusPage = () => {
               onChange={handleAiAssistedChange}
               disabled={isRunning || showPostSession} 
             />
-            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500 peer-disabled:opacity-50"></div>
+            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#007dff] peer-disabled:opacity-50"></div>
         </label>
       </div>
 

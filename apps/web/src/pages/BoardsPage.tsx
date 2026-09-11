@@ -45,14 +45,14 @@ const BoardsPage = () => {
     return (
         <div className="flex flex-col gap-3">
             {showBanner && (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in zoom-in duration-300">
+                <div className="bg-blue-50/70 border border-blue-200/60 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-in fade-in zoom-in duration-300">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100/80 flex items-center justify-center">
-                            <Sparkles size={18} className="text-indigo-500" />
+                        <div className="w-10 h-10 rounded-full bg-blue-100/70 flex items-center justify-center shrink-0">
+                            <Sparkles size={18} className="text-[#007dff]" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-indigo-900">Welcome to Floework</p>
-                            <p className="text-xs text-indigo-700/80 max-w-xl">
+                            <p className="text-sm font-semibold text-slate-900">Welcome to Floework</p>
+                            <p className="text-xs text-slate-600 max-w-xl mt-0.5">
                                 We've seeded your workspace with sample tasks so you can test the Execution Graph. 
                                 When you're ready, clear them out and replace with your real work.
                             </p>
@@ -61,11 +61,11 @@ const BoardsPage = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleClearSamples}
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                            className="px-4 py-2 bg-[#007dff] hover:bg-[#0066cc] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
                         >
                             Clear samples
                         </button>
-                        <button onClick={() => setBannerDismissed(true)} className="p-2 hover:bg-indigo-100 rounded-xl text-indigo-400 hover:text-indigo-600 transition-colors">
+                        <button onClick={() => setBannerDismissed(true)} className="p-2 hover:bg-blue-100/60 rounded-xl text-slate-400 hover:text-slate-600 transition-colors">
                             <X size={16} />
                         </button>
                     </div>
