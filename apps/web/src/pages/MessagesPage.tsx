@@ -7,18 +7,31 @@ import type { AppDispatch } from "@/store";
 import { Send, ChevronDown, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/modules/auth/AuthContext";
 import { UserAvatar } from "@/components/UserAvatar";
+import { MemberProfileModal } from "@/components/MemberProfileModal";
 
-const MessageBubble = ({ msg }: { msg: any }) => {
+const MessageBubble = ({ msg, onAuthorClick }: { msg: any; onAuthorClick?: (author: any) => void }) => {
     const { user } = useAuth();
     const isMe = msg.author?.id === user?.id;
     return (
         <div className={`flex items-start gap-3 group ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-            <UserAvatar name={msg.author?.name || "Unknown"} avatarUrl={msg.author?.avatarUrl} size="md" className="shrink-0" />
+            <button 
+                type="button" 
+                onClick={() => onAuthorClick?.(msg.author)} 
+                className="shrink-0 transition-transform hover:scale-105 cursor-pointer focus:outline-none"
+                title={`View ${msg.author?.name || 'User'}'s profile`}
+            >
+                <UserAvatar name={msg.author?.name || "Unknown"} avatarUrl={msg.author?.avatarUrl} size="md" />
+            </button>
             <div className={`flex flex-col gap-0.5 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
                 <div className={`flex items-center gap-2 mb-0.5 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                    <span className="text-[11px] font-bold text-slate-900">{isMe ? "You" : (msg.author?.name || "Unknown")}</span>
+                    <button
+                        type="button"
+                        onClick={() => onAuthorClick?.(msg.author)}
+                        className="text-[11px] font-bold text-slate-900 hover:text-[#007dff] transition-colors cursor-pointer text-left"
+                    >
+                        {isMe ? "You" : (msg.author?.name || "Unknown")}
+                    </button>
                     <span className="text-[9px] text-slate-400 font-medium">
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
@@ -38,6 +51,8 @@ export default function MessagesPage() {
     const [content, setContent] = useState("");
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [showProjectPicker, setShowProjectPicker] = useState(false);
+    const [selectedAuthor, setSelectedAuthor] = useState<any | null>(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const { data: projectsRes } = useGetProjectsQuery();
@@ -154,7 +169,16 @@ export default function MessagesPage() {
                     </div>
                 )}
                 {messages.map((msg: any) => (
-                    <MessageBubble key={msg.id} msg={msg} />
+                    <MessageBubble 
+                        key={msg.id} 
+                        msg={msg} 
+                        onAuthorClick={(author) => {
+                            if (author) {
+                                setSelectedAuthor(author);
+                                setIsProfileModalOpen(true);
+                            }
+                        }}
+                    />
                 ))}
                 <div ref={messagesEndRef} />
             </div>
@@ -177,6 +201,16 @@ export default function MessagesPage() {
                     Send
                 </Button>
             </form>
+
+            <MemberProfileModal
+                isOpen={isProfileModalOpen}
+                onClose={() => {
+                    setIsProfileModalOpen(false);
+                    setSelectedAuthor(null);
+                }}
+                member={selectedAuthor}
+                workspaceId={projectId || "proj-default-1"}
+            />
         </div>
     );
 }

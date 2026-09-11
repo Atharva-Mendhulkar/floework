@@ -15,6 +15,7 @@ import { TaskCreateModal } from "./TaskCreateModal";
 import { TaskCalendarView } from "./TaskCalendarView";
 import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 import { RealtimeBanner } from "./RealtimeBanner";
+import { MemberProfileModal } from "./MemberProfileModal";
 
 interface FlowBoardProps {
   onTaskClick?: (task: TaskNode | null) => void;
@@ -36,6 +37,8 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   
   const dispatch = useDispatch<AppDispatch>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
   const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(() => {
     return !localStorage.getItem('floework_onboarding_v1_complete');
@@ -187,16 +190,25 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
           {/* Team avatars with presence indicators */}
           <div className="flex -space-x-1.5 px-2">
-            {(team || []).slice(0, 4).map((member, idx) => {
+            {(team || []).slice(0, 5).map((member, idx) => {
               const status: "focus" | "available" | "offline" = idx === 0 ? "focus" : idx === 1 ? "available" : "offline";
               return (
-                <UserAvatar
+                <button
                   key={member.id}
-                  name={member.name}
-                  avatarUrl={member.avatarUrl}
-                  size="sm"
-                  status={status}
-                />
+                  onClick={() => {
+                    setSelectedMember(member);
+                    setIsMemberModalOpen(true);
+                  }}
+                  className="rounded-full transition-transform hover:scale-110 hover:z-10 focus:outline-none focus:ring-2 focus:ring-[#007dff] cursor-pointer"
+                  title={`View ${member.name}'s profile`}
+                >
+                  <UserAvatar
+                    name={member.name}
+                    avatarUrl={member.avatarUrl}
+                    size="sm"
+                    status={status}
+                  />
+                </button>
               );
             })}
           </div>
@@ -280,6 +292,16 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           projectId={effectiveProjectId}
         />
       )}
+
+      <MemberProfileModal
+        isOpen={isMemberModalOpen}
+        onClose={() => {
+          setIsMemberModalOpen(false);
+          setSelectedMember(null);
+        }}
+        member={selectedMember}
+        workspaceId={effectiveProjectId || "proj-default-1"}
+      />
     </div>
   );
 };

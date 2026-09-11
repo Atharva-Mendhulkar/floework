@@ -81,22 +81,119 @@ function getAllStoredInvites(): any[] {
 function getStoredWorkspaceMembers(workspaceId: string): any[] {
     try {
         const raw = localStorage.getItem(`floework_members_${workspaceId}`);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
     } catch {}
     return [
         {
-            id: 'mem-1',
+            id: 'usr-1',
             team_id: workspaceId,
             user_id: 'usr-1',
             role: 'admin',
-            profiles: { full_name: 'Sarah Chen', avatar_url: null, role: 'admin' }
+            name: 'Sarah Chen',
+            email: 'sarah.chen@floework.dev',
+            handle: '@sarahchen',
+            title: 'Lead Systems Architect',
+            avatar_url: '/assets/one.png',
+            presence: 'focus',
+            focus_hours: 32.5,
+            completed_tasks: 14,
+            focus_velocity: 96,
+            active_task_title: 'API Schema Design',
+            bio: 'Leading execution graph causality and backend distributed architecture.',
+            joined_at: '2025-01-15T08:00:00.000Z',
+            profiles: {
+                full_name: 'Sarah Chen',
+                avatar_url: '/assets/one.png',
+                role: 'admin',
+                email: 'sarah.chen@floework.dev',
+                title: 'Lead Systems Architect',
+                presence: 'focus',
+                focus_hours: 32.5
+            }
         },
         {
-            id: 'mem-2',
+            id: 'usr-2',
             team_id: workspaceId,
             user_id: 'usr-2',
             role: 'member',
-            profiles: { full_name: 'Marcus Johnson', avatar_url: null, role: 'member' }
+            name: 'Marcus Johnson',
+            email: 'marcus.j@floework.dev',
+            handle: '@marcusj',
+            title: 'Core Platform Engineer',
+            avatar_url: '/assets/two.png',
+            presence: 'available',
+            focus_hours: 24.0,
+            completed_tasks: 9,
+            focus_velocity: 91,
+            active_task_title: 'Auth Middleware',
+            bio: 'Distributed worker queues, real-time messaging, and Redis caching layers.',
+            joined_at: '2025-01-20T10:30:00.000Z',
+            profiles: {
+                full_name: 'Marcus Johnson',
+                avatar_url: '/assets/two.png',
+                role: 'member',
+                email: 'marcus.j@floework.dev',
+                title: 'Core Platform Engineer',
+                presence: 'available',
+                focus_hours: 24.0
+            }
+        },
+        {
+            id: 'usr-3',
+            team_id: workspaceId,
+            user_id: 'usr-3',
+            role: 'member',
+            name: 'Lina Sato',
+            email: 'lina.sato@floework.dev',
+            handle: '@linasato',
+            title: 'Senior Product Designer',
+            avatar_url: '/assets/three.png',
+            presence: 'focus',
+            focus_hours: 18.5,
+            completed_tasks: 7,
+            focus_velocity: 88,
+            active_task_title: 'Dashboard Layout',
+            bio: 'Design systems, interactive micro-animations, and UX cognitive telemetry.',
+            joined_at: '2025-02-01T09:15:00.000Z',
+            profiles: {
+                full_name: 'Lina Sato',
+                avatar_url: '/assets/three.png',
+                role: 'member',
+                email: 'lina.sato@floework.dev',
+                title: 'Senior Product Designer',
+                presence: 'focus',
+                focus_hours: 18.5
+            }
+        },
+        {
+            id: 'usr-4',
+            team_id: workspaceId,
+            user_id: 'usr-4',
+            role: 'member',
+            name: 'David Kim',
+            email: 'david.kim@floework.dev',
+            handle: '@davidkim',
+            title: 'Frontend Infrastructure',
+            avatar_url: '/assets/four.png',
+            presence: 'offline',
+            focus_hours: 15.0,
+            completed_tasks: 5,
+            focus_velocity: 85,
+            active_task_title: 'Redux Setup',
+            bio: 'Performance budgets, client build pipelines, and graph state synchronization.',
+            joined_at: '2025-02-10T11:45:00.000Z',
+            profiles: {
+                full_name: 'David Kim',
+                avatar_url: '/assets/four.png',
+                role: 'member',
+                email: 'david.kim@floework.dev',
+                title: 'Frontend Infrastructure',
+                presence: 'offline',
+                focus_hours: 15.0
+            }
         }
     ];
 }
@@ -404,16 +501,47 @@ export const api = createApi({
             queryFn: async () => {
                 try {
                     const session = CognitoAuthService.getSession();
-                    const currentMember: User = {
-                        id: session?.user?.id || 'usr-default',
+                    const currentUserId = session?.user?.id || 'usr-default';
+                    const activeWorkspaceId = localStorage.getItem('floework_active_project_id') || 'proj-default-1';
+                    const members = getStoredWorkspaceMembers(activeWorkspaceId);
+
+                    const currentUser: User = {
+                        id: currentUserId,
                         email: session?.user?.email || 'dev@floework.dev',
                         name: session?.user?.name || 'Lead Architect',
-                        role: 'admin',
-                        avatarUrl: session?.user?.avatarUrl,
+                        role: session?.user?.role || 'admin',
+                        avatarUrl: session?.user?.avatarUrl || '/assets/one.png',
                         initials: (session?.user?.name || 'LA').substring(0, 2).toUpperCase(),
-                        color: 'bg-indigo-500'
+                        color: 'bg-[#007dff]'
                     };
-                    return { data: { success: true, data: [currentMember] } };
+
+                    const colors = ['bg-orange-500', 'bg-blue-500', 'bg-pink-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-violet-500'];
+                    const memberUsers: User[] = members.map((m: any, idx: number) => {
+                        const name = m.name || m.profiles?.full_name || 'Team Member';
+                        const initials = name
+                            .split(/\s+/)
+                            .map((p: string) => p[0])
+                            .join('')
+                            .substring(0, 2)
+                            .toUpperCase();
+                        return {
+                            id: m.user_id || m.id,
+                            email: m.email || m.profiles?.email || 'member@floework.dev',
+                            name,
+                            role: m.role || 'member',
+                            avatarUrl: m.avatar_url || m.profiles?.avatar_url || null,
+                            initials,
+                            color: colors[idx % colors.length]
+                        };
+                    });
+
+                    // Deduplicate against currentUser
+                    const allUsers = [
+                        currentUser,
+                        ...memberUsers.filter(u => u.id !== currentUser.id && u.email !== currentUser.email)
+                    ];
+
+                    return { data: { success: true, data: allUsers } };
                 } catch (err: any) {
                     return { error: { status: 500, data: err.message } };
                 }
@@ -660,9 +788,32 @@ export const api = createApi({
                 const idx = currentTasks.findIndex(t => t.id === id);
                 let updatedTask: any = { id, ...updateData };
                 if (idx !== -1) {
+                    let resolvedAssignee = currentTasks[idx].assignee;
+                    if (updateData.assigneeId !== undefined) {
+                        if (!updateData.assigneeId || updateData.assigneeId === 'unassigned') {
+                            resolvedAssignee = undefined;
+                        } else {
+                            const activeWs = updateData.projectId || currentTasks[idx].projectId || 'proj-default-1';
+                            const members = getStoredWorkspaceMembers(activeWs);
+                            const matched = members.find((m: any) => m.id === updateData.assigneeId || m.user_id === updateData.assigneeId);
+                            if (matched) {
+                                const mName = matched.name || matched.profiles?.full_name || 'Team Member';
+                                const initials = mName.split(/\s+/).map((p: string) => p[0]).join('').substring(0, 2).toUpperCase();
+                                resolvedAssignee = {
+                                    id: matched.id || matched.user_id,
+                                    name: mName,
+                                    initials,
+                                    color: 'bg-[#007dff]',
+                                    avatarUrl: matched.avatar_url || matched.profiles?.avatar_url || null
+                                };
+                            }
+                        }
+                    }
+
                     currentTasks[idx] = {
                         ...currentTasks[idx],
                         ...updateData,
+                        assignee: resolvedAssignee,
                         version: (currentTasks[idx].version || 1) + 1,
                         updatedAt: new Date().toISOString()
                     };
@@ -690,6 +841,41 @@ export const api = createApi({
                     resolution: 'review',
                     outcome: 'done'
                 };
+
+                const activeWs = taskData.projectId || 'proj-default-1';
+                const members = getStoredWorkspaceMembers(activeWs);
+                let resolvedAssignee: any = undefined;
+
+                if (taskData.assigneeId && taskData.assigneeId !== 'unassigned') {
+                    const matched = members.find((m: any) => m.id === taskData.assigneeId || m.user_id === taskData.assigneeId);
+                    if (matched) {
+                        const mName = matched.name || matched.profiles?.full_name || 'Team Member';
+                        const initials = mName.split(/\s+/).map((p: string) => p[0]).join('').substring(0, 2).toUpperCase();
+                        resolvedAssignee = {
+                            id: matched.id || matched.user_id,
+                            name: mName,
+                            initials,
+                            color: 'bg-[#007dff]',
+                            avatarUrl: matched.avatar_url || matched.profiles?.avatar_url || null
+                        };
+                    } else {
+                        resolvedAssignee = {
+                            id: taskData.assigneeId,
+                            name: 'Assignee',
+                            initials: 'AS',
+                            color: 'bg-[#007dff]'
+                        };
+                    }
+                } else {
+                    resolvedAssignee = {
+                        id: session?.user?.id || 'usr-default',
+                        name: session?.user?.name || 'User',
+                        initials: (session?.user?.name || 'U').substring(0, 2).toUpperCase(),
+                        color: 'bg-[#007dff]',
+                        avatarUrl: session?.user?.avatarUrl || null
+                    };
+                }
+
                 const newTask: TaskNode = {
                     id: 'task-' + Date.now(),
                     title: taskData.title,
@@ -703,17 +889,7 @@ export const api = createApi({
                     version: 1,
                     isStarred: false,
                     isSample: false,
-                    assignee: taskData.assigneeId && taskData.assigneeId !== 'unassigned' ? {
-                        id: taskData.assigneeId,
-                        name: 'Assignee',
-                        initials: 'AS',
-                        color: 'bg-blue-500'
-                    } : {
-                        id: session?.user?.id || 'usr-default',
-                        name: session?.user?.name || 'User',
-                        initials: (session?.user?.name || 'U').substring(0, 2).toUpperCase(),
-                        color: 'bg-blue-500'
-                    },
+                    assignee: resolvedAssignee,
                     createdAt: new Date().toISOString()
                 };
 
@@ -1014,15 +1190,32 @@ export const api = createApi({
         }),
         updateWorkspaceMember: builder.mutation<{ success: boolean; data: any }, { workspaceId: string; userId: string; role: string }>({
             queryFn: async ({ workspaceId, userId, role }) => {
+                let updatedData: any = null;
                 try {
-                    const data = await authFetch(`/api/workspaces/members?id=${workspaceId}&userId=${userId}`, {
+                    updatedData = await authFetch(`/api/workspaces/members?id=${workspaceId}&userId=${userId}`, {
                         method: 'PATCH',
                         body: JSON.stringify({ role })
                     });
-                    return { data: { success: true, data } };
-                } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                } catch {
+                    // Fall back to client storage
                 }
+
+                const members = getStoredWorkspaceMembers(workspaceId);
+                const idx = members.findIndex(m => m.user_id === userId || m.id === userId);
+                if (idx !== -1) {
+                    members[idx] = {
+                        ...members[idx],
+                        role,
+                        profiles: {
+                            ...(members[idx].profiles || {}),
+                            role
+                        }
+                    };
+                    saveStoredWorkspaceMembers(workspaceId, members);
+                    updatedData = members[idx];
+                }
+
+                return { data: { success: true, data: updatedData || { userId, role } } };
             },
             invalidatesTags: ['User'],
         }),
@@ -1032,10 +1225,14 @@ export const api = createApi({
                     await authFetch(`/api/workspaces/members?id=${workspaceId}&userId=${userId}`, {
                         method: 'DELETE'
                     });
-                    return { data: { success: true, data: { userId } } };
-                } catch (err: any) {
-                    return { error: { status: 400, data: err.message } };
+                } catch {
+                    // Fall back to client storage
                 }
+
+                const members = getStoredWorkspaceMembers(workspaceId);
+                const filtered = members.filter(m => m.user_id !== userId && m.id !== userId);
+                saveStoredWorkspaceMembers(workspaceId, filtered);
+                return { data: { success: true, data: { userId } } };
             },
             invalidatesTags: ['User'],
         }),
@@ -1051,8 +1248,15 @@ export const api = createApi({
             invalidatesTags: ['Project'],
         }),
         updateWorkspace: builder.mutation<{ success: boolean; data: any }, { id: string; name: string; description?: string }>({
-            queryFn: async ({ id, name }) => {
-                return { data: { success: true, data: { id, name } } };
+            queryFn: async ({ id, name, description }) => {
+                try {
+                    await authFetch(`/api/workspaces?id=${id}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ name, description })
+                    });
+                } catch {}
+                localStorage.setItem('floework_active_workspace', name);
+                return { data: { success: true, data: { id, name, description } } };
             },
             invalidatesTags: ['Project'],
         }),

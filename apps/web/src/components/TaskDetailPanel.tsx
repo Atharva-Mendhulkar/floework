@@ -1,10 +1,12 @@
-import { X, Clock, User, AlertTriangle, CheckCircle, Github, Link } from "lucide-react";
+import { X, Clock, User, AlertTriangle, CheckCircle, Github, Link, UserCheck } from "lucide-react";
 import type { TaskNode } from "@/data/mockData";
 import { useState } from "react";
-import { useLinkPRMutation } from "@/store/api";
+import { useLinkPRMutation, useGetUsersQuery, useUpdateTaskMutation } from "@/store/api";
 import { toast } from "sonner";
 import TaskExecutionPanel from "@/components/TaskExecutionPanel";
 import TaskReplayTimeline from "@/components/TaskReplayTimeline";
+import { MemberProfileModal } from "@/components/MemberProfileModal";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface TaskDetailPanelProps {
   task: TaskNode | null;
@@ -32,8 +34,39 @@ const statusStyle: Record<string, string> = {
 const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
   const [prUrl, setPrUrl] = useState("");
   const [linkPR, { isLoading: isLinking }] = useLinkPRMutation();
+  const [updateTask] = useUpdateTaskMutation();
+  const { data: usersRes } = useGetUsersQuery();
+  const team = usersRes?.data || [];
+
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 
   if (!task) return null;
+
+  const handleOpenProfile = () => {
+    if (!task.assignee) return;
+    const matched = team.find(u => u.id === task.assignee?.id || u.name === task.assignee?.name);
+    setSelectedMember(matched || {
+      id: task.assignee.id,
+      name: task.assignee.name,
+      avatarUrl: (task.assignee as any).avatarUrl,
+      role: 'member'
+    });
+    setIsMemberModalOpen(true);
+  };
+
+  const handleReassign = async (newAssigneeId: string) => {
+    try {
+      await updateTask({
+        id: task.id,
+        assigneeId: newAssigneeId === "unassigned" ? undefined : newAssigneeId,
+        projectId: task.projectId
+      }).unwrap();
+      toast.success("Assignee updated");
+    } catch {
+      toast.error("Failed to reassign task");
+    }
+  };
 
   const handleLinkPR = async () => {
     if (!prUrl.trim()) return;
@@ -71,23 +104,51 @@ const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 flex-wrap">
-          {task.assignee && (
-            <div className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-lg ${task.assignee.color} flex items-center justify-center text-[9px] font-bold text-foreground`}>
-                {task.assignee.initials}
-              </div>
-              <span className="text-[12px] text-slate-600">{task.assignee.name}</span>
-            </div>
-          )}
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${statusStyle[task.status] || statusStyle.pending}`}>
-            {task.status.replace("_", " ")}
-          </span>
-          {task.priority && (
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg uppercase">
-              {task.priority}
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 flex-wrap justify-between">
+          <div className="flex items-center gap-2">
+            {task.assignee ? (
+              <button
+                onClick={handleOpenProfile}
+                className="flex items-center gap-2 p-1 -ml-1 rounded-lg hover:bg-slate-100 transition-colors group cursor-pointer"
+                title={`View ${task.assignee.name}'s profile`}
+              >
+                <div className={`w-6 h-6 rounded-lg ${task.assignee.color || 'bg-[#007dff]'} flex items-center justify-center text-[9px] font-bold text-white shadow-sm`}>
+                  {task.assignee.initials}
+                </div>
+                <span className="text-[12px] font-semibold text-slate-700 group-hover:text-[#007dff] transition-colors">
+                  {task.assignee.name}
+                </span>
+              </button>
+            ) : (
+              <span className="text-xs text-slate-400 italic">Unassigned</span>
+            )}
+
+            {/* Quick Reassign Dropdown */}
+            <select
+              value={task.assignee?.id || "unassigned"}
+              onChange={(e) => handleReassign(e.target.value)}
+              className="h-6 px-1.5 text-[10px] bg-slate-50 border border-slate-200 rounded-md text-slate-600 focus:outline-none focus:ring-1 focus:ring-[#007dff] cursor-pointer"
+              title="Change Assignee"
+            >
+              <option value="unassigned">Assign...</option>
+              {team.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${statusStyle[task.status] || statusStyle.pending}`}>
+              {task.status.replace("_", " ")}
             </span>
-          )}
+            {task.priority && (
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg uppercase">
+                {task.priority}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Scrollable body */}
@@ -146,6 +207,16 @@ const TaskDetailPanel = ({ task, onClose }: TaskDetailPanelProps) => {
           <TaskReplayTimeline taskId={task.id} />
         </div>
       </div>
+
+      <MemberProfileModal
+        isOpen={isMemberModalOpen}
+        onClose={() => {
+          setIsMemberModalOpen(false);
+          setSelectedMember(null);
+        }}
+        member={selectedMember}
+        workspaceId={task.projectId || "proj-default-1"}
+      />
     </>
   );
 };
