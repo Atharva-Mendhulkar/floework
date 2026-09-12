@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
 import { MemberProfileModal } from "@/components/MemberProfileModal";
+import { useAuth } from "@/modules/auth/AuthContext";
 
 const MessageBubble = ({ msg, onAuthorClick }: { msg: any; onAuthorClick?: (author: any) => void }) => {
     const { user } = useAuth();
