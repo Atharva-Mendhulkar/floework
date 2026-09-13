@@ -127,12 +127,6 @@ variable "ecs_desired_count" {
   default     = 2
 }
 
-variable "redis_node_type" {
-  description = "ElastiCache Redis node instance type"
-  type        = string
-  default     = "cache.t4g.micro"
-}
-
 variable "tags" {
   description = "Default resource tags"
   default = {

@@ -1,17 +1,16 @@
 // api/_lib/rateLimit.ts
 // ==============================================================================
 // Distributed Rate Limiting (SEC-05 Resolution)
-// Dual-tier rate limiter using Upstash/ElastiCache Redis with local LRU fallback
+// Redis sliding-window limiter with local in-memory fallback
 // Prevents cross-instance brute-force and request abuse across ECS tasks & serverless
 // ==============================================================================
 
-import { LRUCache } from 'lru-cache'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { redis } from './redis'
 
 type RateLimitEntry = { count: number; resetAt: number }
 
-const localCache = new LRUCache<string, RateLimitEntry>({ max: 10000 })
+const localCache = new Map<string, RateLimitEntry>()
 
 export interface RateLimitOptions {
   windowMs: number
@@ -49,7 +48,7 @@ export async function rateLimitDistributed(
 
     return true
   } catch (err) {
-    // Non-blocking fallback to in-memory LRU cache if Redis is temporarily unreachable
+    // Non-blocking fallback to in-memory limiter if Redis is temporarily unreachable
     console.warn('[RateLimit] Redis unreachable, falling back to in-memory limiter:', err)
     return rateLimit(req, res, opts)
   }

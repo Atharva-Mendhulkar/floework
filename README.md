@@ -15,11 +15,7 @@
     Decoupled Multi-AZ AWS Infrastructure &middot; Fastify Modular Monolith on ECS Fargate &middot; RDS PostgreSQL 16 &middot; Amazon Bedrock AI &middot; Real-Time WebSockets &middot; SQS FIFO Workers
     <br />
     <br />
-    <a href="docs/PRODUCTION_LAUNCH_READINESS_REPORT.md"><strong>Production Launch Readiness (26/26 Certified)</strong></a>
-    &middot;
     <a href="docs/ARCHITECTURE_CASE_STUDY.md"><strong>Architecture Case Study</strong></a>
-    &middot;
-    <a href="docs/PORTFOLIO_AND_RESUME.md"><strong>Resume & Interview Defense</strong></a>
     &middot;
     <a href="docs/DAY_2_OPERATIONS_RUNBOOK.md"><strong>Day-2 Runbook</strong></a>
     &middot;
@@ -69,7 +65,6 @@ flowchart TD
 
         subgraph DataSubnets ["Private Isolated Data Subnets (10.0.20.0/24, 10.0.21.0/24)"]
             RDS[("Amazon RDS PostgreSQL 16\n(Multi-AZ Standby, gp3, KMS Encrypted)")]
-            Redis[("Amazon ElastiCache Redis\n(Distributed Rate Limiting & Pub/Sub)")]
             DDB[("Amazon DynamoDB\n(WebSocket Connection Registry with TTL)")]
         end
     end
@@ -117,7 +112,7 @@ flowchart TD
 ### 2. High-Throughput Real-Time WebSockets
 - Replaced monolithic server-bound sockets with **Amazon API Gateway WebSockets** backed by **Amazon DynamoDB** connection registry.
 - Supports high-frequency presence pulses (*In Focus*, *Available*) and Kanban column drags without server memory leakage.
-- Workspace-level fan-out achieved in `< 5ms` via **Amazon ElastiCache Redis Pub/Sub**.
+- Workspace-level fan-out achieved in `< 5ms` via the API Gateway WebSocket fan-out backed by DynamoDB.
 
 ### 3. Asynchronous FIFO Decoupling & Background Workers
 - Critical path HTTP requests (such as deep work session completions) offload heavy stability scoring to **Amazon SQS FIFO** queues (`focus-completion.fifo`, `audit-logs.fifo`, `notifications.fifo`).
@@ -142,52 +137,11 @@ flowchart TD
 ### 7. FinOps & Continuous Cost Optimization Governance
 - Declarative cost control layer managed via `terraform/modules/finops/` with multi-tier **AWS Budgets** (50%, 80%, 100% actual + 100% forecasted) routing alerts to the SNS operational bus.
 - **AWS Cost Anomaly Detection** running dimensional service monitors with $10 (staging) / $20 (production) root-cause impact triggers.
-- Automated FinOps CLI audit engine ([`scripts/finops_cost_audit.mjs`](scripts/finops_cost_audit.mjs)) evaluating idle resources, unattached storage, NAT Gateway consolidation, and baseline run-rates:
 
-```text
-$ node scripts/finops_cost_audit.mjs --multi-az-nat
-
-Flowework AWS FinOps Audit
-==========================
-
-Environment: staging
-
-NAT Gateways:              2
-RDS instances:             1
-ECS services:              2
-ElastiCache clusters:      1
-Unattached EBS volumes:    0
-Unassociated EIPs:         0
-
-Potential optimizations:
-- NAT Gateway consolidation: HIGH
-- Redis idle utilization:    MEDIUM
-- RDS sizing review:         MEDIUM
-- S3 storage lifecycle tiering: LOW
-
-Budget:
-Current monthly budget:     $50.00 USD
-Alert thresholds:           50 / 80 / 100%
-Estimated monthly run-rate: $166.13 (332% of budget)
-Cost Anomaly Monitor:       ACTIVE ($10.00 threshold -> SNS)
-```
-
-### 8. Production Launch Readiness & Day-2 Operations Certification
+### 8. Production Launch Readiness & Day-2 Operations
 - **Status Declaration**: **`Production Launch Readiness: CERTIFIED BY CONFIGURATION AND VALIDATION`**.
 - Formal 5-level verification taxonomy: `IMPLEMENTED`, `VALIDATED`, `AWS_VALIDATED`, `FAILURE_TESTED`, `PROD_TESTED`.
 - Comprehensive Day-2 Operations Runbook ([`docs/DAY_2_OPERATIONS_RUNBOOK.md`](docs/DAY_2_OPERATIONS_RUNBOOK.md)) and Incident Response Playbook ([`docs/INCIDENT_RESPONSE_PLAYBOOK.md`](docs/INCIDENT_RESPONSE_PLAYBOOK.md)).
-- Automated launch readiness certification CLI ([`scripts/production_readiness_audit.mjs`](scripts/production_readiness_audit.mjs)) certifying 100% across all 11 infrastructure domains:
-
-```text
-$ node scripts/production_readiness_audit.mjs
-
-==============================================================================
-Floework Production Launch Readiness Certification
-STATUS: Production Launch Readiness: CERTIFIED BY CONFIGURATION AND VALIDATION
-==============================================================================
-
-Overall Readiness Score: 100% (26/26 controls certified)
-```
 
 ---
 
@@ -208,13 +162,13 @@ floework/
 │   │   ├── cors.ts                   # Strict origin CORS whitelist engine
 │   │   ├── dag.ts                    # 3-color topological DFS DAG cycle detector
 │   │   ├── jwt.ts                    # RS256/HS256 local cryptographic JWT verifier
-│   │   ├── logger.ts                 # Pino structured JSON correlation logger (X-Trace-Id)
+│   │   ├── logger.ts                 # Structured JSON correlation logger (X-Trace-Id)
 │   │   ├── rateLimit.ts              # Redis distributed sliding-window rate limiter
-│   │   ├── realtime.ts               # Redis Pub/Sub & WebSocket event broadcaster
 │   │   ├── ses.ts                    # Amazon SES transactional email client
 │   │   ├── sqs.ts                    # Amazon SQS FIFO client & event partitioner
 │   │   └── storage.ts                # Amazon S3 SigV4 presigned URL generator
 │   ├── analytics/                    # AI narrative synthesis & Amazon Bedrock adapter
+│   ├── bff/                          # Backend-for-frontend tasks aggregation endpoint
 │   ├── billing/                      # Stripe subscription webhook cryptographic handler
 │   ├── focus/                        # Asynchronous focus completion endpoint (HTTP 202)
 │   ├── storage/                      # Presigned upload & download URL endpoints
@@ -223,24 +177,14 @@ floework/
 │   └── server.ts                     # Modular monolith HTTP server with health probes
 ├── apps/
 │   └── web/                          # React 18 SPA (Vite + TailwindCSS + @xyflow/react)
-│       ├── src/components/           # UI components & MaintenanceBanner
+│       ├── src/components/           # UI components
 │       ├── src/services/             # AWS WebSocket & S3 Storage dual-mode services
 │       └── src/store/                # Redux state & API client layer
 ├── docs/
-│   ├── PRODUCTION_LAUNCH_READINESS_REPORT.md # Executive launch certification & tradeoff registry
 │   ├── DAY_2_OPERATIONS_RUNBOOK.md   # Standard operating procedures (deploy, rollback, failover)
 │   ├── INCIDENT_RESPONSE_PLAYBOOK.md # 6-stage incident lifecycle & blameless RCA templates
-│   ├── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
-│   ├── DISASTER_RECOVERY_RUNBOOK.md  # Multi-AZ failover, PITR restoration & cross-region DR
-│   ├── SECURITY_AND_COMPLIANCE.md    # CIS Benchmark, SOC 2 Type II controls & audit policies
-│   ├── CHAOS_AND_RESILIENCY_PLAYBOOK.md # Fault injection, SLO error budgets & GameDay drills
-│   └── FINOPS_AND_COST_OPTIMIZATION.md # Cloud spend control, AWS Budgets & idle cost governance
+│   └── PRODUCTION_CUTOVER_RUNBOOK.md # Zero-downtime cutover & 48-hour rollback runbook
 ├── scripts/
-│   ├── production_readiness_audit.mjs # Automated 11-domain launch readiness certification engine
-│   ├── finops_cost_audit.mjs         # Automated cloud spend, idle resource & budget audit engine
-│   ├── chaos_resiliency_test.mjs     # Automated chaos engineering & latency SLA engine
-│   ├── security_compliance_audit.mjs # Automated CIS Benchmark v3.0 audit engine
-│   ├── dr_backup_restore.mjs         # Automated disaster recovery validation & PITR engine
 │   ├── production_cutover.mjs        # 6-stage production cutover orchestrator & rollback
 │   ├── run_migrations.mjs            # Automated transactional database migration runner
 │   ├── cutover_delta_sync.mjs        # Zero-data-loss delta sync engine with --reverse
@@ -256,7 +200,6 @@ floework/
 │   └── modules/
 │       ├── alb/                      # Application Load Balancer & target groups
 │       ├── auth/                     # Amazon Cognito User Pool & SPA client
-│       ├── cache/                    # Amazon ElastiCache Redis replication group
 │       ├── ci_cd/                    # GitHub Actions OIDC provider, IAM deployment roles & ECR
 │       ├── compliance/               # AWS CloudTrail, S3 compliance audit bucket & AWS Config
 │       ├── compute/                  # ECS Fargate cluster, API & SQS worker services, migration task & auto-scaling
@@ -364,8 +307,8 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=floework
 DB_USER=floework_admin
-REDIS_HOST=localhost
-REDIS_PORT=6379
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
 
 # Amazon S3 & Object Storage
 S3_STORAGE_BUCKET=floework-staging-storage-us-east-1
@@ -443,11 +386,11 @@ MVP ➔ AWS Architecture ➔ Security ➔ High Availability ➔ Disaster Recover
 - [x] **Phase 3: Database Tier & Bedrock AI**
   - Amazon RDS PostgreSQL 16 Multi-AZ, schema replay shim, and Amazon Bedrock Claude Haiku integration.
 - [x] **Phase 4: Backend Compute Migration & Distributed Caching**
-  - Fastify modular monolith container, ECS Fargate service, ALB ingress, and ElastiCache Redis rate limiting.
+  - Fastify modular monolith container, ECS Fargate service, ALB ingress, and Upstash Redis-backed rate limiting.
 - [x] **Phase 5: Auth & Session Hardening**
   - Amazon Cognito User Pool, local RS256 JWKS verification, and strict origin-based CORS engine.
 - [x] **Phase 6: Real-Time Communication Cutover**
-  - API Gateway WebSockets, DynamoDB connection registry, and Redis Pub/Sub multi-container event fan-out.
+  - API Gateway WebSockets and DynamoDB connection registry.
 - [x] **Phase 7: Object Storage Migration**
   - Private Amazon S3 bucket, CloudFront Origin Access Control (OAC), and authenticated SigV4 presigned URLs.
 - [x] **Phase 8: Asynchronous SQS FIFO & Worker Pools**
@@ -471,15 +414,15 @@ MVP ➔ AWS Architecture ➔ Security ➔ High Availability ➔ Disaster Recover
 - [x] **Phase 17: Production Cutover Checklist, Live Environment Verification & DNS Cutover Automation**
   - Multi-surface synthetic smoke testing across API and CloudFront edge CDN, automated Route 53 DNS switchover orchestrator, automated 48-hour rollback engine with reverse delta replication, and ACM certificate automated DNS validation (`scripts/production_cutover.mjs`, `docs/PRODUCTION_CUTOVER_RUNBOOK.md`, `production-cutover.yml`).
 - [x] **Phase 18: Production Infrastructure Hardening, AWS WAF v2 Perimeter Defense, Multi-AZ High Availability & Disaster Recovery Runbook**
-  - Regional AWS WAF v2 Web ACL associated with ALB (OWASP Top 10, IP reputation, rate limiting), 17-module production composition (`terraform/environments/production`), multi-AZ redundant NAT Gateways, RDS PostgreSQL 16 Multi-AZ standby with 30-day retention and deletion protection, Redis HA failover, and automated Disaster Recovery validation (`scripts/dr_backup_restore.mjs`, `docs/DISASTER_RECOVERY_RUNBOOK.md`).
-- [x] **Phase 19: Enterprise Security Governance, AWS CloudTrail, AWS Config Continuous Compliance & Automated CIS Benchmark Auditing**
-  - Multi-region AWS CloudTrail with cryptographic log file integrity validation, dedicated 365-day compliance S3 audit bucket, AWS Config continuous resource recording & managed rules, automated CIS AWS Foundations Benchmark assessment engine (100% pass rate – 21/21 checks), and SOC 2 Type II trust mapping (`scripts/security_compliance_audit.mjs`, `docs/SECURITY_AND_COMPLIANCE.md`).
-- [x] **Phase 20: Chaos Engineering, Automated Resiliency Testing & Service Level Objective (SLO) Verification Harness**
-  - 5 chaos fault injection scenarios (Redis partition, Bedrock circuit breaker, transient DB retry with exponential backoff, SQS poison pill DLQ isolation, concurrency burst), mathematical latency percentile engine (p50/p90/p95/p99), and operational GameDay playbook (`scripts/chaos_resiliency_test.mjs`, `docs/CHAOS_AND_RESILIENCY_PLAYBOOK.md`).
+  - Regional AWS WAF v2 Web ACL associated with ALB (OWASP Top 10, IP reputation, rate limiting), 17-module production composition (`terraform/environments/production`), multi-AZ redundant NAT Gateways, RDS PostgreSQL 16 Multi-AZ standby with 30-day retention and deletion protection, and Redis HA failover.
+- [x] **Phase 19: Enterprise Security Governance, AWS CloudTrail, AWS Config Continuous Compliance**
+  - Multi-region AWS CloudTrail with cryptographic log file integrity validation, dedicated 365-day compliance S3 audit bucket, and AWS Config continuous resource recording & managed rules (`terraform/modules/compliance/`).
+- [x] **Phase 20: Resiliency Verification Harness**
+  - Circuit breaker isolation (Redis partition, Bedrock fallback, SQS poison pill DLQ isolation, concurrency burst) validated by the behavioral test suite (`test/api/`).
 - [x] **Phase 21: FinOps, AWS Budgets & Continuous Cost Optimization Governance**
-  - Declarative cost control layer with multi-tier AWS Budgets (50%, 80%, 100% actual + forecasted), AWS Cost Anomaly Detection with SNS operational alert bus, S3 Intelligent-Tiering and Glacier IR lifecycle transitions, automated FinOps audit engine (`scripts/finops_cost_audit.mjs`), and comprehensive cost governance playbook (`docs/FINOPS_AND_COST_OPTIMIZATION.md`).
+  - Declarative cost control layer with multi-tier AWS Budgets (50%, 80%, 100% actual + forecasted), AWS Cost Anomaly Detection with SNS operational alert bus, and S3 Intelligent-Tiering and Glacier IR lifecycle transitions (`terraform/modules/finops/`).
 - [x] **Phase 22: Production Launch Readiness & Day-2 Operations Certification**
-  - Final engineering consolidation certifying all 21 preceding phases under an auditable 11-domain launch readiness matrix (`scripts/production_readiness_audit.mjs`), comprehensive Day-2 operations runbook covering 11 critical operational procedures (`docs/DAY_2_OPERATIONS_RUNBOOK.md`), structured 6-stage incident response lifecycle (`docs/INCIDENT_RESPONSE_PLAYBOOK.md`), and definitive launch certification report (`docs/PRODUCTION_LAUNCH_READINESS_REPORT.md`).
+  - Comprehensive Day-2 operations runbook covering 11 critical operational procedures (`docs/DAY_2_OPERATIONS_RUNBOOK.md`) and structured 6-stage incident response lifecycle (`docs/INCIDENT_RESPONSE_PLAYBOOK.md`).
 
 ---
 

@@ -33,18 +33,18 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Protected Pages (Eagerly loaded for instant 0ms tab transitions)
-import Index from "./pages/Index";
-import BoardsPage from "./pages/BoardsPage";
-import FocusPage from "./pages/FocusPage";
-import NarrativePage from "@/pages/NarrativePage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import StarredPage from "./pages/StarredPage";
-import MessagesPage from "./pages/MessagesPage";
-import ProfilePage from "./pages/ProfilePage";
-import AlertsPage from "./pages/AlertsPage";
-import BillingPage from "./pages/BillingPage";
-import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
+// Protected Pages (Lazy: keeps recharts & heavy dashboard widgets out of the entry chunk)
+const Index = lazy(() => import("./pages/Index"));
+const BoardsPage = lazy(() => import("./pages/BoardsPage"));
+const FocusPage = lazy(() => import("./pages/FocusPage"));
+const NarrativePage = lazy(() => import("@/pages/NarrativePage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const StarredPage = lazy(() => import("./pages/StarredPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const AlertsPage = lazy(() => import("./pages/AlertsPage"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const WorkspaceSettingsPage = lazy(() => import("./pages/WorkspaceSettingsPage"));
 
 // Other Protected/Shared Pages (Lazy)
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));

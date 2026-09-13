@@ -7,10 +7,9 @@
 // ==============================================================================
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { randomUUID } from 'crypto'
 import { rateLimit } from '../_lib/rateLimit'
 import { getUser, requireMember } from '../_lib/auth'
-import { trace } from '@opentelemetry/api'
-import { v4 as uuidv4 } from 'uuid'
 import CircuitBreaker from 'opossum'
 import { redis } from '../_lib/redis'
 import { generateNarrative, parseNarrativeResponse } from '../_lib/bedrockClient'
@@ -54,8 +53,7 @@ function getPathname(req: VercelRequest): string {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const tracer = trace.getTracer('floework-api')
-  const requestId = uuidv4()
+  const requestId = randomUUID()
   res.setHeader('X-Request-ID', requestId)
 
   const pathname = getPathname(req)
@@ -128,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     pathname.endsWith('/share') ||
     (req.method === 'POST' && req.body?.action === 'share')
   ) {
-    const token = uuidv4()
+    const token = randomUUID()
     const narrativeData = req.body?.narrative || req.body?.data || {}
     const ttlSeconds = 7 * 24 * 60 * 60 // 7 days
 
@@ -242,165 +240,147 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  return tracer.startActiveSpan('GET /api/analytics/narrative', async (span) => {
-    try {
-      const cacheKey = `narrative_cache:${projectId}:${user.id}`
+  try {
+    const cacheKey = `narrative_cache:${projectId}:${user.id}`
 
-      // 1. Return cached narrative if valid and not forcing refresh
-      if (!isForceRefresh) {
-        let cachedData: any = null
-        try {
-          const cachedText = await redis.get<string>(cacheKey).catch(() => null)
-          if (cachedText) {
-            cachedData = typeof cachedText === 'string' ? JSON.parse(cachedText) : cachedText
-          }
-        } catch {}
-
-        if (!cachedData) {
-          const mem = memoryNarrativeCache.get(cacheKey)
-          if (mem && mem.expiresAt > Date.now()) {
-            cachedData = mem.data
-          }
-        }
-
-        if (cachedData) {
-          res.status(200).json({
-            success: true,
-            data: cachedData
-          })
-          return span.end()
-        }
-      }
-
-      // 2. Aggregate Data for Context (Last 24 Hours) from RDS PostgreSQL
-      let hrs = '4.5'
-      let doneCount = 6
-      let activeCount = 3
-
+    // 1. Return cached narrative if valid and not forcing refresh
+    if (!isForceRefresh) {
+      let cachedData: any = null
       try {
-        const twentyFourHrsAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        const focusSessionsRes = await query(
-          'SELECT duration_secs FROM focus_sessions WHERE user_id = $1 AND started_at >= $2',
-          [user.id, twentyFourHrsAgo]
-        ).catch(() => ({ rows: [] }))
-        const focusSessions = focusSessionsRes.rows || []
-
-        const tasksRes = await query('SELECT status, title FROM tasks WHERE project_id = $1', [
-          projectId
-        ]).catch(() => ({ rows: [] }))
-        const tasks = tasksRes.rows || []
-
-        if (focusSessions.length > 0 || tasks.length > 0) {
-          const totalSecs = focusSessions.reduce(
-            (acc: number, curr: any) => acc + (curr.duration_secs || 0),
-            0
-          )
-          hrs = (totalSecs / 3600).toFixed(1)
-          doneCount = tasks.filter((t: any) => t.status === 'done' || t.status === 'outcome').length
-          activeCount = tasks.filter(
-            (t: any) => t.status === 'in_progress' || t.status === 'focus' || t.status === 'review'
-          ).length
+        const cachedText = await redis.get<string>(cacheKey).catch(() => null)
+        if (cachedText) {
+          cachedData = typeof cachedText === 'string' ? JSON.parse(cachedText) : cachedText
         }
-      } catch {
-        // Fallback default context preserved
-      }
-
-      const prompt = `
-        You are an Executive Productivity Analyst for Floework. Write a concise 3-sentence summary.
-        Context: ${hrs} focus hours, ${doneCount} tasks done, ${activeCount} active tasks.
-        Project Context: This is for project ID ${projectId}.
-        Format (JSON): { "summary": "...", "highlights": ["..."], "warnings": ["..."] }
-      `
-
-      // 3. Call AI Narrative Generator with Circuit Breaker
-      const responseText = await tracer.startActiveSpan(
-        'ai-narrative-generation',
-        async (aiSpan) => {
-          try {
-            const text = await breaker.fire(prompt)
-            aiSpan.end()
-            return text
-          } catch (e: any) {
-            aiSpan.recordException(e)
-            aiSpan.end()
-            throw e
-          }
-        }
-      )
-
-      const aiData = parseNarrativeResponse(responseText)
-
-      const now = new Date()
-      const weekLabel = `Sprint ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-      const fullBody = `${aiData.summary}\n\nOver the active sprint period, the team achieved ${hrs} deep focus hours across ${doneCount} resolved milestones. Execution momentum remains high with ${activeCount} deliverables moving smoothly through review phases.`
-
-      const narrativeResult = {
-        id: `narrative-${projectId}-${Date.now()}`,
-        projectId,
-        weekLabel,
-        generatedAt: now.toISOString(),
-        summary: aiData.summary,
-        body: fullBody,
-        highlights: aiData.highlights && aiData.highlights.length > 0 ? aiData.highlights : [
-          `${doneCount} milestones completed during active sprint cycles`,
-          `${hrs} deep focus hours logged with stable concentration metrics`,
-          'Zero blocking dependency deadlocks identified across execution graph'
-        ],
-        warnings: aiData.warnings || [],
-        stats: {
-          focusHours: parseFloat(hrs) || 4.5,
-          completedTasks: doneCount,
-          activeTasks: activeCount,
-          focusDensityScore: 88,
-          velocityIndex: 'Optimal'
-        }
-      }
-
-      // 4. Update Cache in Redis with 1 hour TTL & Memory Cache
-      try {
-        await redis.setex(cacheKey, 3600, JSON.stringify(narrativeResult)).catch(() => null)
       } catch {}
-      memoryNarrativeCache.set(cacheKey, { data: narrativeResult, expiresAt: Date.now() + 3600 * 1000 })
 
-      res.status(200).json({
-        success: true,
-        data: narrativeResult
-      })
-      span.end()
-    } catch (error: any) {
-      console.error('AI Narrative Error:', error)
-      const fallbackResult = {
-        id: `narrative-fallback-${Date.now()}`,
-        projectId,
-        weekLabel: 'Current Sprint',
-        generatedAt: new Date().toISOString(),
-        summary:
-          'Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.',
-        body:
-          'Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.\n\nExecution velocity continues at a steady pace. Dependencies across the active sprint are flowing smoothly toward completion.',
-        highlights: [
-          'Workspace synchronized across core deliverables',
-          'Steady focus velocity maintained through active sprint',
-          'Zero critical path blockers reported'
-        ],
-        warnings: [],
-        stats: {
-          focusHours: 4.5,
-          completedTasks: 6,
-          activeTasks: 3,
-          focusDensityScore: 88,
-          velocityIndex: 'Optimal'
+      if (!cachedData) {
+        const mem = memoryNarrativeCache.get(cacheKey)
+        if (mem && mem.expiresAt > Date.now()) {
+          cachedData = mem.data
         }
       }
 
-      res.status(200).json({
-        success: true,
-        fallback: true,
-        data: fallbackResult,
-        requestId
-      })
-      span.recordException(error)
-      span.end()
+      if (cachedData) {
+        res.status(200).json({
+          success: true,
+          data: cachedData
+        })
+        return
+      }
     }
-  })
+
+    // 2. Aggregate Data for Context (Last 24 Hours) from RDS PostgreSQL
+    let hrs = '4.5'
+    let doneCount = 6
+    let activeCount = 3
+
+    try {
+      const twentyFourHrsAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const focusSessionsRes = await query(
+        'SELECT duration_secs FROM focus_sessions WHERE user_id = $1 AND started_at >= $2',
+        [user.id, twentyFourHrsAgo]
+      ).catch(() => ({ rows: [] }))
+      const focusSessions = focusSessionsRes.rows || []
+
+      const tasksRes = await query('SELECT status, title FROM tasks WHERE project_id = $1', [
+        projectId
+      ]).catch(() => ({ rows: [] }))
+      const tasks = tasksRes.rows || []
+
+      if (focusSessions.length > 0 || tasks.length > 0) {
+        const totalSecs = focusSessions.reduce(
+          (acc: number, curr: any) => acc + (curr.duration_secs || 0),
+          0
+        )
+        hrs = (totalSecs / 3600).toFixed(1)
+        doneCount = tasks.filter((t: any) => t.status === 'done' || t.status === 'outcome').length
+        activeCount = tasks.filter(
+          (t: any) => t.status === 'in_progress' || t.status === 'focus' || t.status === 'review'
+        ).length
+      }
+    } catch {
+      // Fallback default context preserved
+    }
+
+    const prompt = `
+      You are an Executive Productivity Analyst for Floework. Write a concise 3-sentence summary.
+      Context: ${hrs} focus hours, ${doneCount} tasks done, ${activeCount} active tasks.
+      Project Context: This is for project ID ${projectId}.
+      Format (JSON): { "summary": "...", "highlights": ["..."], "warnings": ["..."] }
+    `
+
+    // 3. Call AI Narrative Generator with Circuit Breaker
+    const responseText = await breaker.fire(prompt)
+
+    const aiData = parseNarrativeResponse(responseText)
+
+    const now = new Date()
+    const weekLabel = `Sprint ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    const fullBody = `${aiData.summary}\n\nOver the active sprint period, the team achieved ${hrs} deep focus hours across ${doneCount} resolved milestones. Execution momentum remains high with ${activeCount} deliverables moving smoothly through review phases.`
+
+    const narrativeResult = {
+      id: `narrative-${projectId}-${Date.now()}`,
+      projectId,
+      weekLabel,
+      generatedAt: now.toISOString(),
+      summary: aiData.summary,
+      body: fullBody,
+      highlights: aiData.highlights && aiData.highlights.length > 0 ? aiData.highlights : [
+        `${doneCount} milestones completed during active sprint cycles`,
+        `${hrs} deep focus hours logged with stable concentration metrics`,
+        'Zero blocking dependency deadlocks identified across execution graph'
+      ],
+      warnings: aiData.warnings || [],
+      stats: {
+        focusHours: parseFloat(hrs) || 4.5,
+        completedTasks: doneCount,
+        activeTasks: activeCount,
+        focusDensityScore: 88,
+        velocityIndex: 'Optimal'
+      }
+    }
+
+    // 4. Update Cache in Redis with 1 hour TTL & Memory Cache
+    try {
+      await redis.setex(cacheKey, 3600, JSON.stringify(narrativeResult)).catch(() => null)
+    } catch {}
+    memoryNarrativeCache.set(cacheKey, { data: narrativeResult, expiresAt: Date.now() + 3600 * 1000 })
+
+    res.status(200).json({
+      success: true,
+      data: narrativeResult
+    })
+  } catch (error: any) {
+    console.error('AI Narrative Error:', error)
+    const fallbackResult = {
+      id: `narrative-fallback-${Date.now()}`,
+      projectId,
+      weekLabel: 'Current Sprint',
+      generatedAt: new Date().toISOString(),
+      summary:
+        'Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.',
+      body:
+        'Momentum is building across the workspace. Focus density is stable as the team moves through current objectives.\n\nExecution velocity continues at a steady pace. Dependencies across the active sprint are flowing smoothly toward completion.',
+      highlights: [
+        'Workspace synchronized across core deliverables',
+        'Steady focus velocity maintained through active sprint',
+        'Zero critical path blockers reported'
+      ],
+      warnings: [],
+      stats: {
+        focusHours: 4.5,
+        completedTasks: 6,
+        activeTasks: 3,
+        focusDensityScore: 88,
+        velocityIndex: 'Optimal'
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      fallback: true,
+      data: fallbackResult,
+      requestId
+    })
+  }
 }

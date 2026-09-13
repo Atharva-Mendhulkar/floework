@@ -197,14 +197,3 @@ resource "aws_db_subnet_group" "rds" {
     Environment = var.environment
   })
 }
-
-resource "aws_elasticache_subnet_group" "redis" {
-  name        = "${var.project_name}-${var.environment}-redis-subnet-group"
-  description = "Cache subnet group for ElastiCache Redis / Valkey"
-  subnet_ids  = aws_subnet.private_data[*].id
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-redis-subnet-group"
-    Environment = var.environment
-  })
-}

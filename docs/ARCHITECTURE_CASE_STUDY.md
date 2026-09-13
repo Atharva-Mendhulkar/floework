@@ -239,7 +239,7 @@ sequenceDiagram
 
 ## 8. Chaos Testing & Resiliency
 
-To prove that high-availability architectures survive live failure conditions, we built an automated chaos engineering and resiliency test harness ([`scripts/chaos_resiliency_test.mjs`](file:///home/topfloorboss/Downloads/floework-main/scripts/chaos_resiliency_test.mjs)) that evaluates 5 catastrophic failure modes:
+Resiliency against catastrophic failure modes is validated by the behavioral test suite in `test/api/` (circuit breaker trips, Redis fallback, SQS poison-pill isolation):
 
 ### Failure Modes & Self-Healing Matrix Diagram
 

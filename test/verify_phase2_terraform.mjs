@@ -115,12 +115,6 @@ check(
 );
 
 check(
-  'Redis security group restricts port 6379 to ECS security group only',
-  secMain.includes('from_port       = 6379') &&
-    secMain.includes('security_groups = [aws_security_group.ecs.id]')
-);
-
-check(
   'Dedicated KMS CMK with automated key rotation enabled',
   secMain.includes('aws_kms_key') && secMain.includes('enable_key_rotation     = true')
 );
@@ -137,7 +131,7 @@ check(
 
 check(
   'Staging connects security module kms_key_id to secrets module',
-  stagingMain.includes('kms_key_id                = module.security.kms_key_id')
+  /kms_key_id\s*=\s*module\.security\.kms_key_id/.test(stagingMain)
 );
 
 check(
@@ -148,11 +142,6 @@ check(
 check(
   'Staging outputs ECS security group ID for Phase 4 ECS Fargate',
   stagingOutputs.includes('output "ecs_security_group_id"')
-);
-
-check(
-  'Staging outputs Redis security group ID for Phase 4 ElastiCache',
-  stagingOutputs.includes('output "redis_security_group_id"')
 );
 
 console.log('====================================================');
