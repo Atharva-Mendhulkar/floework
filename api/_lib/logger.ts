@@ -1,11 +1,10 @@
 // api/_lib/logger.ts
 // ==============================================================================
-// Structured JSON Correlation Logger & Telemetry Engine
-// Emits structured JSON logs with correlation IDs (trace_id, span_id, tenant_id)
-// compatible with AWS CloudWatch, AWS X-Ray, and OpenTelemetry.
+// Structured JSON Correlation Logger
+// Emits structured JSON logs with correlation IDs (trace_id, tenant_id)
+// compatible with AWS CloudWatch and AWS X-Ray.
 // ==============================================================================
 
-import { trace } from '@opentelemetry/api'
 import type { IncomingMessage } from 'http'
 import crypto from 'crypto'
 
@@ -44,20 +43,11 @@ export interface StructuredLogRecord {
 }
 
 /**
- * Extracts distributed tracing and correlation IDs from OpenTelemetry or HTTP headers
+ * Extracts distributed tracing and correlation IDs from HTTP headers
  */
 export function extractCorrelationContext(req?: IncomingMessage | Record<string, any>): LogContext {
   const context: LogContext = {}
 
-  // 1. OpenTelemetry active span takes highest precedence
-  const activeSpan = trace.getActiveSpan()
-  if (activeSpan) {
-    const spanCtx = activeSpan.spanContext()
-    if (spanCtx.traceId) context.trace_id = spanCtx.traceId
-    if (spanCtx.spanId) context.span_id = spanCtx.spanId
-  }
-
-  // 2. HTTP Request headers fallback
   if (req) {
     const headers = (req as any).headers || {}
     const getHeader = (k: string): string | undefined => {

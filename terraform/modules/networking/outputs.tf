@@ -32,8 +32,3 @@ output "db_subnet_group_name" {
   description = "Name of the RDS DB subnet group"
   value       = aws_db_subnet_group.rds.name
 }
-
-output "redis_subnet_group_name" {
-  description = "Name of the ElastiCache Redis subnet group"
-  value       = aws_elasticache_subnet_group.redis.name
-}

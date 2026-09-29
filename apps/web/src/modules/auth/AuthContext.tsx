@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { CognitoAuthService, CognitoUser } from "@/services/CognitoAuthService";
 import { resetStore } from "@/store";
 
-export interface User extends CognitoUser {}
+export type User = CognitoUser;
 
 interface AuthContextType {
     user: User | null;

@@ -102,18 +102,18 @@ module "database" {
 module "secrets" {
   source = "../../modules/secrets"
 
-  project_name              = var.project_name
-  environment               = var.environment
-  kms_key_id                = module.security.kms_key_id
-  gemini_api_key            = var.gemini_api_key
-  jwt_secret                = var.jwt_secret
-  upstash_redis_rest_url    = var.upstash_redis_rest_url
-  upstash_redis_rest_token  = var.upstash_redis_rest_token
-  bedrock_model_id          = var.bedrock_model_id
-  bedrock_region            = var.bedrock_region
-  cognito_user_pool_id      = module.auth.user_pool_id
-  cognito_client_id         = module.auth.user_pool_client_id
-  tags                      = var.tags
+  project_name             = var.project_name
+  environment              = var.environment
+  kms_key_id               = module.security.kms_key_id
+  gemini_api_key           = var.gemini_api_key
+  jwt_secret               = var.jwt_secret
+  upstash_redis_rest_url   = var.upstash_redis_rest_url
+  upstash_redis_rest_token = var.upstash_redis_rest_token
+  bedrock_model_id         = var.bedrock_model_id
+  bedrock_region           = var.bedrock_region
+  cognito_user_pool_id     = module.auth.user_pool_id
+  cognito_client_id        = module.auth.user_pool_client_id
+  tags                     = var.tags
 }
 
 # ==============================================================================
@@ -147,23 +147,6 @@ module "waf" {
 }
 
 # ==============================================================================
-# Module: ElastiCache Redis (Multi-Node HA Replication Group & Failover)
-# ==============================================================================
-
-module "cache" {
-  source = "../../modules/cache"
-
-  project_name            = var.project_name
-  environment             = var.environment
-  redis_subnet_group_name = module.networking.redis_subnet_group_name
-  redis_security_group_id = module.security.redis_security_group_id
-  kms_key_arn             = module.security.kms_key_arn
-  node_type               = var.redis_node_type
-  num_cache_clusters      = var.redis_num_cache_clusters
-  tags                    = var.tags
-}
-
-# ==============================================================================
 # Module: Compute (Amazon ECS Fargate High-Availability Service & Auto-Scaling)
 # ==============================================================================
 
@@ -190,9 +173,6 @@ module "compute" {
   database_port     = tostring(module.database.db_instance_port)
   database_name     = module.database.db_name
   database_username = module.database.master_username
-
-  redis_endpoint = module.cache.primary_endpoint_address
-  redis_port     = tostring(module.cache.port)
 
   cognito_user_pool_id = module.auth.user_pool_id
   cognito_client_id    = module.auth.user_pool_client_id

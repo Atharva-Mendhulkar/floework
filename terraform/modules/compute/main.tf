@@ -60,8 +60,6 @@ resource "aws_ecs_task_definition" "api" {
         { name = "DB_PORT", value = var.database_port },
         { name = "DB_NAME", value = var.database_name },
         { name = "DB_USER", value = var.database_username },
-        { name = "REDIS_HOST", value = var.redis_endpoint },
-        { name = "REDIS_PORT", value = var.redis_port },
         { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
         { name = "COGNITO_CLIENT_ID", value = var.cognito_client_id },
         { name = "FOCUS_COMPLETION_QUEUE_URL", value = var.focus_completion_queue_url },
@@ -199,9 +197,7 @@ resource "aws_ecs_task_definition" "worker" {
         { name = "DB_HOST", value = var.database_host },
         { name = "DB_PORT", value = var.database_port },
         { name = "DB_NAME", value = var.database_name },
-        { name = "DB_USER", value = var.database_username },
-        { name = "REDIS_HOST", value = var.redis_endpoint },
-        { name = "REDIS_PORT", value = var.redis_port }
+        { name = "DB_USER", value = var.database_username }
       ]
 
       logConfiguration = {

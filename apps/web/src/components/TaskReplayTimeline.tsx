@@ -30,9 +30,10 @@ const formatEventTitle = (event: any) => {
             return `Moved to ${event.metadata?.status?.replace("_", " ") || "unknown status"}`;
         case "FOCUS_START":
             return "Focus session started";
-        case "FOCUS_STOP":
+        case "FOCUS_STOP": {
             const mins = Math.round((event.metadata?.durationSecs || 0) / 60);
             return `Focus session completed (${mins} min)`;
+        }
         case "BLOCKER_DETECTED":
             return "Blocker signal detected";
         default:

@@ -94,34 +94,6 @@ resource "aws_security_group" "rds" {
   })
 }
 
-# 4. ElastiCache Redis Security Group
-resource "aws_security_group" "redis" {
-  name        = "${var.project_name}-${var.environment}-redis-sg"
-  description = "Cache ingress restricted strictly to ECS application tasks"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description     = "Redis port from ECS tasks only"
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-  }
-
-  egress {
-    description = "No outbound required for isolated cache"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-redis-sg"
-    Environment = var.environment
-  })
-}
-
 # ==============================================================================
 # KMS: Customer Managed Key (CMK) with Automated Rotation
 # ==============================================================================

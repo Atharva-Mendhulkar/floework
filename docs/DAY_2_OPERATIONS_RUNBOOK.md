@@ -12,7 +12,7 @@ This runbook establishes standard operating procedures (SOPs) for operating, mai
 4. [ECS Fargate Task Crash & Auto-Restart Recovery](#4-ecs-fargate-task-crash--auto-restart-recovery)
 5. [RDS PostgreSQL Multi-AZ Failover & Reconnection](#5-rds-postgresql-multi-az-failover--reconnection)
 6. [SQS FIFO Queue Backlog & DLQ Redrive](#6-sqs-fifo-queue-backlog--dlq-redrive)
-7. [ElastiCache Redis Failover & Fallback](#7-elasticache-redis-failover--fallback)
+7. [Upstash Redis Outage & Fallback](#7-upstash-redis-outage--fallback)
 8. [High HTTP 5xx Error Surge Containment](#8-high-http-5xx-error-surge-containment)
 9. [AWS Cost Spike & Anomaly Containment](#9-aws-cost-spike--anomaly-containment)
 10. [SSM Parameter & Secret Rotation](#10-ssm-parameter--secret-rotation)
@@ -94,12 +94,11 @@ This runbook establishes standard operating procedures (SOPs) for operating, mai
   3. Deploy fix to worker container.
   4. Redrive dead-letter messages back to primary FIFO queue using AWS SQS Dead-Letter Queue Redrive API.
 
-### 7. ElastiCache Redis Failover & Fallback
-* **Symptom**: Redis node failover or network partition.
+### 7. Upstash Redis Outage & Fallback
+* **Symptom**: Upstash REST Redis unreachable or network partition.
 * **Graceful Degradation**:
-  - Rate limiting automatically falls back to local container in-memory LRU cache (`api/_lib/rateLimit.ts`) with zero dropped requests.
-  - WebSocket presence continues routing local container socket events.
-* **Recovery**: Once Redis recovers, the background client automatically reconnects and resumes cross-task synchronization without restarting API containers.
+  - Rate limiting automatically falls back to local container in-memory cache (`api/_lib/rateLimit.ts`) with zero dropped requests.
+* **Recovery**: Once Upstash recovers, subsequent requests resume distributed rate limiting without restarting API containers.
 
 ### 8. High HTTP 5xx Error Surge Containment
 * **Symptom**: CloudWatch alarm `alb_5xx_errors` triggers (> 1% error rate over 5 minutes).
@@ -115,10 +114,7 @@ This runbook establishes standard operating procedures (SOPs) for operating, mai
 * **Symptom**: SNS alert received from `aws_ce_anomaly_subscription` (> $20 impact).
 * **Procedure**:
   1. Open AWS Cost Anomaly Detection console to identify the anomalous service.
-  2. Run the automated FinOps audit engine:
-     ```bash
-     npm run finops:audit -- --env production
-     ```
+  2. Review the Budgets & Cost Anomaly Detection resources in `terraform/modules/finops/`.
   3. Verify whether an unexpected NAT Gateway or oversized compute task was created.
   4. If testing in staging, trigger off-hours hibernation to contain spend.
 
@@ -138,7 +134,11 @@ This runbook establishes standard operating procedures (SOPs) for operating, mai
 * **Trigger**: Catastrophic database corruption or regional failure.
 * **Execution**:
   ```bash
-  # Execute automated Point-in-Time Recovery engine
-  node scripts/dr_backup_restore.mjs --restore-pitr "2026-09-08T02:00:00Z"
+  # Restore the RDS instance to a point in time via the AWS CLI
+  aws rds restore-db-instance-to-point-in-time \
+    --source-db-instance-identifier floework-production-db \
+    --target-db-instance-identifier floework-production-db-restored \
+    --restore-time "2026-09-08T02:00:00Z" \
+    --multi-az
   ```
 * **Verification**: Run data integrity checksums and verify RTO (< 15m) and RPO (< 5m) thresholds.

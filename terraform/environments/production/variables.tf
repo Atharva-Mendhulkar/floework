@@ -103,22 +103,6 @@ variable "db_skip_final_snapshot" {
 }
 
 # ------------------------------------------------------------------------------
-# Cache Variables (Production ElastiCache Redis)
-# ------------------------------------------------------------------------------
-
-variable "redis_node_type" {
-  description = "ElastiCache Redis node instance type"
-  type        = string
-  default     = "cache.t4g.small"
-}
-
-variable "redis_num_cache_clusters" {
-  description = "Number of cache clusters (2 for multi-AZ automatic failover replica in production)"
-  type        = number
-  default     = 2
-}
-
-# ------------------------------------------------------------------------------
 # Compute Variables (Production ECS Fargate)
 # ------------------------------------------------------------------------------
 

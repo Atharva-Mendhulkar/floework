@@ -56,13 +56,8 @@ function createMockReqRes({
   return { req, res };
 }
 
-// Mock Kafka & SQS publishers
+// Mock SQS publisher
 const mockPublishedEvents: any[] = [];
-vi.mock('../../api/_lib/kafka', () => ({
-  publishEvent: vi.fn(async (topic: string, key: string, message: any) => {
-    mockPublishedEvents.push({ topic, key, message });
-  }),
-}));
 
 vi.mock('../../api/_lib/sqs', () => ({
   publishFocusCompletionEvent: vi.fn(async (userId: string, event: any) => {

@@ -27,11 +27,6 @@ output "db_subnet_group_name" {
   value       = module.networking.db_subnet_group_name
 }
 
-output "redis_subnet_group_name" {
-  description = "Name of the ElastiCache Redis subnet group (Required for Phase 4)"
-  value       = module.networking.redis_subnet_group_name
-}
-
 output "nat_gateway_ips" {
   description = "Public IP address(es) of the NAT Gateway(s)"
   value       = module.networking.nat_gateway_ips
@@ -54,11 +49,6 @@ output "ecs_security_group_id" {
 output "rds_security_group_id" {
   description = "Security group ID for Amazon RDS PostgreSQL (Required for Phase 3)"
   value       = module.security.rds_security_group_id
-}
-
-output "redis_security_group_id" {
-  description = "Security group ID for ElastiCache Redis (Required for Phase 4)"
-  value       = module.security.redis_security_group_id
 }
 
 output "kms_key_arn" {
@@ -182,19 +172,6 @@ output "target_group_arn" {
 }
 
 # ==============================================================================
-# Cache Outputs (Phase 4 ElastiCache Redis)
-# ==============================================================================
-
-output "redis_primary_endpoint" {
-  description = "Primary endpoint address for ElastiCache Redis"
-  value       = module.cache.primary_endpoint_address
-}
-
-output "redis_port" {
-  description = "Port for ElastiCache Redis"
-  value       = module.cache.port
-}
-
 # ==============================================================================
 # Compute Outputs (Phase 4 ECS Fargate)
 # ==============================================================================

@@ -99,20 +99,6 @@ output "rds_master_user_secret_arn" {
 }
 
 # ------------------------------------------------------------------------------
-# Cache Outputs (Amazon ElastiCache Redis)
-# ------------------------------------------------------------------------------
-
-output "redis_endpoint" {
-  description = "Primary endpoint address for the Redis replication group"
-  value       = module.cache.primary_endpoint_address
-}
-
-output "redis_port" {
-  description = "Port number on which the cache cluster accepts connections"
-  value       = module.cache.port
-}
-
-# ------------------------------------------------------------------------------
 # Compute Outputs (Amazon ECS Fargate)
 # ------------------------------------------------------------------------------
 

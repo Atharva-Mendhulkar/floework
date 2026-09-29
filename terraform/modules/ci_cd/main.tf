@@ -161,7 +161,6 @@ resource "aws_iam_role_policy" "terraform_plan" {
           "ec2:Describe*",
           "rds:Describe*",
           "ecs:Describe*",
-          "elasticache:Describe*",
           "s3:GetBucket*",
           "s3:GetObject*",
           "s3:ListBucket*",

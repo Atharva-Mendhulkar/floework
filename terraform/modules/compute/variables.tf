@@ -109,17 +109,6 @@ variable "database_username" {
   description = "Master database username"
 }
 
-variable "redis_endpoint" {
-  type        = string
-  description = "ElastiCache Redis primary endpoint hostname"
-}
-
-variable "redis_port" {
-  type        = string
-  default     = "6379"
-  description = "ElastiCache Redis connection port"
-}
-
 variable "cognito_user_pool_id" {
   type        = string
   description = "Amazon Cognito User Pool ID"

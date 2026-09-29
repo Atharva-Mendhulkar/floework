@@ -45,7 +45,7 @@ const TaskCustomNode = ({ data, selected }: NodeProps) => {
   const intel = data.intelligence as any;
   
   let signalRing = '';
-  let customStyle = {};
+  const customStyle = {};
 
   if (graphMode === 'critical_path' && intel?.isCritical) {
     signalRing = 'ring-4 ring-rose-500/30 border-rose-500 bg-rose-50';
