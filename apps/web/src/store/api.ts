@@ -1894,6 +1894,26 @@ export const api = createApi({
             },
             invalidatesTags: ['Task'],
         }),
+        deleteTask: builder.mutation<{ success: boolean }, { id: string; projectId?: string }>({
+            queryFn: async ({ id, projectId }) => {
+                try {
+                    await authFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+                } catch {}
+                const currentTasks = getStoredTasks();
+                saveStoredTasks(currentTasks.filter(t => t.id !== id));
+                // Also clean up dependencies
+                if (projectId) {
+                    const deps = getStoredDependencies(projectId);
+                    saveStoredDependencies(projectId, deps.filter((d: any) => {
+                        const s = d.source_task_id || d.sourceTaskId || d.source;
+                        const t = d.target_task_id || d.targetTaskId || d.target;
+                        return s !== id && t !== id;
+                    }));
+                }
+                return { data: { success: true } };
+            },
+            invalidatesTags: ['Task'],
+        }),
     }),
 });
 
@@ -1973,4 +1993,5 @@ export const {
     useGetHasRealTasksQuery,
     useDeleteSampleTasksMutation,
     useGetRecentActivityQuery,
+    useDeleteTaskMutation,
 } = api;

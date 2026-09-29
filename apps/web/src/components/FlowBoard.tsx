@@ -2,10 +2,10 @@ import { phases as initialPhases } from "@/data/mockData";
 import type { TaskNode } from "@/data/mockData";
 import PhaseColumn from "./PhaseColumn";
 import { UserAvatar } from "./UserAvatar";
-import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
+import { Plus, Calendar, ListTodo, Filter, Zap, TrendingDown, TrendingUp, AlertCircle, ChevronDown } from "lucide-react";
 import { useGetTasksQuery, useGetProjectPredictionQuery, useGetProjectsQuery, useGetUsersQuery, useGetProjectSprintsQuery, api } from "@/store/api";
 import { toast } from "sonner";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { useSocket } from "@/modules/socket/SocketContext";
 import { useDispatch } from "react-redux";
 import { useAppSelector } from "@/store/hooks";
@@ -20,6 +20,9 @@ import { MemberProfileModal } from "./MemberProfileModal";
 interface FlowBoardProps {
   onTaskClick?: (task: TaskNode | null) => void;
 }
+
+type FilterPriority = "all" | "high" | "medium" | "low";
+type FilterStatus = "all" | "pending" | "in-progress" | "done";
 
 const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const activeProjectId = useAppSelector((state) => state.dashboard.activeProjectId);
@@ -44,6 +47,12 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
     return !localStorage.getItem('floework_onboarding_v1_complete');
   });
 
+  // Filter state
+  const [filterPriority, setFilterPriority] = useState<FilterPriority>("all");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
   const searchQuery = useAppSelector((state) => state.dashboard.searchQuery);
 
   const { data: sprintsRes } = useGetProjectSprintsQuery(effectiveProjectId || '', { skip: !effectiveProjectId });
@@ -55,7 +64,20 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
   const { data: predictionRes } = useGetProjectPredictionQuery(effectiveProjectId!, { skip: !effectiveProjectId });
   const prediction = predictionRes?.data;
 
-  /* Re-group tasks into phase columns + filter by searchQuery */
+  const hasActiveFilters = filterPriority !== "all" || filterStatus !== "all";
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    if (showFilters) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
+
+  /* Re-group tasks into phase columns + filter by searchQuery + filters */
   const phases = useMemo(() => {
     const structuredPhases = (initialPhases || []).map((phase) => ({ ...phase, tasks: [] as TaskNode[] }));
     if (response?.data) {
@@ -67,6 +89,12 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           (t.description || "").toLowerCase().includes(query)
         );
       }
+      if (filterPriority !== "all") {
+        filteredData = filteredData.filter((t: any) => t.priority === filterPriority);
+      }
+      if (filterStatus !== "all") {
+        filteredData = filteredData.filter((t: any) => t.status === filterStatus);
+      }
 
       filteredData.forEach((task: TaskNode) => {
         const target = structuredPhases.find((p) => p.id === task.phase) || structuredPhases[0];
@@ -76,7 +104,7 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
       });
     }
     return structuredPhases;
-  }, [response, searchQuery]);
+  }, [response, searchQuery, filterPriority, filterStatus]);
 
   const totalTasks = phases.reduce((sum, p) => sum + p.tasks.length, 0);
   const doneTasks = phases.find((p) => p.id === "outcome")?.tasks.length ?? 0;
@@ -134,6 +162,9 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
                 {activeSprint ? activeSprint.name : (activeSprintId === null ? "Backlog" : "Sprint view")}
               </span>
               <span className="text-[12px] text-slate-400 font-medium">· {totalTasks} tasks</span>
+              {hasActiveFilters && (
+                <span className="text-[10px] text-[#007dff] font-bold bg-[#007dff]/10 px-1.5 py-0.5 rounded-md">filtered</span>
+              )}
             </div>
           </div>
         </div>
@@ -215,12 +246,68 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 
           {/* Action buttons */}
           <div className="flex items-center gap-1">
-            <button
-              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-500"
-              title="Filter"
-            >
-              <Filter size={15} />
-            </button>
+            {/* Filter dropdown */}
+            <div className="relative" ref={filterRef}>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                  hasActiveFilters
+                    ? "bg-[#007dff]/10 text-[#007dff]"
+                    : "hover:bg-slate-100 text-slate-500"
+                }`}
+                title="Filter tasks"
+              >
+                <Filter size={15} />
+              </button>
+              {showFilters && (
+                <div className="absolute top-full right-0 mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-3 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Priority</p>
+                    <div className="flex gap-1 flex-wrap">
+                      {(["all", "high", "medium", "low"] as FilterPriority[]).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setFilterPriority(p)}
+                          className={`text-[11px] font-medium px-2 py-1 rounded-lg border transition-colors capitalize ${
+                            filterPriority === p
+                              ? "bg-[#007dff]/10 border-[#007dff]/30 text-[#007dff]"
+                              : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Status</p>
+                    <div className="flex gap-1 flex-wrap">
+                      {(["all", "pending", "in-progress", "done"] as FilterStatus[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setFilterStatus(s)}
+                          className={`text-[11px] font-medium px-2 py-1 rounded-lg border transition-colors capitalize ${
+                            filterStatus === s
+                              ? "bg-[#007dff]/10 border-[#007dff]/30 text-[#007dff]"
+                              : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                          }`}
+                        >
+                          {s.replace("-", " ")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => { setFilterPriority("all"); setFilterStatus("all"); }}
+                      className="text-[11px] text-red-500 font-medium hover:bg-red-50 rounded-lg px-2 py-1 transition-colors self-start"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setViewMode(viewMode === "kanban" ? "calendar" : "kanban")}
               className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${viewMode === "calendar"
@@ -257,18 +344,27 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
           <p className="text-[14px] text-slate-400 max-w-[280px] mx-auto mb-8 font-medium italic">
             "Eliminate noise. Decide what matters. Watch how it unfolds."
           </p>
-          <button
-            onClick={() => {
-              if (!effectiveProjectId) {
-                toast.error("Please create or select a project first");
-                return;
-              }
-              setIsCreateModalOpen(true);
-            }}
-            className="h-12 px-6 rounded-2xl bg-[#007dff] text-white font-semibold text-[14px] shadow-lg shadow-[#007dff]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            Create your first task
-          </button>
+          {hasActiveFilters ? (
+            <button
+              onClick={() => { setFilterPriority("all"); setFilterStatus("all"); }}
+              className="h-12 px-6 rounded-2xl bg-slate-800 text-white font-semibold text-[14px] shadow-lg hover:bg-slate-700 transition-all"
+            >
+              Clear filters to see tasks
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (!effectiveProjectId) {
+                  toast.error("Please create or select a project first");
+                  return;
+                }
+                setIsCreateModalOpen(true);
+              }}
+              className="h-12 px-6 rounded-2xl bg-[#007dff] text-white font-semibold text-[14px] shadow-lg shadow-[#007dff]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Create your first task
+            </button>
+          )}
         </div>
       ) : viewMode === "kanban" ? (
         <div className="flex gap-3 overflow-x-auto pb-2">
@@ -307,3 +403,4 @@ const FlowBoard = ({ onTaskClick }: FlowBoardProps) => {
 };
 
 export default FlowBoard;
+
