@@ -42,6 +42,7 @@ export interface TaskNode {
   priority?: string;
   isStarred?: boolean;
   projectId: string;
+  sprintId?: string | null;
   isSample?: boolean;
   createdAt?: string;
   updatedAt?: string;

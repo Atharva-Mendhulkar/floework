@@ -42,7 +42,9 @@ export const SprintSelector = () => {
     useEffect(() => {
         if (!activeSprintId && sprints.length > 0) {
             const active = sprints.find(s => s.status === "ACTIVE") || sprints[0];
-            dispatch(setActiveSprint(active.id));
+            if (active) {
+                dispatch(setActiveSprint(active.id));
+            }
         }
     }, [activeSprintId, sprints, dispatch]);
 

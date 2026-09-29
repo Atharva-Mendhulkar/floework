@@ -10,7 +10,26 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 function getStoredTasks(): TaskNode[] {
     try {
         const raw = localStorage.getItem('floework_tasks_store');
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                let changed = false;
+                const normalized = parsed.map((t: any) => {
+                    if (!t.sprintId) {
+                        changed = true;
+                        return { ...t, sprintId: 'sprint-1' };
+                    }
+                    return t;
+                });
+                if (changed) {
+                    try {
+                        localStorage.setItem('floework_tasks_store', JSON.stringify(normalized));
+                    } catch {}
+                }
+                return normalized;
+            }
+            return parsed;
+        }
     } catch {}
     const initial: TaskNode[] = (defaultPhases || []).flatMap(p => 
         (p.tasks || []).map(t => ({
@@ -20,7 +39,8 @@ function getStoredTasks(): TaskNode[] {
             isStarred: t.id === 't1' || t.id === 't3',
             focusCount: t.focusCount || 0,
             version: t.version || 1,
-            isSample: true
+            isSample: true,
+            sprintId: 'sprint-1'
         }))
     );
     try {
@@ -382,29 +402,29 @@ function getArchetypeTasks(useCase: string = 'software', projectId: string = 'pr
     switch (useCase) {
         case 'product':
             return [
-                { id: 't-prod-1', title: 'User Journey Mapping', description: 'Map out key onboarding steps and friction points', status: 'done', phase: 'allocation', projectId, effort: 'M', focusCount: 4, priority: 'medium', isStarred: true, version: 1 },
-                { id: 't-prod-2', title: 'Design System Tokens', description: 'Review HSL palette and typography scale', status: 'in-progress', phase: 'allocation', projectId, effort: 'L', focusCount: 7, priority: 'high', version: 1 },
-                { id: 't-prod-3', title: 'Interactive Prototype Review', description: 'Team walkthrough of user dashboard flow', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 12, priority: 'high', version: 1 },
-                { id: 't-prod-4', title: 'Usability Testing Analysis', description: 'Session recordings analysis with 5 beta users', status: 'pending', phase: 'focus', projectId, effort: 'M', focusCount: 2, priority: 'medium', version: 1 },
-                { id: 't-prod-5', title: 'Accessibility Compliance Audit', description: 'WCAG AA contrast and screen reader review', status: 'pending', phase: 'resolution', projectId, effort: 'S', focusCount: 1, priority: 'low', version: 1 },
-                { id: 't-prod-6', title: 'Design Spec Handoff', description: 'Final export for engineering sprint implementation', status: 'done', phase: 'outcome', projectId, effort: 'M', focusCount: 5, priority: 'high', version: 1 },
+                { id: 't-prod-1', title: 'User Journey Mapping', description: 'Map out key onboarding steps and friction points', status: 'done', phase: 'allocation', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 4, priority: 'medium', isStarred: true, version: 1 },
+                { id: 't-prod-2', title: 'Design System Tokens', description: 'Review HSL palette and typography scale', status: 'in-progress', phase: 'allocation', projectId, sprintId: 'sprint-1', effort: 'L', focusCount: 7, priority: 'high', version: 1 },
+                { id: 't-prod-3', title: 'Interactive Prototype Review', description: 'Team walkthrough of user dashboard flow', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, sprintId: 'sprint-1', effort: 'L', focusCount: 12, priority: 'high', version: 1 },
+                { id: 't-prod-4', title: 'Usability Testing Analysis', description: 'Session recordings analysis with 5 beta users', status: 'pending', phase: 'focus', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 2, priority: 'medium', version: 1 },
+                { id: 't-prod-5', title: 'Accessibility Compliance Audit', description: 'WCAG AA contrast and screen reader review', status: 'pending', phase: 'resolution', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 1, priority: 'low', version: 1 },
+                { id: 't-prod-6', title: 'Design Spec Handoff', description: 'Final export for engineering sprint implementation', status: 'done', phase: 'outcome', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 5, priority: 'high', version: 1 },
             ];
         case 'agency':
             return [
-                { id: 't-agn-1', title: 'Client Scope & Milestones', description: 'Align deliverables and timeline expectations', status: 'done', phase: 'allocation', projectId, effort: 'M', focusCount: 3, priority: 'high', isStarred: true, version: 1 },
-                { id: 't-agn-2', title: 'Creative Direction Moodboards', description: 'Present wireframes and visual moodboards', status: 'in-progress', phase: 'allocation', projectId, effort: 'L', focusCount: 6, priority: 'medium', version: 1 },
-                { id: 't-agn-3', title: 'Core Production Sprint', description: 'Active development of client portal features', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 15, priority: 'high', version: 1 },
-                { id: 't-agn-4', title: 'Client Feedback Integration', description: 'Address feedback notes from stakeholders', status: 'pending', phase: 'resolution', projectId, effort: 'M', focusCount: 4, priority: 'medium', version: 1 },
-                { id: 't-agn-5', title: 'QA & Staging Sign-Off', description: 'Final acceptance testing before release', status: 'pending', phase: 'resolution', projectId, effort: 'S', focusCount: 2, priority: 'high', version: 1 },
-                { id: 't-agn-6', title: 'Production Handover', description: 'Production deployment and client sign-off', status: 'done', phase: 'outcome', projectId, effort: 'S', focusCount: 3, priority: 'high', version: 1 },
+                { id: 't-agn-1', title: 'Client Scope & Milestones', description: 'Align deliverables and timeline expectations', status: 'done', phase: 'allocation', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 3, priority: 'high', isStarred: true, version: 1 },
+                { id: 't-agn-2', title: 'Creative Direction Moodboards', description: 'Present wireframes and visual moodboards', status: 'in-progress', phase: 'allocation', projectId, sprintId: 'sprint-1', effort: 'L', focusCount: 6, priority: 'medium', version: 1 },
+                { id: 't-agn-3', title: 'Core Production Sprint', description: 'Active development of client portal features', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, sprintId: 'sprint-1', effort: 'L', focusCount: 15, priority: 'high', version: 1 },
+                { id: 't-agn-4', title: 'Client Feedback Integration', description: 'Address feedback notes from stakeholders', status: 'pending', phase: 'resolution', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 4, priority: 'medium', version: 1 },
+                { id: 't-agn-5', title: 'QA & Staging Sign-Off', description: 'Final acceptance testing before release', status: 'pending', phase: 'resolution', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 2, priority: 'high', version: 1 },
+                { id: 't-agn-6', title: 'Production Handover', description: 'Production deployment and client sign-off', status: 'done', phase: 'outcome', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 3, priority: 'high', version: 1 },
             ];
         case 'solo':
             return [
-                { id: 't-solo-1', title: 'Weekly Top 3 Priorities', description: 'Isolate high-leverage tasks for the week', status: 'done', phase: 'allocation', projectId, effort: 'S', focusCount: 2, priority: 'high', isStarred: true, version: 1 },
-                { id: 't-solo-2', title: 'Deep Work: Core Architecture', description: '90 minutes uninterrupted focus on system design', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, effort: 'L', focusCount: 10, priority: 'high', version: 1 },
-                { id: 't-solo-3', title: 'Flow State Journaling', description: 'Track cognitive fatigue and energy peaks', status: 'in-progress', phase: 'focus', projectId, effort: 'S', focusCount: 4, priority: 'medium', version: 1 },
-                { id: 't-solo-4', title: 'Eliminate Backlog Friction', description: 'Prune low-value noise and unblock dependencies', status: 'pending', phase: 'resolution', projectId, effort: 'M', focusCount: 1, priority: 'low', version: 1 },
-                { id: 't-solo-5', title: 'Weekly Outcome Review', description: 'Review hours spent and completed deliverables', status: 'done', phase: 'outcome', projectId, effort: 'S', focusCount: 3, priority: 'medium', version: 1 },
+                { id: 't-solo-1', title: 'Weekly Top 3 Priorities', description: 'Isolate high-leverage tasks for the week', status: 'done', phase: 'allocation', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 2, priority: 'high', isStarred: true, version: 1 },
+                { id: 't-solo-2', title: 'Deep Work: Core Architecture', description: '90 minutes uninterrupted focus on system design', status: 'in-progress', hasFocus: true, phase: 'focus', projectId, sprintId: 'sprint-1', effort: 'L', focusCount: 10, priority: 'high', version: 1 },
+                { id: 't-solo-3', title: 'Flow State Journaling', description: 'Track cognitive fatigue and energy peaks', status: 'in-progress', phase: 'focus', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 4, priority: 'medium', version: 1 },
+                { id: 't-solo-4', title: 'Eliminate Backlog Friction', description: 'Prune low-value noise and unblock dependencies', status: 'pending', phase: 'resolution', projectId, sprintId: 'sprint-1', effort: 'M', focusCount: 1, priority: 'low', version: 1 },
+                { id: 't-solo-5', title: 'Weekly Outcome Review', description: 'Review hours spent and completed deliverables', status: 'done', phase: 'outcome', projectId, sprintId: 'sprint-1', effort: 'S', focusCount: 3, priority: 'medium', version: 1 },
             ];
         case 'software':
         default:
@@ -412,6 +432,7 @@ function getArchetypeTasks(useCase: string = 'software', projectId: string = 'pr
                 (p.tasks || []).map((t) => ({
                     ...t,
                     projectId,
+                    sprintId: 'sprint-1',
                     isStarred: t.id === 't1' || t.id === 't3',
                     focusCount: t.focusCount || 0,
                     version: t.version || 1
@@ -653,7 +674,7 @@ export const api = createApi({
 
                 let tasks = getStoredTasks();
                 if (sprintId) {
-                    tasks = tasks.filter(t => (t as any).sprintId === sprintId);
+                    tasks = tasks.filter(t => (t as any).sprintId === sprintId || (!t.sprintId && sprintId === 'sprint-1'));
                 }
                 return { data: { success: true, data: tasks } };
             },
@@ -885,6 +906,7 @@ export const api = createApi({
                     priority: taskData.priority || 'medium',
                     dueDate: taskData.dueDate,
                     projectId: taskData.projectId || 'proj-default-1',
+                    sprintId: taskData.sprintId || 'sprint-1',
                     focusCount: 0,
                     version: 1,
                     isStarred: false,
